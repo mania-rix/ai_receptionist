@@ -6,7 +6,23 @@ export async function POST(req: Request) {
     const data = await req.json();
 
     // Extract relevant fields
-    const { name, voice, temperature, interruption_sensitivity, greeting } = data;
+    const {
+      agent_name,      // required string
+      voice_id,        // required string
+      interruption_sensitivity, // optional number
+      // ...any other fields you want to support
+    } = data;
+
+    // Build payload as per API docs
+    const payload = {
+      agent_name,
+      voice_id,
+      interruption_sensitivity, // can include or omit if not needed
+      response_engine: {
+        type: 'retell-llm',
+        llm_id: 'llm_08507d646ed9a0c79da91ef05d67'
+      }
+    };
 
     // Make the Retell API request
     const retellRes = await fetch('https://api.retellai.com/create-agent', {
@@ -15,14 +31,7 @@ export async function POST(req: Request) {
         'Content-Type': 'application/json',
         Authorization: `Bearer ${process.env.RETELL_API_KEY?.trim()}`,
       },
-      body: JSON.stringify({
-        name,
-        voice,
-        greeting_messages: [greeting],
-        temperature,
-        interruption_sensitivity,
-        llm_id: 'llm_08507d646ed9a0c79da91ef05d67',
-      }),
+      body: JSON.stringify(payload),
     });
 
     if (!retellRes.ok) {
@@ -44,7 +53,7 @@ export async function POST(req: Request) {
     const { data: savedAgent, error } = await supabase
       .from('agents')
       .insert([
-        { ...data, retell_agent_id: retellAgent.id },
+        { ...data, retell_agent_id: retellAgent.agent_id }, // Use correct field
       ])
       .select()
       .single();
