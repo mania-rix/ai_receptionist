@@ -1,34 +1,29 @@
 import { NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
-
-// Create Supabase client on the server (do NOT use browser version here)
-const supabase = createClient(
-  process.env.SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY! // Use SERVICE_ROLE_KEY for server-side inserts
-);
+import { cookies } from 'next/headers';
+import { createServerSupabaseClient } from '@/lib/supabase';
 
 export async function POST(req: Request) {
   try {
-    const data = await req.json();
+    // Get user session
+    const cookieStore = cookies();
+    const supabase = createServerSupabaseClient(cookieStore);
+    const { data: { user } } = await supabase.auth.getUser();
 
-    // Extract relevant fields
-    const {
-      agent_name,      // required string
-      voice_id,        // required string
-      interruption_sensitivity, // optional number
-      user_id,         // pass this from frontend or extract from session if needed
-      // ...any other fields you want to support
-    } = data;
+    // Get input data from request
+    const { name, voice, greeting, temperature, interruption_sensitivity } = await req.json();
 
     // Build payload as per Retell API docs
-    const payload = {
-      agent_name,
-      voice_id,
+    const payload: any = {
+      agent_name: name,
+      voice_id: voice,
       interruption_sensitivity,
+      // Only include optional fields if present
+      ...(greeting ? { greeting_messages: [greeting] } : {}),
+      ...(temperature ? { temperature } : {}),
       response_engine: {
         type: 'retell-llm',
-        llm_id: 'llm_08507d646ed9a0c79da91ef05d67'
-      }
+        llm_id: 'llm_08507d646ed9a0c79da91ef05d67',
+      },
     };
 
     // Make the Retell API request
@@ -47,31 +42,34 @@ export async function POST(req: Request) {
         status: retellRes.status,
         statusText: retellRes.statusText,
         errorText,
+        requestBody: payload,
       });
       return NextResponse.json(
-        { error: 'Retell agent creation failed', details: errorText },
+        { error: 'Retell agent creation failed', details: errorText, requestBody: payload },
         { status: retellRes.status }
       );
     }
 
     const retellAgent = await retellRes.json();
 
-    // Save to Supabase with all original metadata (add user_id if required by schema)
+    // Save to Supabase (add user_id for tracking)
     const { data: savedAgent, error } = await supabase
       .from('agents')
-      .insert([
-        {
-          ...data,
-          retell_agent_id: retellAgent.agent_id,
-          user_id: user_id || null, // add user_id if present
-        },
-      ])
+      .insert([{
+        name,
+        voice,
+        greeting,
+        temperature,
+        interruption_sensitivity,
+        retell_agent_id: retellAgent.agent_id,
+        user_id: user?.id,
+      }])
       .select()
       .single();
 
     if (error) throw error;
 
-    // Return object with agent property for frontend compatibility
+    // Return shape: { agent: savedAgent }
     return NextResponse.json({ agent: savedAgent });
   } catch (err: any) {
     console.error('🚨 Error in create-agent:', err);
