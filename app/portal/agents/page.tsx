@@ -56,12 +56,11 @@ export default function AgentsPage() {
 const createRetellAgent = async (data: FormData) => {
   setIsLoading(true);
   try {
-    const response = await fetch('https://api.retellai.com/create-agent', {
+    const response = await fetch('/api/create-agent', {
       method: 'POST',
       headers: {
-    'Content-Type': 'application/json',
-    'Authorization': `Bearer ${process.env.RETELL_API_KEY}`,
-  },
+        'Content-Type': 'application/json',
+      },
       body: JSON.stringify(data),
     });
 
