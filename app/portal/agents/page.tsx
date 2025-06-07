@@ -58,7 +58,10 @@ const createRetellAgent = async (data: FormData) => {
   try {
     const response = await fetch('https://api.retellai.com/create-agent', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+    'Content-Type': 'application/json',
+    'Authorization': `Bearer ${process.env.RETELL_API_KEY}`,
+  },
       body: JSON.stringify(data),
     });
 
