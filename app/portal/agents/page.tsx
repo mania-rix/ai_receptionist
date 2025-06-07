@@ -53,42 +53,42 @@ export default function AgentsPage() {
     },
   });
 
-  const createAgent = async (data: FormData) => {
-    setIsLoading(true);
-    try {
-      const response = await fetch('/api/create-agent', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(data),
-      });
+const createRetellAgent = async (data: FormData) => {
+  setIsLoading(true);
+  try {
+    const response = await fetch('/api/create-agent', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to create agent');
-      }
+    const result = await response.json();
 
-      const savedAgent = await response.json();
-      setAgents((prev) => [savedAgent, ...prev]);
-
-      setOpen(false);
-      form.reset();
-      toast({
-        title: 'Success',
-        description: 'Agent created successfully',
-      });
-    } catch (error: any) {
-      console.error('Error creating agent:', error);
-      toast({
-        title: 'Error',
-        description: error.message || 'Failed to create agent',
-        variant: 'destructive',
-      });
-    } finally {
-      setIsLoading(false);
+    if (!response.ok) {
+      throw new Error(result.error || 'Failed to create agent');
     }
-  };
+
+    setAgents((prev) => [result.agent, ...prev]);
+    setOpen(false);
+    form.reset();
+    toast({
+      title: 'Success',
+      description: 'Agent created successfully',
+    });
+  } catch (error: any) {
+    console.error('Error creating agent:', error);
+    toast({
+      title: 'Error',
+      description: error.message || 'Failed to create agent',
+      variant: 'destructive',
+    });
+  } finally {
+    setIsLoading(false);
+  }
+};
+
+
+
 
   useEffect(() => {
     const fetchAgents = async () => {
@@ -123,7 +123,7 @@ export default function AgentsPage() {
             <DialogHeader>
               <DialogTitle>Create New Agent</DialogTitle>
             </DialogHeader>
-            <form onSubmit={form.handleSubmit(createAgent)} className="space-y-6">
+            <form onSubmit={form.handleSubmit(createRetellAgent)} className="space-y-6">
               <div className="space-y-4">
                 <div>
                   <Input
