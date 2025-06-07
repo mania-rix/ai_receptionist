@@ -7,7 +7,7 @@ export async function POST(req: Request) {
   try {
     const { agent_id, to_number, from_number } = await req.json();
     
-    // Start call using Retell REST API
+    // Start call using Retell SDK
     const result = await startOutboundCall(agent_id, to_number, from_number);
     
     // Log call to Supabase

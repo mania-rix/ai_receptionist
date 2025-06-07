@@ -69,8 +69,8 @@ export default function AgentsPage() {
         throw new Error(errorData.error || 'Failed to create agent');
       }
 
-      const { agent } = await response.json();
-      setAgents((prev) => [agent, ...prev]);
+      const savedAgent = await response.json();
+      setAgents((prev) => [savedAgent, ...prev]);
 
       setOpen(false);
       form.reset();
