@@ -3,7 +3,7 @@ import { createClient } from '@supabase/supabase-js';
 
 // Create Supabase client on the server (do NOT use browser version here)
 const supabase = createClient(
-  process.env.EXT_PUBLIC_SUPABASE_URL!,
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY! // Use SERVICE_ROLE_KEY for server-side inserts
 );
 
