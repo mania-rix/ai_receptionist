@@ -1,5 +1,11 @@
 import { NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabase';
+import { createClient } from '@supabase/supabase-js';
+
+// Create Supabase client on the server (do NOT use browser version here)
+const supabase = createClient(
+  process.env.SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY! // Use SERVICE_ROLE_KEY for server-side inserts
+);
 
 export async function POST(req: Request) {
   try {
@@ -10,14 +16,15 @@ export async function POST(req: Request) {
       agent_name,      // required string
       voice_id,        // required string
       interruption_sensitivity, // optional number
+      user_id,         // pass this from frontend or extract from session if needed
       // ...any other fields you want to support
     } = data;
 
-    // Build payload as per API docs
+    // Build payload as per Retell API docs
     const payload = {
       agent_name,
       voice_id,
-      interruption_sensitivity, // can include or omit if not needed
+      interruption_sensitivity,
       response_engine: {
         type: 'retell-llm',
         llm_id: 'llm_08507d646ed9a0c79da91ef05d67'
@@ -49,18 +56,23 @@ export async function POST(req: Request) {
 
     const retellAgent = await retellRes.json();
 
-    // Save to Supabase with all original metadata
+    // Save to Supabase with all original metadata (add user_id if required by schema)
     const { data: savedAgent, error } = await supabase
       .from('agents')
       .insert([
-        { ...data, retell_agent_id: retellAgent.agent_id }, // Use correct field
+        {
+          ...data,
+          retell_agent_id: retellAgent.agent_id,
+          user_id: user_id || null, // add user_id if present
+        },
       ])
       .select()
       .single();
 
     if (error) throw error;
 
-    return NextResponse.json(savedAgent);
+    // Return object with agent property for frontend compatibility
+    return NextResponse.json({ agent: savedAgent });
   } catch (err: any) {
     console.error('🚨 Error in create-agent:', err);
     return NextResponse.json(
