@@ -9,7 +9,7 @@ export async function POST(req: Request) {
     const { name, voice, temperature, interruption_sensitivity, greeting } = data;
 
     // Make the Retell API request
-    const retellRes = await fetch('https://api.retellai.com/v2/agents', {
+    const retellRes = await fetch('https://api.retellai.com/create-agents', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
