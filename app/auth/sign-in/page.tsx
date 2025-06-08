@@ -19,7 +19,10 @@ export default function SignInPage() {
   const [email, setEmail] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [activeTab, setActiveTab] = useState('sign-in');
- // const supabase = createBrowserSupabaseClient();
+  
+  useEffect(() => {
+    console.log('window.location.origin =', window.location.origin);
+  }, []);
   
   const handleEmailSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -212,7 +215,4 @@ export default function SignInPage() {
   );
 }
 
-useEffect(() => {
-  console.log('window.location.origin =', window.location.origin);
-}, []);
 
