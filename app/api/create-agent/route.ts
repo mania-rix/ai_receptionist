@@ -1,6 +1,8 @@
 ///home/project/app/api/create-agent/route.ts
 import { createRetellAgent } from "@/lib/retell";
-import { supabase } from "@/lib/supabase"; // adjust path if needed
+import { createServerSupabaseClient } from "@/lib/supabase";
+import { cookies } from "next/headers";
+
 
 export async function POST(req: Request) {
   try {
