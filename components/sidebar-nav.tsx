@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { motion } from 'framer-motion';
-import { LayoutDashboard, PhoneOutgoing, PhoneIncoming, FileText, Video, Settings, LogOut } from 'lucide-react';
+import { LayoutDashboard, User, PhoneOutgoing, PhoneIncoming, FileText, Video, Settings, LogOut } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { createBrowserSupabaseClient } from '@/lib/supabase';
 import { useRouter } from 'next/navigation';
