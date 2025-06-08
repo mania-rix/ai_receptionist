@@ -3,8 +3,8 @@ import { NextResponse } from 'next/server';
 
 export async function POST(req: Request) {
   try {
-    const { agent_id, phone_number } = await req.json();
-    const result = await startOutboundCall(agent_id, phone_number, {});
+      const { agent_id, to_number, from_number } = await req.json();
+      const result = await startOutboundCall(agent_id, to_number, from_number);
     return NextResponse.json(result);
   } catch (err: any) {
     console.error('❌ Failed to start call:', err);
