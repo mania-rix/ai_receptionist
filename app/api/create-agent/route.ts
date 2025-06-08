@@ -1,81 +1,38 @@
-import { NextResponse } from 'next/server';
-import { cookies } from 'next/headers';
-import { createServerSupabaseClient } from '@/lib/supabase';
+import { createRetellAgent } from "@/lib/retell";
+import { supabase } from "@/lib/supabase"; // adjust path if needed
 
 export async function POST(req: Request) {
   try {
-    // Get user session
-    const cookieStore = cookies();
-    const supabase = createServerSupabaseClient(cookieStore);
-    const { data: { user } } = await supabase.auth.getUser();
+    const body = await req.json();
 
-    // Get input data from request
-    const { name, voice, greeting, temperature, interruption_sensitivity } = await req.json();
-
-    // Build payload as per Retell API docs
-    const payload: any = {
-      agent_name: name,
-      voice_id: voice,
-      interruption_sensitivity,
-      // Only include optional fields if present
-      ...(greeting ? { greeting_messages: [greeting] } : {}),
-      ...(temperature ? { temperature } : {}),
-      response_engine: {
-        type: 'retell-llm',
-        llm_id: 'llm_08507d646ed9a0c79da91ef05d67',
-      },
-    };
-
-    // Make the Retell API request
-    const retellRes = await fetch('https://api.retellai.com/create-agent', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${process.env.RETELL_API_KEY?.trim()}`,
-      },
-      body: JSON.stringify(payload),
+    const retellAgent = await createRetellAgent({
+      name: body.name,
+      voice: body.voice,
+      greeting: body.greeting,
+      temperature: body.temperature,
+      interruption_sensitivity: body.interruption_sensitivity,
     });
 
-    if (!retellRes.ok) {
-      const errorText = await retellRes.text();
-      console.error('❌ Retell agent creation failed:', {
-        status: retellRes.status,
-        statusText: retellRes.statusText,
-        errorText,
-        requestBody: payload,
-      });
-      return NextResponse.json(
-        { error: 'Retell agent creation failed', details: errorText, requestBody: payload },
-        { status: retellRes.status }
-      );
+    const { data, error } = await supabase.from("agents").insert([
+      {
+        name: body.name,
+        voice: body.voice,
+        greeting: body.greeting,
+        temperature: body.temperature,
+        interruption_sensitivity: body.interruption_sensitivity,
+        retell_agent_id: retellAgent.id,
+        retell_llm_id: retellAgent.llm_id ?? null,
+      },
+    ]).select().single();
+
+    if (error) {
+      console.error("❌ Supabase insert error:", error.message);
+      return new Response(JSON.stringify({ error: error.message }), { status: 500 });
     }
 
-    const retellAgent = await retellRes.json();
-
-    // Save to Supabase (add user_id for tracking)
-    const { data: savedAgent, error } = await supabase
-      .from('agents')
-      .insert([{
-        name,
-        voice,
-        greeting,
-        temperature,
-        interruption_sensitivity,
-        retell_agent_id: retellAgent.agent_id,
-        user_id: user?.id,
-      }])
-      .select()
-      .single();
-
-    if (error) throw error;
-
-    // Return shape: { agent: savedAgent }
-    return NextResponse.json({ agent: savedAgent });
-  } catch (err: any) {
-    console.error('🚨 Error in create-agent:', err);
-    return NextResponse.json(
-      { error: err.message || 'Unknown error occurred' },
-      { status: 500 }
-    );
+    return new Response(JSON.stringify({ agent: data }), { status: 200 });
+  } catch (error: any) {
+    console.error("❌ API route /create-agent failed:", error.message);
+    return new Response(JSON.stringify({ error: error.message || "Unknown error" }), { status: 500 });
   }
 }
