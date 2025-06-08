@@ -1,8 +1,6 @@
-///home/project/app/api/create-agent/route.ts
 import { createRetellAgent } from "@/lib/retell";
 import { createServerSupabaseClient } from "@/lib/supabase";
 import { cookies } from "next/headers";
-
 
 export async function POST(req: Request) {
   try {
@@ -15,7 +13,8 @@ export async function POST(req: Request) {
       temperature: body.temperature,
       interruption_sensitivity: body.interruption_sensitivity,
     });
-    
+
+    // 👇 THIS IS THE CORRECT WAY
     const cookieStore = cookies();
     const supabase = createServerSupabaseClient(cookieStore);
 
