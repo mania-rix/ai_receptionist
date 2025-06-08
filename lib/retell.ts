@@ -1,30 +1,56 @@
-export async function startOutboundCall(agent_id: string, to_number: string, from_number: string) {
-  const res = await fetch("https://api.retellai.com/v2/create-phone-call", {
-    method: "POST",
+// /home/project/lib/retell.ts
+
+type AgentData = {
+  name: string;
+  voice: string;
+  greeting: string;
+  temperature: number;
+  interruption_sensitivity: number;
+};
+
+export async function createRetellAgent(data: AgentData) {
+  const response = await fetch('https://api.retellai.com/v1/agents', {
+    method: 'POST',
     headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${process.env.RETELL_API_KEY?.trim()}`,
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${process.env.RETELL_API_KEY?.trim()}`,
     },
     body: JSON.stringify({
-      agent_id,
-      to_number,
-      from_number,
+      name: data.name,
+      voice: data.voice,
+      greeting_messages: [data.greeting],
+      temperature: data.temperature,
+      interruption_sensitivity: data.interruption_sensitivity,
     }),
   });
 
-  const contentType = res.headers.get("content-type");
-
-  let result: any;
-  if (contentType?.includes("application/json")) {
-    result = await res.json();
-  } else {
-    const text = await res.text();
-    throw new Error(`Retell API returned non-JSON response: ${text}`);
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`Retell agent creation failed: ${errorText}`);
   }
 
-  if (!res.ok) {
-    throw new Error(result.error || `Retell call failed with status ${res.status}`);
+  const retellAgent = await response.json();
+  return retellAgent;
+}
+
+export async function startOutboundCall(agent_id: string, phone_number: string) {
+  const response = await fetch('https://api.retellai.com/v1/phone-calls', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${process.env.RETELL_API_KEY?.trim()}`,
+    },
+    body: JSON.stringify({
+      agent_id,
+      phone_number,
+    }),
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`Retell call initiation failed: ${errorText}`);
   }
 
-  return result;
+  const call = await response.json();
+  return call;
 }
