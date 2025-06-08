@@ -14,7 +14,6 @@ export async function POST(req: Request) {
       interruption_sensitivity: body.interruption_sensitivity,
     });
 
-    // 👇 THIS IS THE CORRECT WAY
     const cookieStore = cookies();
     const supabase = createServerSupabaseClient(cookieStore);
 
