@@ -2,6 +2,7 @@
 
 'use client';
 
+import { useEffect } from "react";
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
@@ -211,4 +212,7 @@ export default function SignInPage() {
   );
 }
 
-console.log('window.location.origin =', window.location.origin);
+useEffect(() => {
+  console.log('window.location.origin =', window.location.origin);
+}, []);
+
