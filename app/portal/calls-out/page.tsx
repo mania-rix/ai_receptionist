@@ -15,6 +15,7 @@ import {
 } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/lib/supabase-browser';
+import { v4 as uuidv4 } from "uuid";
 
 type FormData = {
   agentId: string;
