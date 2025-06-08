@@ -18,7 +18,7 @@ const navItems = [
   {
     title: 'Agents',
     href: '/portal/agents',
-    icon: LayoutDashboard,
+    icon: User,
   },
   {
     title: 'Outbound Calls',
