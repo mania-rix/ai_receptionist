@@ -15,6 +15,9 @@ export async function POST(req: Request) {
       temperature: body.temperature,
       interruption_sensitivity: body.interruption_sensitivity,
     });
+    
+    const cookieStore = cookies();
+    const supabase = createServerSupabaseClient(cookieStore);
 
     const { data, error } = await supabase.from("agents").insert([
       {
