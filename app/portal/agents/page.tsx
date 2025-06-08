@@ -56,39 +56,40 @@ export default function AgentsPage() {
 const createRetellAgent = async (data: FormData) => {
   setIsLoading(true);
   try {
-    const response = await fetch('/api/create-agent', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(data),
-    });
+    // Use pre-created Retell agent + llm IDs
+    const { data: savedAgent, error } = await supabase
+      .from('agents')
+      .insert([
+        {
+          ...data,
+          retell_agent_id: 'agent_d45ccf76ef7145a584ccf7d4e9',
+          retell_llm_id: 'llm_08507d646ed9a0c79da91ef05d67',
+        },
+      ])
+      .select()
+      .single();
 
-    const result = await response.json();
+    if (error) throw error;
 
-    if (!response.ok) {
-      throw new Error(result.error || 'Failed to create agent');
-    }
+    setAgents((prev) => [savedAgent, ...prev]);
 
-    setAgents((prev) => [result.agent, ...prev]);
     setOpen(false);
     form.reset();
     toast({
       title: 'Success',
-      description: 'Agent created successfully',
+      description: 'Agent added successfully',
     });
-  } catch (error: any) {
-    console.error('Error creating agent:', error);
+  } catch (error) {
+    console.error('Error saving agent:', error);
     toast({
       title: 'Error',
-      description: error.message || 'Failed to create agent',
+      description: (error as any).message || 'Failed to save agent',
       variant: 'destructive',
     });
   } finally {
     setIsLoading(false);
   }
 };
-
 
 
 
