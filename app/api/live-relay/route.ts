@@ -54,34 +54,36 @@ export async function POST(req: Request) {
         voice_id: 'EXAVITQu4vr4xnSDxMaL', // Default voice
       });
 
-      // First, fetch the session to get the current transcript
-      const { data: session, error: fetchError } = await supabase
-        .from('live_relay_sessions')
-        .select('transcript')
-        .eq('call_id', call_id)
-        .eq('status', 'active')
-        .single();
-      
-      if (fetchError) throw fetchError;
-      
-      const { data: newTranscript, error: rpcError } = await supabase.rpc('jsonb_array_append', {
-        target: session.transcript,
-        new_element: JSON.stringify({
-          type: 'operator_message',
-          message: translatedMessage,
-          original: message,
-          timestamp: new Date().toISOString(),
-        }),
-      });
-      if (rpcError) throw rpcError;
-      
-      const { error: updateError } = await supabase
-        .from('live_relay_sessions')
-        .update({ transcript: newTranscript })
-        .eq('call_id', call_id)
-        .eq('status', 'active');
-      
-      if (updateError) throw updateError;
+// Step 1: Get current transcript for this session
+const { data: session, error: fetchError } = await supabase
+  .from('live_relay_sessions')
+  .select('id, transcript')
+  .eq('call_id', call_id)
+  .eq('status', 'active')
+  .single();
+
+if (fetchError || !session) throw fetchError || new Error('Session not found');
+
+// Step 2: Append new message using your RPC (adjust params if needed)
+const { data: newTranscript, error: rpcError } = await supabase.rpc('jsonb_array_append', {
+  target: session.transcript, // The current transcript array!
+  new_element: JSON.stringify({
+    type: 'operator_message',
+    message: translatedMessage,
+    original: message,
+    timestamp: new Date().toISOString(),
+  }),
+});
+if (rpcError) throw rpcError;
+
+// Step 3: Update the session with the new transcript array
+const { error: updateError } = await supabase
+  .from('live_relay_sessions')
+  .update({ transcript: newTranscript })
+  .eq('id', session.id);
+
+if (updateError) throw updateError;
+
 
 
       if (error) throw error;
