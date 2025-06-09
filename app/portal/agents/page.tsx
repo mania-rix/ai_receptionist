@@ -90,6 +90,10 @@ export default function AgentsPage() {
 
 const createOrUpdateAgent = async (data: FormData) => {
   setIsLoading(true);
+    console.log(
+    `[AgentUI] ${editingAgent ? 'Updating' : 'Creating'} agent. Data:`,
+    data
+  );
   try {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) throw new Error('Not authenticated');
@@ -106,6 +110,7 @@ const createOrUpdateAgent = async (data: FormData) => {
         .single();
 
       if (error) throw error;
+      console.log('[AgentUI] Agent updated:', savedAgent);
       setAgents(prev => prev.map(agent => agent.id === editingAgent.id ? savedAgent : agent));
     } else {
       const { data: savedAgent, error } = await supabase
@@ -122,6 +127,7 @@ const createOrUpdateAgent = async (data: FormData) => {
         .single();
 
       if (error) throw error;
+      console.log('[AgentUI] Agent created:', savedAgent);
       setAgents((prev) => [savedAgent, ...prev]);
     }
 
