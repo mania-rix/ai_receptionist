@@ -38,7 +38,7 @@ export async function PATCH(
     const body = await req.json();
     console.log('[API:conversation-flows] PATCH payload:', body);
     const cookieStore = cookies();
-    const supabase = createServerSupabaseClient(cookieStore);
+    const supabase = supabaseServer(cookieStore);
 
     const { data, error } = await supabase
       .from('conversation_flows')
@@ -72,7 +72,7 @@ export async function DELETE(
   console.log('[API:conversation-flows] DELETE request:', params.id);
   try {
     const cookieStore = cookies();
-    const supabase = createServerSupabaseClient(cookieStore);
+    const supabase = supabaseServer(cookieStore);
 
     const { error } = await supabase
       .from('conversation_flows')
