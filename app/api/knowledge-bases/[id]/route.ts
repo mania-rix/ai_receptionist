@@ -68,7 +68,7 @@ export async function DELETE(
 ) {
   try {
     const cookieStore = cookies();
-    const supabase = createServerSupabaseClient(cookieStore);
+    const supabase = supabaseServer(cookieStore)
 
     const { error } = await supabase
       .from('knowledge_bases')
