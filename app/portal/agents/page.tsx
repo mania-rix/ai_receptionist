@@ -152,6 +152,7 @@ const createOrUpdateAgent = async (data: FormData) => {
 };
 
   const deleteAgent = async (id: string) => {
+    console.log('[AgentUI] Deleting agent:', id);
     try {
       const { error } = await supabase
         .from('agents')
@@ -159,7 +160,8 @@ const createOrUpdateAgent = async (data: FormData) => {
         .eq('id', id);
 
       if (error) throw error;
-
+      
+      console.log('[AgentUI] Agent deleted:', id);
       setAgents(prev => prev.filter(agent => agent.id !== id));
       toast({
         title: 'Success',
