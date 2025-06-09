@@ -67,7 +67,6 @@ export default function AnalyticsPage() {
       const complianceIssues = callAnalytics?.filter(
         (a: CallAnalyticsRow) => (a.compliance_flags ?? []).length > 0
       ).length || 0;
-
       const revenueAttribution = callAnalytics?.reduce(
         (sum: number, a: CallAnalyticsRow) => sum + (a.call?.cost || 0), 0
       ) || 0;
