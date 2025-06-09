@@ -246,7 +246,7 @@ export default function VoiceAnalyticsPage() {
               <h4 className="font-medium mb-2">Example Questions</h4>
               <ul className="text-sm text-gray-400 space-y-1">
                 <li>• &quot;How many calls happened today?&quot;</li>
-                <li>• &quot;What's our patient satisfaction rate?&quot;</li>
+                <li>• &quot;What&#39;s our patient satisfaction rate?&quot;</li>
                 <li>• &quot;Show me revenue trends this month&quot;</li>
                 <li>• &quot;Which agents need more training?&quot;</li>
               </ul>
