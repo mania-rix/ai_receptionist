@@ -92,7 +92,8 @@ const { error: updateError } = await supabase
   .update({ transcript: updatedTranscript })
   .eq('id', session.id);
 if (updateError) throw updateError;
- 
+
+      
       // In a real implementation, this would send the audio to the active call
       // For now, we'll return the audio data
       console.log('[API:live-relay] Message sent successfully');
