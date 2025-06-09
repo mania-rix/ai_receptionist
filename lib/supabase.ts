@@ -1,3 +1,33 @@
+// /lib/supabase.ts
+
+import { createBrowserClient, createServerClient } from '@supabase/ssr'
+import type { Database } from '../database.types'
+
+/**
+ * Singleton browser Supabase client (for use in components, hooks, etc)
+ * Safe to use in 'use client' code.
+ */
+export const supabaseBrowser = createBrowserClient<Database>(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+)
+
+/**
+ * Factory for a server Supabase client (for use in API routes, server components, etc)
+ * Call supabaseServer(cookies) in server code and pass cookies as needed.
+ * 
+ * Example for Next.js API route:
+ *   const supabase = supabaseServer(req.cookies)
+ */
+export function supabaseServer(cookies: any) {
+  return createServerClient<Database>(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    { cookies }
+  )
+}
+
+
 export type Json =
   | string
   | number
