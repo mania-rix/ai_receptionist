@@ -180,7 +180,6 @@ export default function KnowledgeBasePage() {
               Upload PDF/DOC
             </Button>
           </label>
-
           <Dialog open={open} onOpenChange={(open) => {
             setOpen(open);
             if (!open) {
