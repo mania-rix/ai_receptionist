@@ -128,7 +128,7 @@ export default function InboundCallsPage() {
                 </div>
                 <div className="flex items-center gap-2">
                   {call.analytics?.[0]?.sentiment_score && (
-                    <Badge variant="outline\" className=\"flex items-center gap-1">
+                    <Badge variant="outline" className="flex items-center gap-1">
                       {getSentimentEmoji(call.analytics[0].sentiment_score)}
                       Sentiment
                     </Badge>
