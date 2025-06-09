@@ -9,7 +9,7 @@ export async function POST(req: Request) {
     const { action, message, call_id, target_language } = await req.json();
     console.log('[API:live-relay] Incoming payload:', { action, message, call_id, target_language });
     const cookieStore = cookies();
-    const supabase = createServerSupabaseClient(cookieStore);
+    const supabase = supabaseServer(cookieStore)
 
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
