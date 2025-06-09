@@ -6,6 +6,21 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { supabase } from '@/lib/supabase-browser';
 
+
+type CallAnalyticsRow = {
+  sentiment_score?: number;
+  quality_score?: number;
+  upsell_likelihood?: number;
+  compliance_flags?: any[];
+  anomaly_flags?: string[];
+  call?: {
+    cost?: number;
+    callee?: string;
+    started_at?: string;
+    agent?: { name?: string };
+  };
+};
+
 export default function AnalyticsPage() {
   const [analytics, setAnalytics] = useState({
     totalCalls: 0,
