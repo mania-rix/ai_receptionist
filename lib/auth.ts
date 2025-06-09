@@ -1,5 +1,5 @@
 import { cookies } from 'next/headers';
-import { createServerSupabaseClient } from '@/lib/supabase';
+import { supabaseServer } from '@/lib/supabase'
 
 export async function getUser() {
   console.log('[AuthLib] Getting user...');
