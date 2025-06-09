@@ -14,7 +14,7 @@ const retellVoices = [
 export async function GET() {
   try {
     // Get ElevenLabs voices
-    let elevenLabsVoices = [];
+    let elevenLabsVoices: any[] = [];
     try {
       const voices = await getElevenLabsVoices();
       elevenLabsVoices = voices.map(voice => ({
