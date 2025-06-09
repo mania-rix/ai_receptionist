@@ -54,22 +54,35 @@ export async function POST(req: Request) {
         voice_id: 'EXAVITQu4vr4xnSDxMaL', // Default voice
       });
 
-      // Update session transcript
-      const { error } = await supabase
+      // First, fetch the session to get the current transcript
+      const { data: session, error: fetchError } = await supabase
         .from('live_relay_sessions')
-        .update({
-          transcript: supabase.rpc('jsonb_array_append', {
-            target: 'transcript',
-            new_element: JSON.stringify({
-              type: 'operator_message',
-              message: translatedMessage,
-              original: message,
-              timestamp: new Date().toISOString(),
-            }),
-          }),
-        })
+        .select('transcript')
+        .eq('call_id', call_id)
+        .eq('status', 'active')
+        .single();
+      
+      if (fetchError) throw fetchError;
+      
+      const { data: newTranscript, error: rpcError } = await supabase.rpc('jsonb_array_append', {
+        target: session.transcript,
+        new_element: JSON.stringify({
+          type: 'operator_message',
+          message: translatedMessage,
+          original: message,
+          timestamp: new Date().toISOString(),
+        }),
+      });
+      if (rpcError) throw rpcError;
+      
+      const { error: updateError } = await supabase
+        .from('live_relay_sessions')
+        .update({ transcript: newTranscript })
         .eq('call_id', call_id)
         .eq('status', 'active');
+      
+      if (updateError) throw updateError;
+
 
       if (error) throw error;
 
