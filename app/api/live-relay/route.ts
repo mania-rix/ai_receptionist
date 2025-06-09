@@ -93,10 +93,6 @@ const { error: updateError } = await supabase
   .eq('id', session.id);
 if (updateError) throw updateError;
 
-
-
-
-
       if (error) throw error;
 
       // In a real implementation, this would send the audio to the active call
