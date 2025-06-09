@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { motion } from 'framer-motion';
-import { LayoutDashboard, User, PhoneOutgoing, PhoneIncoming, FileText, Video, Settings, LogOut } from 'lucide-react';
+import { LayoutDashboard, User, PhoneOutgoing, PhoneIncoming, FileText, Video, Settings, LogOut, Phone, Book, BarChart3, Calendar, Users, Shield } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { createBrowserSupabaseClient } from '@/lib/supabase';
 import { useRouter } from 'next/navigation';
@@ -26,19 +26,39 @@ const navItems = [
     icon: PhoneOutgoing,
   },
   {
-    title: 'Inbound',
-    href: '/portal/inbound',
+    title: 'Inbound Calls',
+    href: '/portal/calls-in',
     icon: PhoneIncoming,
   },
   {
-    title: 'Ledger',
-    href: '/portal/ledger',
-    icon: FileText,
+    title: 'Phone Numbers',
+    href: '/portal/phone-numbers',
+    icon: Phone,
   },
   {
-    title: 'Video',
-    href: '/portal/video',
-    icon: Video,
+    title: 'Knowledge Base',
+    href: '/portal/knowledge-base',
+    icon: Book,
+  },
+  {
+    title: 'Analytics',
+    href: '/portal/analytics',
+    icon: BarChart3,
+  },
+  {
+    title: 'Events',
+    href: '/portal/events',
+    icon: Calendar,
+  },
+  {
+    title: 'HR Center',
+    href: '/portal/hr-center',
+    icon: Users,
+  },
+  {
+    title: 'Compliance',
+    href: '/portal/compliance',
+    icon: Shield,
   },
   {
     title: 'Settings',
