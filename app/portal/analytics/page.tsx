@@ -187,7 +187,7 @@ export default function AnalyticsPage() {
           </CardHeader>
           <CardContent>
             <div className="text-3xl font-bold text-green-500">{analytics.upsellOpportunities}</div>
-            <p className="text-xs text-gray-400">>70% likelihood</p>
+            <p className="text-xs text-gray-400">{">"}70% likelihood</p>
           </CardContent>
         </Card>
 
