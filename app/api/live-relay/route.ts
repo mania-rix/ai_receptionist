@@ -3,6 +3,17 @@ import { supabaseServer } from '@/lib/supabase'
 import { cookies } from 'next/headers';
 import { elevenLabsAPI } from '@/lib/elevenlabs';
 
+
+// Helper to safely convert transcript to array
+function ensureArray(val: unknown): any[] {
+  if (Array.isArray(val)) return val;
+  try {
+    if (typeof val === 'string') return JSON.parse(val);
+  } catch {}
+  return [];
+}
+
+
 export async function POST(req: Request) {
   console.log('[API:live-relay] Incoming request');
   try {
@@ -54,6 +65,7 @@ export async function POST(req: Request) {
         voice_id: 'EXAVITQu4vr4xnSDxMaL', // Default voice
       });
 
+
 // 1. Fetch the current transcript
 const { data: session, error: fetchError } = await supabase
   .from('live_relay_sessions')
@@ -63,9 +75,9 @@ const { data: session, error: fetchError } = await supabase
   .single();
 if (fetchError || !session) throw fetchError || new Error('Session not found');
 
-// 2. Append the new message in JS
+// 2. Coerce transcript to array and append new message
 const updatedTranscript = [
-  ...(session.transcript || []), // in case transcript is null/empty
+  ...ensureArray(session.transcript),
   {
     type: 'operator_message',
     message: translatedMessage,
@@ -74,12 +86,13 @@ const updatedTranscript = [
   },
 ];
 
-// 3. Update the row
+// 3. Update the row in Supabase
 const { error: updateError } = await supabase
   .from('live_relay_sessions')
   .update({ transcript: updatedTranscript })
   .eq('id', session.id);
 if (updateError) throw updateError;
+
 
 
 
