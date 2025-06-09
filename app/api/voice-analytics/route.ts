@@ -9,7 +9,7 @@ export async function POST(req: Request) {
     const { question, audio_data } = await req.json();
     console.log('[API:voice-analytics] POST payload:', { question, hasAudio: !!audio_data });
     const cookieStore = cookies();
-    const supabase = createServerSupabaseClient(cookieStore);
+    const supabase = supabaseServer(cookieStore)
 
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
