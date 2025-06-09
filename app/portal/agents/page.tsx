@@ -54,6 +54,14 @@ export default function AgentsPage() {
     },
   });
 
+  useEffect(() => {
+  console.log('[AgentUI] AgentsPage mounted');
+  return () => {
+    console.log('[AgentUI] AgentsPage unmounted');
+  };
+}, []);
+
+
   const watchVoiceEngine = form.watch('voice_engine');
 
   useEffect(() => {
