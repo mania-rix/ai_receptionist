@@ -26,9 +26,7 @@ export default function AnalyticsPage() {
   }, []);
 
   const fetchAnalytics = async () => {
-    console.log('[AnalyticsUI] Fetching analytics data...');
     try {
-      // Fetch call analytics summary
       const { data: callAnalytics, error } = await (supabase as any)
         .from('call_analytics')
         .select(`
@@ -42,11 +40,21 @@ export default function AnalyticsPage() {
       if (error) throw error;
 
       const totalCalls = callAnalytics?.length || 0;
-      const avgSentiment = callAnalytics?.reduce((sum: number, a: any) => sum + (a.sentiment_score || 0), 0) / totalCalls || 0;
-      const avgQuality = callAnalytics?.reduce((sum: number, a: any) => sum + (a.quality_score || 0), 0) / totalCalls || 0;
-      const upsellOpportunities = callAnalytics?.filter(a => (a.upsell_likelihood || 0) > 0.7).length || 0;
-      const complianceIssues = callAnalytics?.filter(a => a.compliance_flags?.length > 0).length || 0;
-      const revenueAttribution = callAnalytics?.reduce((sum: number, a: any) => sum + (a.call?.cost || 0), 0) || 0;
+      const avgSentiment = callAnalytics?.reduce(
+        (sum: number, a: CallAnalyticsRow) => sum + (a.sentiment_score || 0), 0
+      ) / totalCalls || 0;
+      const avgQuality = callAnalytics?.reduce(
+        (sum: number, a: CallAnalyticsRow) => sum + (a.quality_score || 0), 0
+      ) / totalCalls || 0;
+      const upsellOpportunities = callAnalytics?.filter(
+        (a: CallAnalyticsRow) => (a.upsell_likelihood || 0) > 0.7
+      ).length || 0;
+      const complianceIssues = callAnalytics?.filter(
+        (a: CallAnalyticsRow) => a.compliance_flags?.length > 0
+      ).length || 0;
+      const revenueAttribution = callAnalytics?.reduce(
+        (sum: number, a: CallAnalyticsRow) => sum + (a.call?.cost || 0), 0
+      ) || 0;
 
       setAnalytics({
         totalCalls,
