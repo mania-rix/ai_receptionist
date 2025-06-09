@@ -6,7 +6,7 @@ import { elevenLabsAPI } from '@/lib/elevenlabs';
 export async function GET() {
   try {
     const cookieStore = cookies();
-    const supabase = createServerSupabaseClient(cookieStore);
+    const supabase = supabaseServer(cookieStore)
 
     const { data: phoneNumbers, error } = await supabase
       .from('phone_numbers')
