@@ -17,7 +17,7 @@ export async function POST(req: Request) {
     });
 
     const cookieStore = cookies();
-    const supabase = createServerSupabaseClient(cookieStore);
+    const supabase = supabaseServer(cookieStore)
 
     const { data, error } = await supabase.from("agents").insert([
       {
