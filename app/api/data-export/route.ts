@@ -216,7 +216,7 @@ export async function GET() {
   console.log('[API:data-export] GET request');
   try {
     const cookieStore = cookies();
-    const supabase = createServerSupabaseClient(cookieStore);
+    const supabase = supabaseServer(cookieStore)
 
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
