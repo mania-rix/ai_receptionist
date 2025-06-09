@@ -54,35 +54,33 @@ export async function POST(req: Request) {
         voice_id: 'EXAVITQu4vr4xnSDxMaL', // Default voice
       });
 
-      // Step 1: Get current transcript for this session
-      const { data: session, error: fetchError } = await supabase
-        .from('live_relay_sessions')
-        .select('id, transcript')
-        .eq('call_id', call_id)
-        .eq('status', 'active')
-        .single();
-      
-      if (fetchError || !session) throw fetchError || new Error('Session not found');
-      
-      // Step 2: Append new message using your RPC (adjust params if needed)
-      const { data: newTranscript, error: rpcError } = await supabase.rpc('jsonb_array_append', {
-        target: session.transcript, // The current transcript array!
-        new_element: JSON.stringify({
-          type: 'operator_message',
-          message: translatedMessage,
-          original: message,
-          timestamp: new Date().toISOString(),
-        }),
-      });
-      if (rpcError) throw rpcError;
-      
-      // Step 3: Update the session with the new transcript array
-      const { error: updateError } = await supabase
-        .from('live_relay_sessions')
-        .update({ transcript: newTranscript })
-        .eq('id', session.id);
-      
-      if (updateError) throw updateError;
+// 1. Fetch the current transcript
+const { data: session, error: fetchError } = await supabase
+  .from('live_relay_sessions')
+  .select('id, transcript')
+  .eq('call_id', call_id)
+  .eq('status', 'active')
+  .single();
+if (fetchError || !session) throw fetchError || new Error('Session not found');
+
+// 2. Append the new message in JS
+const updatedTranscript = [
+  ...(session.transcript || []), // in case transcript is null/empty
+  {
+    type: 'operator_message',
+    message: translatedMessage,
+    original: message,
+    timestamp: new Date().toISOString(),
+  },
+];
+
+// 3. Update the row
+const { error: updateError } = await supabase
+  .from('live_relay_sessions')
+  .update({ transcript: updatedTranscript })
+  .eq('id', session.id);
+if (updateError) throw updateError;
+
 
 
 
