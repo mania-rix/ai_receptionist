@@ -65,8 +65,9 @@ export default function AnalyticsPage() {
         (a: CallAnalyticsRow) => (a.upsell_likelihood || 0) > 0.7
       ).length || 0;
       const complianceIssues = callAnalytics?.filter(
-        (a: CallAnalyticsRow) => a.compliance_flags?.length > 0
+        (a: CallAnalyticsRow) => (a.compliance_flags ?? []).length > 0
       ).length || 0;
+
       const revenueAttribution = callAnalytics?.reduce(
         (sum: number, a: CallAnalyticsRow) => sum + (a.call?.cost || 0), 0
       ) || 0;
