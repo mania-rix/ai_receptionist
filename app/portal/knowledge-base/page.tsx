@@ -167,16 +167,20 @@ export default function KnowledgeBasePage() {
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-bold tracking-tight">Knowledge Base</h1>
         <div className="flex gap-2">
-          <Button variant="outline">
-            <Upload className="mr-2 h-4 w-4" />
+          <label className="relative inline-flex items-center cursor-pointer">
             <input
               type="file"
               accept=".pdf,.doc,.docx"
               onChange={handleFileUpload}
-              className="absolute inset-0 opacity-0 cursor-pointer"
+              className="absolute inset-0 opacity-0 w-full h-full cursor-pointer"
+              tabIndex={-1}
             />
-            Upload PDF/DOC
-          </Button>
+            <Button variant="outline" type="button">
+              <Upload className="mr-2 h-4 w-4" />
+              Upload PDF/DOC
+            </Button>
+          </label>
+
           <Dialog open={open} onOpenChange={(open) => {
             setOpen(open);
             if (!open) {
