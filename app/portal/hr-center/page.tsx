@@ -195,7 +195,7 @@ export default function HRCenterPage() {
                     </div>
                     {request.reason && (
                       <div className="text-sm mt-2 p-2 bg-gray-900 rounded">
-                        "{request.reason}"
+                        &quot;{request.reason}&quot;
                       </div>
                     )}
                   </div>
