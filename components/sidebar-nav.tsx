@@ -6,7 +6,7 @@ import { cn } from '@/lib/utils';
 import { motion } from 'framer-motion';
 import { LayoutDashboard, User, PhoneOutgoing, PhoneIncoming, FileText, Video, Settings, LogOut, Phone, Book, BarChart3, Calendar, Users, Shield, GitBranch, MessageSquare, Mic } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { createBrowserSupabaseClient } from '@/lib/supabase';
+import { supabaseBrowser } from '@/lib/supabase'
 import { useRouter } from 'next/navigation';
 import { ActivityFeed } from './activity-feed';
 import { FeedbackWidget } from './feedback-widget';
