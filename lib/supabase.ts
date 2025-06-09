@@ -27,8 +27,6 @@ export function supabaseServer(cookies: any) {
   )
 }
 
-
-
 export type Json =
   | string
   | number
@@ -352,8 +350,10 @@ export type Database = {
           recording_url: string | null
           started_at: string | null
           status: string | null
+          tavus_video_id: string
           transcript: string | null
           user_id: string
+          video_status: string
         }
         Insert: {
           agent_id?: string | null
@@ -369,8 +369,10 @@ export type Database = {
           recording_url?: string | null
           started_at?: string | null
           status?: string | null
+          tavus_video_id?: string
           transcript?: string | null
           user_id: string
+          video_status?: string
         }
         Update: {
           agent_id?: string | null
@@ -386,8 +388,10 @@ export type Database = {
           recording_url?: string | null
           started_at?: string | null
           status?: string | null
+          tavus_video_id?: string
           transcript?: string | null
           user_id?: string
+          video_status?: string
         }
         Relationships: [
           {
