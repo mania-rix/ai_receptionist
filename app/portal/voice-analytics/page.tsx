@@ -16,6 +16,12 @@ export default function VoiceAnalyticsPage() {
   const { toast } = useToast();
   const audioRef = useRef<HTMLAudioElement>(null);
 
+  useEffect(() => {
+    console.log('[VoiceAnalyticsUI] Component mounted');
+    return () => {
+      console.log('[VoiceAnalyticsUI] Component unmounted');
+    };
+  }, []);
   const commonQuestions = [
     "How many calls did we have today?",
     "What's our compliance rate this month?",
@@ -26,6 +32,7 @@ export default function VoiceAnalyticsPage() {
   ];
 
   const toggleRecording = () => {
+    console.log('[VoiceAnalyticsUI] Toggling recording:', !isRecording);
     setIsRecording(!isRecording);
     // In a real implementation, this would start/stop voice recording
     toast({
@@ -38,6 +45,7 @@ export default function VoiceAnalyticsPage() {
     const queryText = questionText || question;
     if (!queryText.trim()) return;
 
+    console.log('[VoiceAnalyticsUI] Asking question:', queryText);
     setIsLoading(true);
     try {
       const response = await fetch('/api/voice-analytics', {
@@ -55,13 +63,14 @@ export default function VoiceAnalyticsPage() {
       setLastResponse(result);
       setQuestion('');
       
+      console.log('[VoiceAnalyticsUI] Question processed successfully:', result);
       // In a real implementation, this would play the TTS response
       toast({
         title: 'Query Processed',
         description: 'Your analytics question has been answered',
       });
     } catch (error) {
-      console.error('Error processing question:', error);
+      console.error('[VoiceAnalyticsUI] Error processing question:', error);
       toast({
         title: 'Error',
         description: 'Failed to process your question',
@@ -73,6 +82,7 @@ export default function VoiceAnalyticsPage() {
   };
 
   const playResponse = () => {
+    console.log('[VoiceAnalyticsUI] Playing response');
     // In a real implementation, this would play the TTS audio response
     toast({
       title: 'Playing Response',

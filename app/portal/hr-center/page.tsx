@@ -22,10 +22,12 @@ export default function HRCenterPage() {
   const { toast } = useToast();
 
   useEffect(() => {
+    console.log('[HRUI] Component mounted');
     fetchHRRequests();
   }, []);
 
   const fetchHRRequests = async () => {
+    console.log('[HRUI] Fetching HR requests...');
     try {
       const { data, error } = await supabase
         .from('hr_requests')
@@ -34,12 +36,14 @@ export default function HRCenterPage() {
 
       if (error) throw error;
       setRequests(data || []);
+      console.log('[HRUI] HR requests fetched:', data?.length || 0);
     } catch (error) {
-      console.error('Error fetching HR requests:', error);
+      console.error('[HRUI] Error fetching HR requests:', error);
     }
   };
 
   const updateRequestStatus = async (id: string, status: string) => {
+    console.log('[HRUI] Updating request status:', { id, status });
     setIsLoading(true);
     try {
       const { error } = await supabase
@@ -53,12 +57,13 @@ export default function HRCenterPage() {
         req.id === id ? { ...req, status } : req
       ));
 
+      console.log('[HRUI] Request status updated successfully');
       toast({
         title: 'Success',
         description: `Request ${status}`,
       });
     } catch (error) {
-      console.error('Error updating request:', error);
+      console.error('[HRUI] Error updating request:', error);
       toast({
         title: 'Error',
         description: 'Failed to update request',
@@ -70,6 +75,7 @@ export default function HRCenterPage() {
   };
 
   const exportToCSV = () => {
+    console.log('[HRUI] Exporting HR requests to CSV');
     const csvContent = [
       ['Date', 'Employee', 'Phone', 'Type', 'Reason', 'Status'].join(','),
       ...requests.map(req => [
@@ -89,6 +95,7 @@ export default function HRCenterPage() {
     a.download = `hr-requests-${format(new Date(), 'yyyy-MM-dd')}.csv`;
     a.click();
     window.URL.revokeObjectURL(url);
+    console.log('[HRUI] CSV export completed');
   };
 
   const getStatusColor = (status: string) => {

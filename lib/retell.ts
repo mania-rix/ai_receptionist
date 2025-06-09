@@ -9,6 +9,8 @@ type AgentData = {
 };
 
 export async function createRetellAgent(data: AgentData) {
+  console.log('[RetellLib] Creating Retell agent:', data.name);
+  // TODO: Review error handling for Retell API calls
   const response = await fetch('https://api.retellai.com/v1/agents', {
     method: 'POST',
     headers: {
@@ -26,14 +28,18 @@ export async function createRetellAgent(data: AgentData) {
 
   if (!response.ok) {
     const errorText = await response.text();
+    console.error('[RetellLib] Agent creation failed:', response.status, errorText);
     throw new Error(`Retell agent creation failed: ${errorText}`);
   }
 
   const retellAgent = await response.json();
+  console.log('[RetellLib] Agent created successfully:', retellAgent.id);
   return retellAgent;
 }
 
 export async function startOutboundCall(agent_id: string, phone_number: string) {
+  console.log('[RetellLib] Starting outbound call:', { agent_id, phone_number });
+  // TODO: Review error handling for Retell API calls
   const response = await fetch('https://api.retellai.com/v1/phone-calls', {
     method: 'POST',
     headers: {
@@ -48,9 +54,11 @@ export async function startOutboundCall(agent_id: string, phone_number: string) 
 
   if (!response.ok) {
     const errorText = await response.text();
+    console.error('[RetellLib] Call initiation failed:', response.status, errorText);
     throw new Error(`Retell call initiation failed: ${errorText}`);
   }
 
   const call = await response.json();
+  console.log('[RetellLib] Call started successfully:', call.id);
   return call;
 }

@@ -3,13 +3,16 @@ import { createServerSupabaseClient } from '@/lib/supabase';
 import { cookies } from 'next/headers';
 
 export async function POST(req: Request) {
+  console.log('[API:data-export] POST request');
   try {
     const { export_type, filters } = await req.json();
+    console.log('[API:data-export] POST payload:', { export_type, filters });
     const cookieStore = cookies();
     const supabase = createServerSupabaseClient(cookieStore);
 
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
+      console.error('[API:data-export] POST Unauthorized access attempt');
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -72,13 +75,14 @@ export async function POST(req: Request) {
 
     if (updateError) throw updateError;
 
+    console.log('[API:data-export] POST response:', { export_id: exportRecord.id, filename });
     return NextResponse.json({ 
       export_id: exportRecord.id,
       download_url: dataUrl,
       filename,
     });
   } catch (error) {
-    console.error('Export error:', error);
+    console.error('[API:data-export] POST Error:', error);
     return NextResponse.json(
       { error: 'Failed to create export' },
       { status: 500 }
@@ -209,12 +213,14 @@ async function exportAllData(supabase: any, userId: string) {
 }
 
 export async function GET() {
+  console.log('[API:data-export] GET request');
   try {
     const cookieStore = cookies();
     const supabase = createServerSupabaseClient(cookieStore);
 
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
+      console.error('[API:data-export] GET Unauthorized access attempt');
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -226,9 +232,10 @@ export async function GET() {
 
     if (error) throw error;
 
+    console.log('[API:data-export] GET response:', exports);
     return NextResponse.json({ exports });
   } catch (error) {
-    console.error('Error fetching exports:', error);
+    console.error('[API:data-export] GET Error:', error);
     return NextResponse.json(
       { error: 'Failed to fetch exports' },
       { status: 500 }

@@ -10,6 +10,7 @@ export interface AnalyticsQuery {
 
 export class VoiceAnalyticsProcessor {
   async processVoiceQuery(audioBlob: Blob, userId: string): Promise<AnalyticsQuery> {
+    console.log('[VoiceAnalyticsLib] Processing voice query for user:', userId);
     // Convert speech to text (would use a speech-to-text service)
     const question = await this.speechToText(audioBlob);
     
@@ -26,6 +27,7 @@ export class VoiceAnalyticsProcessor {
   }
 
   async processTextQuery(question: string, userId: string): Promise<AnalyticsQuery> {
+    console.log('[VoiceAnalyticsLib] Processing text query:', question);
     // This would integrate with an LLM to understand the query and generate SQL/data queries
     // For now, we'll handle some common patterns
     
@@ -47,6 +49,7 @@ export class VoiceAnalyticsProcessor {
       return this.getComplianceData(userId);
     }
     
+    console.log('[VoiceAnalyticsLib] No matching pattern found for question');
     return {
       question,
       user_id: userId,
@@ -55,25 +58,30 @@ export class VoiceAnalyticsProcessor {
   }
 
   private async speechToText(audioBlob: Blob): Promise<string> {
+    console.log('[VoiceAnalyticsLib] Converting speech to text');
     // This would integrate with a speech-to-text service like OpenAI Whisper
     // For now, return a mock response
+    // TODO: Review integration with speech-to-text service
     return "How many unhappy patients called last week?";
   }
 
   private async textToSpeech(text: string): Promise<ArrayBuffer> {
+    console.log('[VoiceAnalyticsLib] Converting text to speech');
     // Use ElevenLabs for text-to-speech
     try {
+      // TODO: Review error handling for TTS conversion
       return await elevenLabsAPI.generateSpeech({
         text,
         voice_id: 'EXAVITQu4vr4xnSDxMaL', // Default voice
       });
     } catch (error) {
-      console.error('TTS error:', error);
+      console.error('[VoiceAnalyticsLib] TTS error:', error);
       throw error;
     }
   }
 
   private async getUnhappyPatientsData(userId: string): Promise<AnalyticsQuery> {
+    console.log('[VoiceAnalyticsLib] Getting unhappy patients data for user:', userId);
     // This would query the database for sentiment data
     const mockData = {
       count: 3,
@@ -90,6 +98,7 @@ export class VoiceAnalyticsProcessor {
   }
 
   private async getTodayCallsData(userId: string): Promise<AnalyticsQuery> {
+    console.log('[VoiceAnalyticsLib] Getting today\'s calls data for user:', userId);
     const mockData = {
       total: 15,
       completed: 12,
@@ -106,6 +115,7 @@ export class VoiceAnalyticsProcessor {
   }
 
   private async getRevenueData(userId: string): Promise<AnalyticsQuery> {
+    console.log('[VoiceAnalyticsLib] Getting revenue data for user:', userId);
     const mockData = {
       total: 2450.75,
       period: 'this month',
@@ -121,6 +131,7 @@ export class VoiceAnalyticsProcessor {
   }
 
   private async getComplianceData(userId: string): Promise<AnalyticsQuery> {
+    console.log('[VoiceAnalyticsLib] Getting compliance data for user:', userId);
     const mockData = {
       rate: 94.5,
       violations: 2,

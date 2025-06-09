@@ -23,10 +23,12 @@ export default function InboundCallsPage() {
   const { toast } = useToast();
 
   useEffect(() => {
+    console.log('[CallsIn] Component mounted');
     fetchInboundCalls();
   }, []);
 
   const fetchInboundCalls = async () => {
+    console.log('[CallsIn] Fetching inbound calls...');
     try {
       const { data, error } = await supabase
         .from('calls')
@@ -40,12 +42,14 @@ export default function InboundCallsPage() {
 
       if (error) throw error;
       setCalls(data || []);
+      console.log('[CallsIn] Inbound calls fetched:', data?.length || 0);
     } catch (error) {
-      console.error('Error fetching inbound calls:', error);
+      console.error('[CallsIn] Error fetching inbound calls:', error);
     }
   };
 
   const generateVideo = async (call: any) => {
+    console.log('[CallsIn] Generating video for call:', call.id);
     setIsGeneratingVideo(true);
     try {
       const response = await fetch('/api/generate-video', {
@@ -63,6 +67,7 @@ export default function InboundCallsPage() {
 
       const result = await response.json();
       
+      console.log('[CallsIn] Video generation started:', result.video.video_id);
       toast({
         title: 'Video Generation Started',
         description: 'Your doctor\'s note video is being generated. You\'ll be notified when it\'s ready.',
@@ -75,7 +80,7 @@ export default function InboundCallsPage() {
           : c
       ));
     } catch (error) {
-      console.error('Error generating video:', error);
+      console.error('[CallsIn] Error generating video:', error);
       toast({
         title: 'Error',
         description: 'Failed to generate video',
@@ -137,6 +142,7 @@ export default function InboundCallsPage() {
                   <Dialog>
                     <DialogTrigger asChild>
                       <Button variant="outline" size="sm" onClick={() => setSelectedCall(call)}>
+                        {console.log('[CallsIn] Opening call details for:', call.id)}
                         View Details
                       </Button>
                     </DialogTrigger>

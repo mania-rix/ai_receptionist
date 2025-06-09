@@ -54,19 +54,22 @@ export const DEFAULT_PERMISSIONS: Record<UserRole, Permission[]> = {
 
 export class RBACManager {
   async getUserRoles(userId: string, cookies: any): Promise<UserRole[]> {
+    console.log('[RBACLib] Getting user roles for:', userId);
     const supabase = createServerSupabaseClient(cookies);
     
+    // TODO: Review error handling for role queries
     const { data, error } = await supabase
       .from('user_roles')
       .select('role')
       .eq('user_id', userId);
 
     if (error) {
-      console.error('Error fetching user roles:', error);
+      console.error('[RBACLib] Error fetching user roles:', error);
       return ['viewer']; // Default role
     }
 
     const roles = data?.map(r => r.role as UserRole) || ['viewer'];
+    console.log('[RBACLib] User roles found:', roles);
     return roles.length > 0 ? roles : ['viewer'];
   }
 
@@ -76,6 +79,7 @@ export class RBACManager {
     action: 'create' | 'read' | 'update' | 'delete',
     cookies: any
   ): Promise<boolean> {
+    console.log('[RBACLib] Checking permission:', { userId, resource, action });
     const roles = await this.getUserRoles(userId, cookies);
     
     for (const role of roles) {
@@ -92,10 +96,12 @@ export class RBACManager {
       }
     }
     
+    console.log('[RBACLib] Permission denied for:', { userId, resource, action });
     return false;
   }
 
   async assignRole(assignerId: string, userId: string, role: UserRole, cookies: any): Promise<void> {
+    console.log('[RBACLib] Assigning role:', { assignerId, userId, role });
     const supabase = createServerSupabaseClient(cookies);
     
     // Check if assigner has admin role
@@ -104,6 +110,7 @@ export class RBACManager {
       throw new Error('Only admins can assign roles');
     }
     
+    // TODO: Review error handling for role assignment
     const { error } = await supabase
       .from('user_roles')
       .upsert({
@@ -115,9 +122,11 @@ export class RBACManager {
     if (error) {
       throw new Error(`Failed to assign role: ${error.message}`);
     }
+    console.log('[RBACLib] Role assigned successfully');
   }
 
   async removeRole(removerId: string, userId: string, role: UserRole, cookies: any): Promise<void> {
+    console.log('[RBACLib] Removing role:', { removerId, userId, role });
     const supabase = createServerSupabaseClient(cookies);
     
     // Check if remover has admin role
@@ -126,6 +135,7 @@ export class RBACManager {
       throw new Error('Only admins can remove roles');
     }
     
+    // TODO: Review error handling for role removal
     const { error } = await supabase
       .from('user_roles')
       .delete()
@@ -135,17 +145,21 @@ export class RBACManager {
     if (error) {
       throw new Error(`Failed to remove role: ${error.message}`);
     }
+    console.log('[RBACLib] Role removed successfully');
   }
 
   getHighestRole(roles: UserRole[]): UserRole {
+    console.log('[RBACLib] Getting highest role from:', roles);
     const roleHierarchy: UserRole[] = ['admin', 'manager', 'hr', 'compliance', 'staff', 'viewer'];
     
     for (const role of roleHierarchy) {
       if (roles.includes(role)) {
+        console.log('[RBACLib] Highest role found:', role);
         return role;
       }
     }
     
+    console.log('[RBACLib] Defaulting to viewer role');
     return 'viewer';
   }
 }
@@ -159,9 +173,12 @@ export async function requirePermission(
   action: 'create' | 'read' | 'update' | 'delete',
   cookies: any
 ) {
+  console.log('[RBACLib] Requiring permission:', { userId, resource, action });
   const hasPermission = await rbacManager.hasPermission(userId, resource, action, cookies);
   
   if (!hasPermission) {
+    console.error('[RBACLib] Permission check failed');
     throw new Error(`Insufficient permissions: ${action} ${resource}`);
   }
+  console.log('[RBACLib] Permission check passed');
 }

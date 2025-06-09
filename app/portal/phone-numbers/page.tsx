@@ -52,21 +52,25 @@ export default function PhoneNumbersPage() {
   const watchProvider = form.watch('provider');
 
   useEffect(() => {
+    console.log('[PhoneNumbersUI] Component mounted');
     fetchPhoneNumbers();
     fetchAgents();
   }, []);
 
   const fetchPhoneNumbers = async () => {
+    console.log('[PhoneNumbersUI] Fetching phone numbers...');
     try {
       const response = await fetch('/api/phone-numbers');
       const data = await response.json();
       setPhoneNumbers(data.phoneNumbers || []);
+      console.log('[PhoneNumbersUI] Phone numbers fetched:', data.phoneNumbers?.length || 0);
     } catch (error) {
-      console.error('Error fetching phone numbers:', error);
+      console.error('[PhoneNumbersUI] Error fetching phone numbers:', error);
     }
   };
 
   const fetchAgents = async () => {
+    console.log('[PhoneNumbersUI] Fetching agents...');
     try {
       const { data, error } = await supabase
         .from('agents')
@@ -75,12 +79,14 @@ export default function PhoneNumbersPage() {
 
       if (error) throw error;
       setAgents(data || []);
+      console.log('[PhoneNumbersUI] Agents fetched:', data?.length || 0);
     } catch (error) {
-      console.error('Error fetching agents:', error);
+      console.error('[PhoneNumbersUI] Error fetching agents:', error);
     }
   };
 
   const createPhoneNumber = async (data: FormData) => {
+    console.log('[PhoneNumbersUI] Creating phone number:', data);
     setIsLoading(true);
     try {
       const response = await fetch('/api/phone-numbers', {
@@ -99,12 +105,13 @@ export default function PhoneNumbersPage() {
       setOpen(false);
       form.reset();
       
+      console.log('[PhoneNumbersUI] Phone number created successfully:', result.phoneNumber);
       toast({
         title: 'Success',
         description: 'Phone number added successfully',
       });
     } catch (error) {
-      console.error('Error creating phone number:', error);
+      console.error('[PhoneNumbersUI] Error creating phone number:', error);
       toast({
         title: 'Error',
         description: (error as Error).message,
@@ -116,6 +123,7 @@ export default function PhoneNumbersPage() {
   };
 
   const deletePhoneNumber = async (id: string) => {
+    console.log('[PhoneNumbersUI] Deleting phone number:', id);
     try {
       const response = await fetch(`/api/phone-numbers/${id}`, {
         method: 'DELETE',
@@ -124,12 +132,13 @@ export default function PhoneNumbersPage() {
       if (!response.ok) throw new Error('Failed to delete phone number');
 
       setPhoneNumbers(prev => prev.filter(num => num.id !== id));
+      console.log('[PhoneNumbersUI] Phone number deleted successfully:', id);
       toast({
         title: 'Success',
         description: 'Phone number deleted successfully',
       });
     } catch (error) {
-      console.error('Error deleting phone number:', error);
+      console.error('[PhoneNumbersUI] Error deleting phone number:', error);
       toast({
         title: 'Error',
         description: 'Failed to delete phone number',

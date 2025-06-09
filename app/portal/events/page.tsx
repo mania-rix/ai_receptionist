@@ -36,10 +36,12 @@ export default function EventsPage() {
   const form = useForm<FormData>();
 
   useEffect(() => {
+    console.log('[EventsUI] Component mounted');
     fetchEvents();
   }, []);
 
   const fetchEvents = async () => {
+    console.log('[EventsUI] Fetching events...');
     try {
       const { data, error } = await supabase
         .from('events')
@@ -51,12 +53,14 @@ export default function EventsPage() {
 
       if (error) throw error;
       setEvents(data || []);
+      console.log('[EventsUI] Events fetched:', data?.length || 0);
     } catch (error) {
-      console.error('Error fetching events:', error);
+      console.error('[EventsUI] Error fetching events:', error);
     }
   };
 
   const createOrUpdateEvent = async (data: FormData) => {
+    console.log('[EventsUI] Creating/updating event:', data);
     setIsLoading(true);
     try {
       const { data: { user } } = await supabase.auth.getUser();
@@ -82,12 +86,13 @@ export default function EventsPage() {
       setEditingEvent(null);
       form.reset();
       
+      console.log('[EventsUI] Event saved successfully');
       toast({
         title: 'Success',
         description: `Event ${editingEvent ? 'updated' : 'created'} successfully`,
       });
     } catch (error) {
-      console.error('Error saving event:', error);
+      console.error('[EventsUI] Error saving event:', error);
       toast({
         title: 'Error',
         description: (error as Error).message,
@@ -99,6 +104,7 @@ export default function EventsPage() {
   };
 
   const deleteEvent = async (id: string) => {
+    console.log('[EventsUI] Deleting event:', id);
     try {
       const { error } = await supabase
         .from('events')
@@ -108,12 +114,13 @@ export default function EventsPage() {
       if (error) throw error;
 
       setEvents(prev => prev.filter(event => event.id !== id));
+      console.log('[EventsUI] Event deleted successfully:', id);
       toast({
         title: 'Success',
         description: 'Event deleted successfully',
       });
     } catch (error) {
-      console.error('Error deleting event:', error);
+      console.error('[EventsUI] Error deleting event:', error);
       toast({
         title: 'Error',
         description: 'Failed to delete event',
@@ -123,6 +130,7 @@ export default function EventsPage() {
   };
 
   const handleEdit = (event: any) => {
+    console.log('[EventsUI] Editing event:', event.id);
     setEditingEvent(event);
     form.reset({
       title: event.title,

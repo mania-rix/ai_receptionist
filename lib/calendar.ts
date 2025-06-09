@@ -23,6 +23,7 @@ export interface CalendarIntegration {
 class CalendarManager {
   // Google Calendar Integration
   async createGoogleEvent(integration: CalendarIntegration, event: Omit<CalendarEvent, 'id'>) {
+    console.log('[CalendarLib] Creating Google event:', event.title);
     const auth = new google.auth.OAuth2(
       process.env.GOOGLE_CLIENT_ID,
       process.env.GOOGLE_CLIENT_SECRET
@@ -35,6 +36,7 @@ class CalendarManager {
 
     const calendar = google.calendar({ version: 'v3', auth });
 
+    // TODO: Review error handling for Google Calendar API calls
     const response = await calendar.events.insert({
       calendarId: integration.calendar_id,
       requestBody: {
@@ -53,10 +55,12 @@ class CalendarManager {
       },
     });
 
+    console.log('[CalendarLib] Google event created:', response.data.id);
     return response.data;
   }
 
   async updateGoogleEvent(integration: CalendarIntegration, eventId: string, updates: Partial<CalendarEvent>) {
+    console.log('[CalendarLib] Updating Google event:', eventId);
     const auth = new google.auth.OAuth2(
       process.env.GOOGLE_CLIENT_ID,
       process.env.GOOGLE_CLIENT_SECRET
@@ -69,6 +73,7 @@ class CalendarManager {
 
     const calendar = google.calendar({ version: 'v3', auth });
 
+    // TODO: Review error handling for Google Calendar API calls
     const response = await calendar.events.update({
       calendarId: integration.calendar_id,
       eventId,
@@ -88,10 +93,12 @@ class CalendarManager {
       },
     });
 
+    console.log('[CalendarLib] Google event updated:', response.data.id);
     return response.data;
   }
 
   async deleteGoogleEvent(integration: CalendarIntegration, eventId: string) {
+    console.log('[CalendarLib] Deleting Google event:', eventId);
     const auth = new google.auth.OAuth2(
       process.env.GOOGLE_CLIENT_ID,
       process.env.GOOGLE_CLIENT_SECRET
@@ -104,14 +111,18 @@ class CalendarManager {
 
     const calendar = google.calendar({ version: 'v3', auth });
 
+    // TODO: Review error handling for Google Calendar API calls
     await calendar.events.delete({
       calendarId: integration.calendar_id,
       eventId,
     });
+    console.log('[CalendarLib] Google event deleted:', eventId);
   }
 
   // Outlook Calendar Integration
   async createOutlookEvent(integration: CalendarIntegration, event: Omit<CalendarEvent, 'id'>) {
+    console.log('[CalendarLib] Creating Outlook event:', event.title);
+    // TODO: Review error handling for Outlook API calls
     const response = await fetch(`https://graph.microsoft.com/v1.0/me/calendars/${integration.calendar_id}/events`, {
       method: 'POST',
       headers: {
@@ -142,13 +153,18 @@ class CalendarManager {
     });
 
     if (!response.ok) {
+      console.error('[CalendarLib] Outlook API error:', response.status);
       throw new Error(`Outlook API error: ${response.status}`);
     }
 
-    return response.json();
+    const result = await response.json();
+    console.log('[CalendarLib] Outlook event created:', result.id);
+    return result;
   }
 
   async updateOutlookEvent(integration: CalendarIntegration, eventId: string, updates: Partial<CalendarEvent>) {
+    console.log('[CalendarLib] Updating Outlook event:', eventId);
+    // TODO: Review error handling for Outlook API calls
     const response = await fetch(`https://graph.microsoft.com/v1.0/me/events/${eventId}`, {
       method: 'PATCH',
       headers: {
@@ -179,13 +195,18 @@ class CalendarManager {
     });
 
     if (!response.ok) {
+      console.error('[CalendarLib] Outlook API error:', response.status);
       throw new Error(`Outlook API error: ${response.status}`);
     }
 
-    return response.json();
+    const result = await response.json();
+    console.log('[CalendarLib] Outlook event updated:', result.id);
+    return result;
   }
 
   async deleteOutlookEvent(integration: CalendarIntegration, eventId: string) {
+    console.log('[CalendarLib] Deleting Outlook event:', eventId);
+    // TODO: Review error handling for Outlook API calls
     const response = await fetch(`https://graph.microsoft.com/v1.0/me/events/${eventId}`, {
       method: 'DELETE',
       headers: {
@@ -194,12 +215,15 @@ class CalendarManager {
     });
 
     if (!response.ok) {
+      console.error('[CalendarLib] Outlook API error:', response.status);
       throw new Error(`Outlook API error: ${response.status}`);
     }
+    console.log('[CalendarLib] Outlook event deleted:', eventId);
   }
 
   // Universal methods
   async createEvent(integration: CalendarIntegration, event: Omit<CalendarEvent, 'id'>) {
+    console.log('[CalendarLib] Creating event via provider:', integration.provider);
     if (integration.provider === 'google') {
       return this.createGoogleEvent(integration, event);
     } else {
@@ -208,6 +232,7 @@ class CalendarManager {
   }
 
   async updateEvent(integration: CalendarIntegration, eventId: string, updates: Partial<CalendarEvent>) {
+    console.log('[CalendarLib] Updating event via provider:', integration.provider);
     if (integration.provider === 'google') {
       return this.updateGoogleEvent(integration, eventId, updates);
     } else {
@@ -216,6 +241,7 @@ class CalendarManager {
   }
 
   async deleteEvent(integration: CalendarIntegration, eventId: string) {
+    console.log('[CalendarLib] Deleting event via provider:', integration.provider);
     if (integration.provider === 'google') {
       return this.deleteGoogleEvent(integration, eventId);
     } else {
@@ -231,6 +257,7 @@ export async function scheduleAppointmentFromCall(
   callTranscript: string,
   integration: CalendarIntegration
 ) {
+  console.log('[CalendarLib] Scheduling appointment from call transcript');
   // This would use an LLM to extract appointment details from the call transcript
   // For now, we'll return a mock implementation
   
@@ -242,5 +269,6 @@ export async function scheduleAppointmentFromCall(
     attendees: [], // Would extract from transcript
   };
 
+  console.log('[CalendarLib] Appointment details extracted:', appointmentDetails);
   return calendarManager.createEvent(integration, appointmentDetails);
 }

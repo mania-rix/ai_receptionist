@@ -4,17 +4,21 @@ import { cookies } from 'next/headers';
 import { elevenLabsAPI } from '@/lib/elevenlabs';
 
 export async function POST(req: Request) {
+  console.log('[API:live-relay] Incoming request');
   try {
     const { action, message, call_id, target_language } = await req.json();
+    console.log('[API:live-relay] Incoming payload:', { action, message, call_id, target_language });
     const cookieStore = cookies();
     const supabase = createServerSupabaseClient(cookieStore);
 
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
+      console.error('[API:live-relay] Unauthorized access attempt');
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     if (action === 'start_session') {
+      console.log('[API:live-relay] Starting session for call:', call_id);
       // Create a new relay session
       const { data: session, error } = await supabase
         .from('live_relay_sessions')
@@ -29,10 +33,12 @@ export async function POST(req: Request) {
 
       if (error) throw error;
 
+      console.log('[API:live-relay] Session created:', session);
       return NextResponse.json({ session });
     }
 
     if (action === 'send_message') {
+      console.log('[API:live-relay] Sending message:', message);
       // Translate message if needed and send via TTS
       let translatedMessage = message;
       
@@ -69,6 +75,7 @@ export async function POST(req: Request) {
 
       // In a real implementation, this would send the audio to the active call
       // For now, we'll return the audio data
+      console.log('[API:live-relay] Message sent successfully');
       return NextResponse.json({ 
         success: true,
         audio_url: 'data:audio/mpeg;base64,' + Buffer.from(audioBuffer).toString('base64'),
@@ -76,6 +83,7 @@ export async function POST(req: Request) {
     }
 
     if (action === 'end_session') {
+      console.log('[API:live-relay] Ending session for call:', call_id);
       const { error } = await supabase
         .from('live_relay_sessions')
         .update({
@@ -87,12 +95,14 @@ export async function POST(req: Request) {
 
       if (error) throw error;
 
+      console.log('[API:live-relay] Session ended successfully');
       return NextResponse.json({ success: true });
     }
 
+    console.error('[API:live-relay] Invalid action:', action);
     return NextResponse.json({ error: 'Invalid action' }, { status: 400 });
   } catch (error) {
-    console.error('Live relay error:', error);
+    console.error('[API:live-relay] Error:', error);
     return NextResponse.json(
       { error: 'Failed to process relay action' },
       { status: 500 }
@@ -101,15 +111,18 @@ export async function POST(req: Request) {
 }
 
 export async function GET(req: Request) {
+  console.log('[API:live-relay] GET request');
   try {
     const { searchParams } = new URL(req.url);
     const call_id = searchParams.get('call_id');
+    console.log('[API:live-relay] GET payload:', { call_id });
     
     const cookieStore = cookies();
     const supabase = createServerSupabaseClient(cookieStore);
 
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
+      console.error('[API:live-relay] GET Unauthorized access attempt');
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -124,6 +137,7 @@ export async function GET(req: Request) {
 
       if (error && error.code !== 'PGRST116') throw error;
 
+      console.log('[API:live-relay] GET session response:', session);
       return NextResponse.json({ session });
     } else {
       // Get all active sessions for user
@@ -136,10 +150,11 @@ export async function GET(req: Request) {
 
       if (error) throw error;
 
+      console.log('[API:live-relay] GET sessions response:', sessions);
       return NextResponse.json({ sessions });
     }
   } catch (error) {
-    console.error('Error fetching relay sessions:', error);
+    console.error('[API:live-relay] GET Error:', error);
     return NextResponse.json(
       { error: 'Failed to fetch sessions' },
       { status: 500 }

@@ -23,6 +23,7 @@ export function ActivityFeed() {
   const [unreadCount, setUnreadCount] = useState(0);
 
   useEffect(() => {
+    console.log('[ActivityFeed] Component mounted');
     fetchActivities();
     
     // Set up real-time subscription
@@ -39,10 +40,12 @@ export function ActivityFeed() {
 
     return () => {
       subscription.unsubscribe();
+      console.log('[ActivityFeed] Component unmounted');
     };
   }, []);
 
   const fetchActivities = async () => {
+    console.log('[ActivityFeed] Fetching activities...');
     try {
       const { data, error } = await supabase
         .from('activity_feed')
@@ -54,12 +57,14 @@ export function ActivityFeed() {
 
       setActivities(data || []);
       setUnreadCount(data?.filter(item => !item.is_read).length || 0);
+      console.log('[ActivityFeed] Activities fetched:', data?.length || 0);
     } catch (error) {
-      console.error('Error fetching activities:', error);
+      console.error('[ActivityFeed] Error fetching activities:', error);
     }
   };
 
   const markAsRead = async (id: string) => {
+    console.log('[ActivityFeed] Marking as read:', id);
     try {
       const { error } = await supabase
         .from('activity_feed')
@@ -75,11 +80,12 @@ export function ActivityFeed() {
       );
       setUnreadCount(prev => Math.max(0, prev - 1));
     } catch (error) {
-      console.error('Error marking as read:', error);
+      console.error('[ActivityFeed] Error marking as read:', error);
     }
   };
 
   const markAllAsRead = async () => {
+    console.log('[ActivityFeed] Marking all as read');
     try {
       const { error } = await supabase
         .from('activity_feed')
@@ -93,7 +99,7 @@ export function ActivityFeed() {
       );
       setUnreadCount(0);
     } catch (error) {
-      console.error('Error marking all as read:', error);
+      console.error('[ActivityFeed] Error marking all as read:', error);
     }
   };
 

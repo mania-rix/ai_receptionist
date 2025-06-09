@@ -106,6 +106,13 @@ import {
 export default function OverviewPage() {
   const email = 'demo@blvckwall.ai'
 
+  useEffect(() => {
+    console.log('[OverviewUI] Component mounted');
+    console.log('[OverviewUI] Loading dashboard for user:', email);
+    return () => {
+      console.log('[OverviewUI] Component unmounted');
+    };
+  }, []);
   return (
     <div className="flex-1 space-y-6 p-8">
       <div className="flex items-center justify-between">

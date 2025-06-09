@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { MessageSquare, Bug, Lightbulb, Send, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -31,8 +31,16 @@ export function FeedbackWidget() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
 
+  useEffect(() => {
+    console.log('[FeedbackWidget] Component mounted');
+    return () => {
+      console.log('[FeedbackWidget] Component unmounted');
+    };
+  }, []);
+
   const submitFeedback = async () => {
     if (!title.trim() || !description.trim()) {
+      console.log('[FeedbackWidget] Validation failed - missing fields');
       toast({
         title: 'Error',
         description: 'Please fill in all required fields',
@@ -42,6 +50,7 @@ export function FeedbackWidget() {
     }
 
     setIsSubmitting(true);
+    console.log('[FeedbackWidget] Submitting feedback:', { type, title, description, priority });
     try {
       const response = await fetch('/api/feedback', {
         method: 'POST',
@@ -56,6 +65,7 @@ export function FeedbackWidget() {
 
       if (!response.ok) throw new Error('Failed to submit feedback');
 
+      console.log('[FeedbackWidget] Feedback submitted successfully');
       toast({
         title: 'Feedback Submitted',
         description: 'Thank you for your feedback! We\'ll review it soon.',
@@ -68,7 +78,7 @@ export function FeedbackWidget() {
       setPriority('medium');
       setOpen(false);
     } catch (error) {
-      console.error('Error submitting feedback:', error);
+      console.error('[FeedbackWidget] Error submitting feedback:', error);
       toast({
         title: 'Error',
         description: 'Failed to submit feedback. Please try again.',

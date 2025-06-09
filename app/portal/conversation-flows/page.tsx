@@ -42,20 +42,24 @@ export default function ConversationFlowsPage() {
   const form = useForm<FormData>();
 
   useEffect(() => {
+    console.log('[FlowDesigner] Component mounted');
     fetchFlows();
   }, []);
 
   const fetchFlows = async () => {
+    console.log('[FlowDesigner] Fetching flows...');
     try {
       const response = await fetch('/api/conversation-flows');
       const data = await response.json();
       setFlows(data.flows || []);
+      console.log('[FlowDesigner] Flows fetched:', data.flows?.length || 0);
     } catch (error) {
-      console.error('Error fetching flows:', error);
+      console.error('[FlowDesigner] Error fetching flows:', error);
     }
   };
 
   const createOrUpdateFlow = async (data: FormData) => {
+    console.log('[FlowDesigner] Creating/updating flow:', data);
     setIsLoading(true);
     try {
       const url = editingFlow 
@@ -92,12 +96,13 @@ export default function ConversationFlowsPage() {
       setEditingFlow(null);
       form.reset();
       
+      console.log('[FlowDesigner] Flow saved successfully:', result.flow);
       toast({
         title: 'Success',
         description: `Flow ${editingFlow ? 'updated' : 'created'} successfully`,
       });
     } catch (error) {
-      console.error('Error saving flow:', error);
+      console.error('[FlowDesigner] Error saving flow:', error);
       toast({
         title: 'Error',
         description: (error as Error).message,
@@ -109,6 +114,7 @@ export default function ConversationFlowsPage() {
   };
 
   const deleteFlow = async (id: string) => {
+    console.log('[FlowDesigner] Deleting flow:', id);
     try {
       const response = await fetch(`/api/conversation-flows/${id}`, {
         method: 'DELETE',
@@ -117,12 +123,13 @@ export default function ConversationFlowsPage() {
       if (!response.ok) throw new Error('Failed to delete flow');
 
       setFlows(prev => prev.filter(flow => flow.id !== id));
+      console.log('[FlowDesigner] Flow deleted successfully:', id);
       toast({
         title: 'Success',
         description: 'Flow deleted successfully',
       });
     } catch (error) {
-      console.error('Error deleting flow:', error);
+      console.error('[FlowDesigner] Error deleting flow:', error);
       toast({
         title: 'Error',
         description: 'Failed to delete flow',
@@ -132,6 +139,7 @@ export default function ConversationFlowsPage() {
   };
 
   const handleEdit = (flow: any) => {
+    console.log('[FlowDesigner] Editing flow:', flow.id);
     setEditingFlow(flow);
     form.reset({
       name: flow.name,
@@ -141,6 +149,7 @@ export default function ConversationFlowsPage() {
   };
 
   const openDesigner = (flow: any) => {
+    console.log('[FlowDesigner] Opening designer for flow:', flow.id);
     setCurrentFlow(flow);
     setNodes(flow.flow_data?.nodes || [
       {
@@ -155,6 +164,7 @@ export default function ConversationFlowsPage() {
   };
 
   const addNode = (type: FlowNode['type']) => {
+    console.log('[FlowDesigner] Adding node of type:', type);
     const newNode: FlowNode = {
       id: `node_${Date.now()}`,
       type,
@@ -178,6 +188,7 @@ export default function ConversationFlowsPage() {
   const saveFlowDesign = async () => {
     if (!currentFlow) return;
 
+    console.log('[FlowDesigner] Saving flow design for:', currentFlow.id);
     try {
       const response = await fetch(`/api/conversation-flows/${currentFlow.id}`, {
         method: 'PATCH',
@@ -189,6 +200,7 @@ export default function ConversationFlowsPage() {
 
       if (!response.ok) throw new Error('Failed to save flow design');
 
+      console.log('[FlowDesigner] Flow design saved successfully');
       toast({
         title: 'Success',
         description: 'Flow design saved successfully',
@@ -197,7 +209,7 @@ export default function ConversationFlowsPage() {
       setDesignerOpen(false);
       fetchFlows();
     } catch (error) {
-      console.error('Error saving flow design:', error);
+      console.error('[FlowDesigner] Error saving flow design:', error);
       toast({
         title: 'Error',
         description: 'Failed to save flow design',
@@ -207,6 +219,7 @@ export default function ConversationFlowsPage() {
   };
 
   const simulateFlow = () => {
+    console.log('[FlowDesigner] Simulating flow');
     toast({
       title: 'Flow Simulation',
       description: 'Flow simulation would run here with test scenarios',

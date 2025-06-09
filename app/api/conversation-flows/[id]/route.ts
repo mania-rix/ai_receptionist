@@ -6,6 +6,7 @@ export async function GET(
   req: Request,
   { params }: { params: { id: string } }
 ) {
+  console.log('[API:conversation-flows] GET by ID request:', params.id);
   try {
     const cookieStore = cookies();
     const supabase = createServerSupabaseClient(cookieStore);
@@ -20,7 +21,7 @@ export async function GET(
 
     return NextResponse.json({ flow: data });
   } catch (error) {
-    console.error('Error fetching conversation flow:', error);
+    console.error('[API:conversation-flows] GET by ID Error:', error);
     return NextResponse.json(
       { error: 'Failed to fetch conversation flow' },
       { status: 500 }
@@ -32,8 +33,10 @@ export async function PATCH(
   req: Request,
   { params }: { params: { id: string } }
 ) {
+  console.log('[API:conversation-flows] PATCH request:', params.id);
   try {
     const body = await req.json();
+    console.log('[API:conversation-flows] PATCH payload:', body);
     const cookieStore = cookies();
     const supabase = createServerSupabaseClient(cookieStore);
 
@@ -54,7 +57,7 @@ export async function PATCH(
 
     return NextResponse.json({ flow: data });
   } catch (error) {
-    console.error('Error updating conversation flow:', error);
+    console.error('[API:conversation-flows] PATCH Error:', error);
     return NextResponse.json(
       { error: 'Failed to update conversation flow' },
       { status: 500 }
@@ -66,6 +69,7 @@ export async function DELETE(
   req: Request,
   { params }: { params: { id: string } }
 ) {
+  console.log('[API:conversation-flows] DELETE request:', params.id);
   try {
     const cookieStore = cookies();
     const supabase = createServerSupabaseClient(cookieStore);
@@ -77,9 +81,10 @@ export async function DELETE(
 
     if (error) throw error;
 
+    console.log('[API:conversation-flows] DELETE success:', params.id);
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error('Error deleting conversation flow:', error);
+    console.error('[API:conversation-flows] DELETE Error:', error);
     return NextResponse.json(
       { error: 'Failed to delete conversation flow' },
       { status: 500 }

@@ -183,8 +183,14 @@ function useToast() {
 
   return {
     ...state,
-    toast,
-    dismiss: (toastId?: string) => dispatch({ type: 'DISMISS_TOAST', toastId }),
+    toast: ({ ...props }) => {
+      console.log('[ToastHook] Showing toast:', props);
+      return toast({ ...props });
+    },
+    dismiss: (toastId?: string) => {
+      console.log('[ToastHook] Dismissing toast:', toastId);
+      return dispatch({ type: 'DISMISS_TOAST', toastId });
+    },
   };
 }
 

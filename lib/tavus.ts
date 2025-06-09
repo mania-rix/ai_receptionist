@@ -20,12 +20,16 @@ class TavusAPI {
   constructor() {
     this.apiKey = process.env.TAVUS_API_KEY || '';
     if (!this.apiKey) {
+      console.error('[TavusLib] TAVUS_API_KEY not found');
       throw new Error('TAVUS_API_KEY environment variable is required');
     }
+    console.log('[TavusLib] Tavus API initialized');
   }
 
   private async request(endpoint: string, options: RequestInit = {}) {
+    console.log('[TavusLib] Making request to:', endpoint);
     const url = `${TAVUS_API_BASE}${endpoint}`;
+    // TODO: Review error handling for Tavus API calls
     const response = await fetch(url, {
       ...options,
       headers: {
@@ -37,19 +41,25 @@ class TavusAPI {
 
     if (!response.ok) {
       const errorText = await response.text();
+      console.error('[TavusLib] API error:', response.status, errorText);
       throw new Error(`Tavus API error: ${response.status} ${errorText}`);
     }
 
-    return response.json();
+    const result = await response.json();
+    console.log('[TavusLib] Request successful');
+    return result;
   }
 
   // Replica Management
   async getReplicas(): Promise<TavusReplica[]> {
+    console.log('[TavusLib] Getting replicas...');
     const data = await this.request('/v2/replicas');
+    console.log('[TavusLib] Replicas retrieved:', data.data?.length || 0);
     return data.data || [];
   }
 
   async getReplica(replicaId: string): Promise<TavusReplica> {
+    console.log('[TavusLib] Getting replica:', replicaId);
     const data = await this.request(`/v2/replicas/${replicaId}`);
     return data.data;
   }
@@ -61,6 +71,7 @@ class TavusAPI {
     background_url?: string;
     callback_url?: string;
   }): Promise<TavusVideo> {
+    console.log('[TavusLib] Generating video with replica:', data.replica_id);
     const response = await this.request('/v2/videos', {
       method: 'POST',
       body: JSON.stringify({
@@ -70,15 +81,18 @@ class TavusAPI {
         callback_url: data.callback_url,
       }),
     });
+    console.log('[TavusLib] Video generation started:', response.data.video_id);
     return response.data;
   }
 
   async getVideo(videoId: string): Promise<TavusVideo> {
+    console.log('[TavusLib] Getting video:', videoId);
     const data = await this.request(`/v2/videos/${videoId}`);
     return data.data;
   }
 
   async deleteVideo(videoId: string): Promise<void> {
+    console.log('[TavusLib] Deleting video:', videoId);
     await this.request(`/v2/videos/${videoId}`, {
       method: 'DELETE',
     });
@@ -86,7 +100,9 @@ class TavusAPI {
 
   // Video Templates
   async getTemplates(): Promise<any[]> {
+    console.log('[TavusLib] Getting templates...');
     const data = await this.request('/v2/templates');
+    console.log('[TavusLib] Templates retrieved:', data.data?.length || 0);
     return data.data || [];
   }
 }
@@ -101,12 +117,14 @@ export async function generateDoctorsNoteVideo(data: {
   replicaId: string;
   brandColor?: string;
 }) {
+  console.log('[TavusLib] Generating doctor\'s note video for:', data.patientName);
   const script = `Hello ${data.patientName}, this is ${data.doctorName}. 
 
 Here's a summary of your recent appointment: ${data.appointmentSummary}
 
 Thank you for choosing our practice. If you have any questions, please don't hesitate to contact us.`;
 
+  console.log('[TavusLib] Video script prepared');
   return tavusAPI.generateVideo({
     replica_id: data.replicaId,
     script,
@@ -115,9 +133,11 @@ Thank you for choosing our practice. If you have any questions, please don't hes
 }
 
 export async function getTavusReplicas() {
+  console.log('[TavusLib] Getting Tavus replicas helper');
   return tavusAPI.getReplicas();
 }
 
 export async function getTavusVideo(videoId: string) {
+  console.log('[TavusLib] Getting Tavus video helper:', videoId);
   return tavusAPI.getVideo(videoId);
 }

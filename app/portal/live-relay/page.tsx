@@ -26,6 +26,12 @@ export default function LiveRelayPage() {
   const { toast } = useToast();
   const audioRef = useRef<HTMLAudioElement>(null);
 
+  useEffect(() => {
+    console.log('[LiveRelay] Component mounted');
+    return () => {
+      console.log('[LiveRelay] Component unmounted');
+    };
+  }, []);
   const languages = [
     { code: 'en', name: 'English' },
     { code: 'es', name: 'Spanish' },
@@ -40,6 +46,7 @@ export default function LiveRelayPage() {
   ];
 
   const startSession = async () => {
+    console.log('[LiveRelay] Starting session for call:', currentCallId);
     try {
       const response = await fetch('/api/live-relay', {
         method: 'POST',
@@ -56,12 +63,13 @@ export default function LiveRelayPage() {
       setIsSessionActive(true);
       setCurrentCallId(result.session.call_id);
       
+      console.log('[LiveRelay] Session started successfully:', result.session);
       toast({
         title: 'Session Started',
         description: 'Live relay session is now active',
       });
     } catch (error) {
-      console.error('Error starting session:', error);
+      console.error('[LiveRelay] Error starting session:', error);
       toast({
         title: 'Error',
         description: 'Failed to start relay session',
@@ -71,6 +79,7 @@ export default function LiveRelayPage() {
   };
 
   const endSession = async () => {
+    console.log('[LiveRelay] Ending session for call:', currentCallId);
     try {
       const response = await fetch('/api/live-relay', {
         method: 'POST',
@@ -87,12 +96,13 @@ export default function LiveRelayPage() {
       setCurrentCallId('');
       setTranscript([]);
       
+      console.log('[LiveRelay] Session ended successfully');
       toast({
         title: 'Session Ended',
         description: 'Live relay session has been terminated',
       });
     } catch (error) {
-      console.error('Error ending session:', error);
+      console.error('[LiveRelay] Error ending session:', error);
       toast({
         title: 'Error',
         description: 'Failed to end relay session',
@@ -104,6 +114,7 @@ export default function LiveRelayPage() {
   const sendMessage = async () => {
     if (!operatorMessage.trim() || !isSessionActive) return;
 
+    console.log('[LiveRelay] Sending message:', operatorMessage);
     try {
       const response = await fetch('/api/live-relay', {
         method: 'POST',
@@ -136,12 +147,13 @@ export default function LiveRelayPage() {
 
       setOperatorMessage('');
       
+      console.log('[LiveRelay] Message sent successfully');
       toast({
         title: 'Message Sent',
         description: 'Your message has been translated and spoken to the caller',
       });
     } catch (error) {
-      console.error('Error sending message:', error);
+      console.error('[LiveRelay] Error sending message:', error);
       toast({
         title: 'Error',
         description: 'Failed to send message',
@@ -151,6 +163,7 @@ export default function LiveRelayPage() {
   };
 
   const toggleRecording = () => {
+    console.log('[LiveRelay] Toggling recording:', !isRecording);
     setIsRecording(!isRecording);
     // In a real implementation, this would start/stop voice recording
     toast({

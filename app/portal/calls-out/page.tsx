@@ -30,14 +30,16 @@ export default function OutboundCallsPage() {
   const form = useForm<FormData>();
 
   useEffect(() => {
+    console.log('[CallsOut] Component mounted');
     const fetchAgents = async () => {
+      console.log('[CallsOut] Fetching agents...');
       const { data, error } = await supabase
         .from('agents')
         .select('*')
         .order('name');
 
       if (error) {
-        console.error('Error fetching agents:', error);
+        console.error('[CallsOut] Error fetching agents:', error);
         toast({
           title: 'Error',
           description: 'Failed to load agents',
@@ -47,12 +49,14 @@ export default function OutboundCallsPage() {
       }
 
       setAgents(data || []);
+      console.log('[CallsOut] Agents fetched:', data?.length || 0);
     };
 
     fetchAgents();
   }, [toast]);
 
   const startCall = async (data: FormData) => {
+    console.log('[CallsOut] Starting call with data:', data);
     setIsLoading(true);
     try {
       const agent = agents.find((a) => a.id === data.agentId);
@@ -88,13 +92,14 @@ if (!response.ok) {
 
       if (error) throw error;
 
+      console.log('[CallsOut] Call started successfully');
       toast({
         title: 'Success',
         description: 'Call initiated successfully',
       });
       form.reset();
     } catch (error) {
-      console.error('Error starting call:', error);
+      console.error('[CallsOut] Error starting call:', error);
       toast({
         title: 'Error',
         description: 'Failed to start call',

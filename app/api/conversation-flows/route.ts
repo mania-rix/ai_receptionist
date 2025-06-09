@@ -3,6 +3,7 @@ import { createServerSupabaseClient } from '@/lib/supabase';
 import { cookies } from 'next/headers';
 
 export async function GET() {
+  console.log('[API:conversation-flows] GET request');
   try {
     const cookieStore = cookies();
     const supabase = createServerSupabaseClient(cookieStore);
@@ -14,9 +15,10 @@ export async function GET() {
 
     if (error) throw error;
 
+    console.log('[API:conversation-flows] GET response:', flows);
     return NextResponse.json({ flows });
   } catch (error) {
-    console.error('Error fetching conversation flows:', error);
+    console.error('[API:conversation-flows] GET Error:', error);
     return NextResponse.json(
       { error: 'Failed to fetch conversation flows' },
       { status: 500 }
@@ -25,13 +27,16 @@ export async function GET() {
 }
 
 export async function POST(req: Request) {
+  console.log('[API:conversation-flows] POST request');
   try {
     const body = await req.json();
+    console.log('[API:conversation-flows] POST payload:', body);
     const cookieStore = cookies();
     const supabase = createServerSupabaseClient(cookieStore);
 
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
+      console.error('[API:conversation-flows] POST Unauthorized access attempt');
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -51,9 +56,10 @@ export async function POST(req: Request) {
 
     if (error) throw error;
 
+    console.log('[API:conversation-flows] POST response:', data);
     return NextResponse.json({ flow: data });
   } catch (error) {
-    console.error('Error creating conversation flow:', error);
+    console.error('[API:conversation-flows] POST Error:', error);
     return NextResponse.json(
       { error: 'Failed to create conversation flow' },
       { status: 500 }

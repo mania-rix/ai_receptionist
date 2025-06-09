@@ -3,8 +3,10 @@ import { createServerSupabaseClient } from "@/lib/supabase";
 import { cookies } from "next/headers";
 
 export async function POST(req: Request) {
+  console.log('[API:create-agent] Incoming request');
   try {
     const body = await req.json();
+    console.log('[API:create-agent] Incoming payload:', body);
 
     const retellAgent = await createRetellAgent({
       name: body.name,
@@ -34,9 +36,10 @@ export async function POST(req: Request) {
       return new Response(JSON.stringify({ error: error.message }), { status: 500 });
     }
 
+    console.log('[API:create-agent] Success response:', data);
     return new Response(JSON.stringify({ agent: data }), { status: 200 });
   } catch (error: any) {
-    console.error("❌ API route /create-agent failed:", error.message);
+    console.error('[API:create-agent] Error:', error.message);
     return new Response(JSON.stringify({ error: error.message || "Unknown error" }), { status: 500 });
   }
 }

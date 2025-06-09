@@ -44,20 +44,24 @@ export default function KnowledgeBasePage() {
   });
 
   useEffect(() => {
+    console.log('[KBUI] Component mounted');
     fetchKnowledgeBases();
   }, []);
 
   const fetchKnowledgeBases = async () => {
+    console.log('[KBUI] Fetching knowledge bases...');
     try {
       const response = await fetch('/api/knowledge-bases');
       const data = await response.json();
       setKnowledgeBases(data.knowledgeBases || []);
+      console.log('[KBUI] Knowledge bases fetched:', data.knowledgeBases?.length || 0);
     } catch (error) {
-      console.error('Error fetching knowledge bases:', error);
+      console.error('[KBUI] Error fetching knowledge bases:', error);
     }
   };
 
   const createOrUpdateKnowledgeBase = async (data: FormData) => {
+    console.log('[KBUI] Creating/updating knowledge base:', data);
     setIsLoading(true);
     try {
       const url = editingKB 
@@ -91,12 +95,13 @@ export default function KnowledgeBasePage() {
       setEditingKB(null);
       form.reset();
       
+      console.log('[KBUI] Knowledge base saved successfully:', result.knowledgeBase);
       toast({
         title: 'Success',
         description: `Knowledge base ${editingKB ? 'updated' : 'created'} successfully`,
       });
     } catch (error) {
-      console.error('Error saving knowledge base:', error);
+      console.error('[KBUI] Error saving knowledge base:', error);
       toast({
         title: 'Error',
         description: (error as Error).message,
@@ -108,6 +113,7 @@ export default function KnowledgeBasePage() {
   };
 
   const deleteKnowledgeBase = async (id: string) => {
+    console.log('[KBUI] Deleting knowledge base:', id);
     try {
       const response = await fetch(`/api/knowledge-bases/${id}`, {
         method: 'DELETE',
@@ -116,12 +122,13 @@ export default function KnowledgeBasePage() {
       if (!response.ok) throw new Error('Failed to delete knowledge base');
 
       setKnowledgeBases(prev => prev.filter(kb => kb.id !== id));
+      console.log('[KBUI] Knowledge base deleted successfully:', id);
       toast({
         title: 'Success',
         description: 'Knowledge base deleted successfully',
       });
     } catch (error) {
-      console.error('Error deleting knowledge base:', error);
+      console.error('[KBUI] Error deleting knowledge base:', error);
       toast({
         title: 'Error',
         description: 'Failed to delete knowledge base',
@@ -131,6 +138,7 @@ export default function KnowledgeBasePage() {
   };
 
   const handleEdit = (kb: any) => {
+    console.log('[KBUI] Editing knowledge base:', kb.id);
     setEditingKB(kb);
     form.reset({
       name: kb.name,
@@ -145,6 +153,7 @@ export default function KnowledgeBasePage() {
     const file = event.target.files?.[0];
     if (!file) return;
 
+    console.log('[KBUI] File upload initiated:', file.name);
     // Here you would implement PDF/DOC parsing and FAQ generation
     // For now, we'll show a placeholder
     toast({

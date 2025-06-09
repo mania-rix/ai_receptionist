@@ -19,12 +19,14 @@ export default function AnalyticsPage() {
   const [recentAnomalies, setRecentAnomalies] = useState<any[]>([]);
 
   useEffect(() => {
+    console.log('[AnalyticsUI] Component mounted');
     fetchAnalytics();
     fetchSentimentHeatmap();
     fetchAnomalies();
   }, []);
 
   const fetchAnalytics = async () => {
+    console.log('[AnalyticsUI] Fetching analytics data...');
     try {
       // Fetch call analytics summary
       const { data: callAnalytics, error } = await supabase
@@ -55,11 +57,12 @@ export default function AnalyticsPage() {
         revenueAttribution,
       });
     } catch (error) {
-      console.error('Error fetching analytics:', error);
+      console.error('[AnalyticsUI] Error fetching analytics:', error);
     }
   };
 
   const fetchSentimentHeatmap = async () => {
+    console.log('[AnalyticsUI] Fetching sentiment heatmap...');
     try {
       // Fetch sentiment data for the last 7 days
       const sevenDaysAgo = new Date();
@@ -101,11 +104,12 @@ export default function AnalyticsPage() {
 
       setSentimentHeatmap(heatmapData);
     } catch (error) {
-      console.error('Error fetching sentiment heatmap:', error);
+      console.error('[AnalyticsUI] Error fetching sentiment heatmap:', error);
     }
   };
 
   const fetchAnomalies = async () => {
+    console.log('[AnalyticsUI] Fetching anomalies...');
     try {
       const { data, error } = await supabase
         .from('call_analytics')
@@ -119,8 +123,9 @@ export default function AnalyticsPage() {
 
       if (error) throw error;
       setRecentAnomalies(data || []);
+      console.log('[AnalyticsUI] Anomalies fetched:', data?.length || 0);
     } catch (error) {
-      console.error('Error fetching anomalies:', error);
+      console.error('[AnalyticsUI] Error fetching anomalies:', error);
     }
   };
 

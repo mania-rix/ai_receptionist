@@ -4,13 +4,16 @@ import { cookies } from 'next/headers';
 import { generateDoctorsNoteVideo } from '@/lib/tavus';
 
 export async function POST(req: Request) {
+  console.log('[API:generate-video] Incoming request');
   try {
     const body = await req.json();
+    console.log('[API:generate-video] Incoming payload:', body);
     const cookieStore = cookies();
     const supabase = createServerSupabaseClient(cookieStore);
 
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
+      console.error('[API:generate-video] Unauthorized access attempt');
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -22,6 +25,7 @@ export async function POST(req: Request) {
       .single();
 
     if (callError || !call) {
+      console.error('[API:generate-video] Call not found:', body.call_id);
       return NextResponse.json({ error: 'Call not found' }, { status: 404 });
     }
 
@@ -52,9 +56,10 @@ export async function POST(req: Request) {
       console.error('Error updating call with video ID:', updateError);
     }
 
+    console.log('[API:generate-video] Success response:', video);
     return NextResponse.json({ video });
   } catch (error) {
-    console.error('Error generating video:', error);
+    console.error('[API:generate-video] Error:', error);
     return NextResponse.json(
       { error: 'Failed to generate video' },
       { status: 500 }
