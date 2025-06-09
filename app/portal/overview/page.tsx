@@ -11,7 +11,7 @@ import {
 export default function OverviewPage() {
   const email = 'demo@blvckwall.ai'
 
-    useEffect(() => {
+  useEffect(() => {
       console.log('[OverviewUI] Component mounted');
       console.log('[OverviewUI] Loading dashboard for user:', email);
     return () => {
