@@ -282,7 +282,7 @@ Do you consent to this recording?"
                   <p className="text-xs text-gray-500">Required phrases:</p>
                   {script.required_phrases?.slice(0, 2).map((phrase: string, index: number) => (
                     <div key={index} className="text-xs bg-gray-900 rounded px-2 py-1">
-                      "{phrase}"
+                      &quot;{phrase}&quot;
                     </div>
                   ))}
                   {script.required_phrases?.length > 2 && (
