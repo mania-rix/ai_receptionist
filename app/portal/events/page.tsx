@@ -244,7 +244,7 @@ export default function EventsPage() {
                   </div>
                   <div className="flex items-center gap-2">
                     {event.auto_promote && (
-                      <Badge variant="outline" className="text-xs">
+                      <Badge variant="outline\" className="text-xs">
                         Auto-promote
                       </Badge>
                     )}
