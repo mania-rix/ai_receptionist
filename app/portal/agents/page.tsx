@@ -192,6 +192,7 @@ const createOrUpdateAgent = async (data: FormData) => {
 
 
   const fetchAgents = async () => {
+    console.log('[AgentUI] Fetching agents...');
       const { data, error } = await supabase
         .from('agents')
         .select(`
@@ -204,7 +205,7 @@ const createOrUpdateAgent = async (data: FormData) => {
         console.error('Error fetching agents:', error);
         return;
       }
-
+      console.log('[AgentUI] Agents fetched:', data);
       setAgents(data || []);
   };
 
