@@ -1,5 +1,5 @@
 import { cookies } from 'next/headers';
-import { createServerSupabaseClient } from '@/lib/supabase';
+import { supabaseServer } from '@/lib/supabase'
 import { NextResponse, type NextRequest } from 'next/server';
 
 const REDIRECT_URL = '/portal/overview';
