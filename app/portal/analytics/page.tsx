@@ -42,11 +42,11 @@ export default function AnalyticsPage() {
       if (error) throw error;
 
       const totalCalls = callAnalytics?.length || 0;
-      const avgSentiment = callAnalytics?.reduce((sum, a) => sum + (a.sentiment_score || 0), 0) / totalCalls || 0;
-      const avgQuality = callAnalytics?.reduce((sum, a) => sum + (a.quality_score || 0), 0) / totalCalls || 0;
+      const avgSentiment = callAnalytics?.reduce((sum: number, a: any) => sum + (a.sentiment_score || 0), 0) / totalCalls || 0;
+      const avgQuality = callAnalytics?.reduce((sum: number, a: any) => sum + (a.quality_score || 0), 0) / totalCalls || 0;
       const upsellOpportunities = callAnalytics?.filter(a => (a.upsell_likelihood || 0) > 0.7).length || 0;
       const complianceIssues = callAnalytics?.filter(a => a.compliance_flags?.length > 0).length || 0;
-      const revenueAttribution = callAnalytics?.reduce((sum, a) => sum + (a.call?.cost || 0), 0) || 0;
+      const revenueAttribution = callAnalytics?.reduce((sum: number, a: any) => sum + (a.call?.cost || 0), 0) || 0;
 
       setAnalytics({
         totalCalls,
