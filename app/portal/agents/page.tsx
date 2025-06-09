@@ -63,9 +63,11 @@ export default function AgentsPage() {
   }, []);
 
   const fetchVoices = async () => {
+    console.log('[AgentUI] Fetching voices...');
     try {
       const response = await fetch('/api/voices');
       const data = await response.json();
+      console.log('[AgentUI] Voices fetched:', data.voices || []);
       setVoices(data.voices || []);
     } catch (error) {
       console.error('Error fetching voices:', error);
@@ -73,9 +75,11 @@ export default function AgentsPage() {
   };
 
   const fetchKnowledgeBases = async () => {
+    console.log('[AgentUI] Fetching knowledge bases...');
     try {
       const response = await fetch('/api/knowledge-bases');
       const data = await response.json();
+      console.log('[AgentUI] Knowledge bases fetched:', data.knowledgeBases || []);
       setKnowledgeBases(data.knowledgeBases || []);
     } catch (error) {
       console.error('Error fetching knowledge bases:', error);
