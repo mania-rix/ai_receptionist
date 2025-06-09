@@ -9,7 +9,7 @@ export async function PATCH(
   try {
     const body = await req.json();
     const cookieStore = cookies();
-    const supabase = createServerSupabaseClient(cookieStore);
+    const supabase = supabaseServer(cookieStore)
 
     const { data, error } = await supabase
       .from('phone_numbers')
