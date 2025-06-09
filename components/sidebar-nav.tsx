@@ -4,10 +4,12 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { motion } from 'framer-motion';
-import { LayoutDashboard, User, PhoneOutgoing, PhoneIncoming, FileText, Video, Settings, LogOut, Phone, Book, BarChart3, Calendar, Users, Shield } from 'lucide-react';
+import { LayoutDashboard, User, PhoneOutgoing, PhoneIncoming, FileText, Video, Settings, LogOut, Phone, Book, BarChart3, Calendar, Users, Shield, GitBranch, MessageSquare, Mic } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { createBrowserSupabaseClient } from '@/lib/supabase';
 import { useRouter } from 'next/navigation';
+import { ActivityFeed } from './activity-feed';
+import { FeedbackWidget } from './feedback-widget';
 
 const navItems = [
   {
@@ -61,6 +63,21 @@ const navItems = [
     icon: Shield,
   },
   {
+    title: 'Live Relay',
+    href: '/portal/live-relay',
+    icon: MessageSquare,
+  },
+  {
+    title: 'Conversation Flows',
+    href: '/portal/conversation-flows',
+    icon: GitBranch,
+  },
+  {
+    title: 'Voice Analytics',
+    href: '/portal/voice-analytics',
+    icon: Mic,
+  },
+  {
     title: 'Settings',
     href: '/portal/settings',
     icon: Settings,
@@ -79,7 +96,12 @@ export function SidebarNav() {
 
   return (
     <div className="flex h-full w-[72px] flex-col items-center border-r border-gray-800 bg-[#121212] py-4">
-      <div className="mb-8 h-10 w-10 rounded-full bg-gradient-to-br from-purple-600 to-blue-600" />
+      <div className="mb-6 h-10 w-10 rounded-full bg-gradient-to-br from-purple-600 to-blue-600" />
+      
+      {/* Activity Feed */}
+      <div className="mb-4">
+        <ActivityFeed />
+      </div>
 
       <div className="flex flex-1 flex-col items-center gap-4">
         <TooltipProvider>
@@ -133,6 +155,9 @@ export function SidebarNav() {
           </TooltipContent>
         </Tooltip>
       </TooltipProvider>
+      
+      {/* Feedback Widget */}
+      <FeedbackWidget />
     </div>
   );
 }
