@@ -15,7 +15,7 @@ export async function GET(request: NextRequest) {
 
   if (code) {
     try {
-      const supabase = createServerSupabaseClient(cookieStore);
+      const supabase = supabaseServer(cookieStore)
       await supabase.auth.exchangeCodeForSession(code);
     } catch (error) {
       console.error('Auth callback error:', error);
