@@ -329,7 +329,7 @@ export default function LiveRelayPage() {
                 <li>1. Enter a call ID or start a new session</li>
                 <li>2. Select the target language for translation</li>
                 <li>3. Type your message or use voice input</li>
-                <li>4. Click "Send & Speak" to relay to caller</li>
+                <li>4. Click &quot;Send & Speak&quot; to relay to caller</li>
               </ul>
             </div>
             <div>
