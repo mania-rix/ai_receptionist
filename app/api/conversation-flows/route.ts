@@ -6,7 +6,7 @@ export async function GET() {
   console.log('[API:conversation-flows] GET request');
   try {
     const cookieStore = cookies();
-    const supabase = createServerSupabaseClient(cookieStore);
+    const supabase = supabaseServer(cookieStore);
 
     const { data: flows, error } = await supabase
       .from('conversation_flows')
@@ -32,7 +32,7 @@ export async function POST(req: Request) {
     const body = await req.json();
     console.log('[API:conversation-flows] POST payload:', body);
     const cookieStore = cookies();
-    const supabase = createServerSupabaseClient(cookieStore);
+    const supabase = supabaseServer(cookieStore);
 
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
