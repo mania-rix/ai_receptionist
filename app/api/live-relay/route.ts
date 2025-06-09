@@ -118,7 +118,7 @@ export async function GET(req: Request) {
     console.log('[API:live-relay] GET payload:', { call_id });
     
     const cookieStore = cookies();
-    const supabase = createServerSupabaseClient(cookieStore);
+    const supabase = supabaseServer(cookieStore)
 
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
