@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { createServerSupabaseClient } from '@/lib/supabase';
+import { supabaseServer } from '@/lib/supabase'
 import { cookies } from 'next/headers';
 import { generateDoctorsNoteVideo } from '@/lib/tavus';
 
