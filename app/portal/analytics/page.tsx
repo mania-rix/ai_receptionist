@@ -29,7 +29,7 @@ export default function AnalyticsPage() {
     console.log('[AnalyticsUI] Fetching analytics data...');
     try {
       // Fetch call analytics summary
-      const { data: callAnalytics, error } = await supabase
+      const { data: callAnalytics, error } = await (supabase as any)
         .from('call_analytics')
         .select(`
           sentiment_score,
