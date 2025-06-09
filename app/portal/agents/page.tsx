@@ -178,6 +178,7 @@ const createOrUpdateAgent = async (data: FormData) => {
   };
 
   const handleEdit = (agent: any) => {
+    console.log('[AgentUI] Editing agent:', agent.id);
     setEditingAgent(agent);
     form.reset({
       name: agent.name,
