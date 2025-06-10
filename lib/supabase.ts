@@ -930,3 +930,7 @@ export const Constants = {
     Enums: {},
   },
 } as const
+
+
+export const createServerSupabaseClient = supabaseServer;
+export const createBrowserSupabaseClient = supabaseBrowser;
