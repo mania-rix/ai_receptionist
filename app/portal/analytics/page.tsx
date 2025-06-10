@@ -133,7 +133,7 @@ const dayData = data?.filter(item => {
     }
   };
 
-  cconst fetchAnomalies = async () => {
+const fetchAnomalies = async () => {
   console.log('[AnalyticsUI] Fetching anomalies...');
   try {
     const { data, error } = await supabase
