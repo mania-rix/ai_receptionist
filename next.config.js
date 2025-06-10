@@ -4,11 +4,7 @@ const nextConfig = {
     ignoreDuringBuilds: true,
   },
   images: { unoptimized: true },
-  // Deployment optimizations for Vercel and Netlify
-  experimental: {
-    // Enable static exports for better compatibility
-    esmExternals: 'loose',
-  },
+  
   // Ensure proper handling of dynamic imports
   webpack: (config, { isServer, dev }) => {
     if (!isServer) {
