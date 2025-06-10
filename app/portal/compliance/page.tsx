@@ -60,18 +60,24 @@ const fetchViolations = async () => {
         call:calls(id, callee, started_at, agent:agents(name), recording_url)
       `)
       .not('compliance_flags', 'eq', '[]')
-      .limit(20); 
+      .limit(20); // removed .order()
 
     if (error) throw error;
-    // Sort on the client by call.started_at DESC
-    const sorted = (data || []).sort(
-      (a, b) => new Date(b.call?.started_at) - new Date(a.call?.started_at)
-    );
+
+    // Only sort items that have a call and started_at
+    const sorted = (data || [])
+      .filter(item => item.call && item.call.started_at)
+      .sort(
+        (a, b) =>
+          new Date(b.call.started_at).getTime() - new Date(a.call.started_at).getTime()
+      );
+
     setViolations(sorted);
   } catch (error) {
     console.error('Error fetching violations:', error);
   }
 };
+
 
   const createComplianceScript = async (data: FormData) => {
     setIsLoading(true);
