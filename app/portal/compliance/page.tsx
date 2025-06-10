@@ -51,25 +51,27 @@ export default function CompliancePage() {
     }
   };
 
-  const fetchViolations = async () => {
-    try {
-      // Fetch calls with compliance violations
-      const { data, error } = await supabase
-        .from('call_analytics')
-        .select(`
-          compliance_flags,
-          call:calls(id, callee, started_at, agent:agents(name), recording_url)
-        `)
-        .not('compliance_flags', 'eq', '[]')
-        .order('calls.started_at', { ascending: false })
-        .limit(20);
+const fetchViolations = async () => {
+  try {
+    const { data, error } = await supabase
+      .from('call_analytics')
+      .select(`
+        compliance_flags,
+        call:calls(id, callee, started_at, agent:agents(name), recording_url)
+      `)
+      .not('compliance_flags', 'eq', '[]')
+      .limit(20); // REMOVE the .order('calls.started_at', ...) line
 
-      if (error) throw error;
-      setViolations(data || []);
-    } catch (error) {
-      console.error('Error fetching violations:', error);
-    }
-  };
+    if (error) throw error;
+    // Sort on the client by call.started_at DESC
+    const sorted = (data || []).sort(
+      (a, b) => new Date(b.call?.started_at) - new Date(a.call?.started_at)
+    );
+    setViolations(sorted);
+  } catch (error) {
+    console.error('Error fetching violations:', error);
+  }
+};
 
   const createComplianceScript = async (data: FormData) => {
     setIsLoading(true);
