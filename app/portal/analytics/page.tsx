@@ -291,7 +291,7 @@ const dayData = data?.filter(item => {
                 <div>
                   <div className="font-medium">{anomaly.call?.callee}</div>
                   <div className="text-sm text-gray-400">
-                    {anomaly.call?.agent?.name} • {new Date(anomaly.call?.started_at).toLocaleDateString()}
+                   {anomaly.call?.agent?.name} • {anomaly.call?.started_at ? new Date(anomaly.call?.started_at).toLocaleDateString() : "Unknown date"}
                   </div>
                 </div>
                 <div className="flex gap-1">
