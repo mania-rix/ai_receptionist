@@ -83,7 +83,6 @@ if (!response.ok) {
 
       // Save call to Supabase
       const { error } = await supabase.from('calls').insert({
-        id: uuidv4(),
         agent_id: data.agentId,
         callee: data.phoneNumber,
         direction: 'outbound',
