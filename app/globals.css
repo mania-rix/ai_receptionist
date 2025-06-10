@@ -72,6 +72,21 @@
   }
 }
 
+/* Scrollbar utilities */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+/* Performance optimizations */
+.transform-gpu {
+  transform: translateZ(0);
+}
+
 @layer base {
   * {
     @apply border-border;
