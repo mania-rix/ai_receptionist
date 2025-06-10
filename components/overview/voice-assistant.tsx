@@ -71,7 +71,12 @@ export function VoiceAssistant() {
         body: JSON.stringify({ question: query }),
       });
 
-      if (!response.ok) throw new Error('Failed to process command');
+      if (!response.ok) {
+      const text = await response.text().catch(() => null);
+      console.error('[VoiceAssistant] Server returned non-OK:', response.status, text);
+      throw new Error(`Failed to process command: ${response.status} - ${text || "No body"}`);
+    }
+
 
       const result = await response.json();
       
