@@ -1,11 +1,8 @@
 cat > postcss.config.js << 'EOF'
-/** @type {import('postcss-load-config').Config} */
-const config = {
+module.exports = {
   plugins: {
-    '@tailwindcss/postcss': {},
+    tailwindcss: {},
     autoprefixer: {},
   },
 }
-
-module.exports = config
 EOF
