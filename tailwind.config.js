@@ -30,7 +30,7 @@ module.exports = {
             DEFAULT: 'hsl(var(--border))',
             border: 'hsl(var(--border))',
           },
-}
+},
         popover: {
           DEFAULT: 'hsl(var(--popover))',
           foreground: 'hsl(var(--popover-foreground))',
