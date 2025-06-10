@@ -202,7 +202,7 @@ export default function InboundCallsPage() {
 
                         <div className="flex gap-2">
                           {call.recording_url && (
-                            <Button variant="outline\" asChild>
+                            <Button variant="outline" asChild>
                               <a href={call.recording_url} target="_blank" rel="noopener noreferrer">
                                 Play Recording
                               </a>
