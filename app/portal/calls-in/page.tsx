@@ -141,8 +141,7 @@ export default function InboundCallsPage() {
                   )}
                   <Dialog>
                     <DialogTrigger asChild>
-                      <Button variant="outline" size="sm" onClick={() => setSelectedCall(call)}>
-                        onClick={() => console.log('something')}
+                      <Button variant="outline" size="sm" onClick={() => {console.log('Opening call details for...', call); setSelectedCall(call)}}>
                         View Details
                       </Button>
                     </DialogTrigger>
