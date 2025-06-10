@@ -1,6 +1,11 @@
 'use client'
 
 import { useEffect } from 'react';
+import { ActivityTimeline } from '@/components/overview/activity-timeline';
+import { AIInsights } from '@/components/overview/ai-insights';
+import { QuickActions } from '@/components/overview/quick-actions';
+import { VoiceAssistant } from '@/components/overview/voice-assistant';
+import { BusinessHealthScore } from '@/components/overview/business-health-score';
 
 import {
   Card,
@@ -30,6 +35,9 @@ export default function OverviewPage() {
         </div>
       </div>
 
+      {/* AI Insights Banner */}
+      <AIInsights />
+
       {/* Card grid (static placeholder) */}
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
         {['AI Credits', 'Active Projects', 'API Calls'].map((title, i) => (
@@ -46,6 +54,35 @@ export default function OverviewPage() {
             </CardContent>
           </Card>
         ))}
+      </div>
+
+      {/* Enhanced Widgets Grid */}
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+        <QuickActions />
+        <VoiceAssistant />
+        <BusinessHealthScore />
+      </div>
+
+      {/* Activity Timeline */}
+      <div className="grid gap-6 lg:grid-cols-3">
+        <div className="lg:col-span-2">
+          <ActivityTimeline />
+        </div>
+        <div className="space-y-6">
+          {/* Weather Widget Placeholder */}
+          <Card className="border-gray-800 bg-[#121212]">
+            <CardHeader>
+              <CardTitle>Weather</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-center py-8">
+                <div className="text-4xl mb-2">☀️</div>
+                <div className="text-2xl font-bold">72°F</div>
+                <div className="text-sm text-gray-400">Sunny in San Francisco</div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
       </div>
     </div>
   )
