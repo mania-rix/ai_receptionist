@@ -28,7 +28,7 @@ module.exports = {
         colors: {
           border: {
             DEFAULT: 'hsl(var(--border))',
-            border: 'hsl(var(--border))', // Explicit definition
+            border: 'hsl(var(--border))',
           },
 }
         popover: {
