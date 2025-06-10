@@ -110,8 +110,10 @@ export default function AnalyticsPage() {
         const dayEnd = new Date(date.setHours(23, 59, 59, 999));
 
 const dayData = data?.filter(item => {
-  const callDate = item.call?.started_at ? new Date(item.call?.started_at) : null;
-  return callDate && callDate >= dayStart && callDate <= dayEnd;
+  const startedAt = item.call?.started_at;
+  if (!startedAt) return false; // Don't include if null/undefined
+  const callDate = new Date(startedAt);
+  return callDate >= dayStart && callDate <= dayEnd;
 }) || [];
 
         const avgSentiment = dayData.length > 0 
