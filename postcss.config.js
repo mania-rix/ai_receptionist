@@ -1,4 +1,4 @@
-cat > postcss.config.js << 'EOF'
+echo > postcss.config.js << 'EOF'
 module.exports = {
   plugins: {
     tailwindcss: {},
