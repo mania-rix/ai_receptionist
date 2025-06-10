@@ -2,11 +2,10 @@
 
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { supabase } from '@/lib/supabase-browser'; 
+import { supabase } from '@/lib/supabase-browser'; // <--- this import
 
 export default function AuthCallbackPage() {
   const router = useRouter();
-  const supabase = createBrowserSupabaseClient();
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -16,7 +15,7 @@ export default function AuthCallbackPage() {
         router.replace('/sign-in');
       }
     });
-  }, []);
+  }, [router]);
 
   return (
     <div className="flex min-h-screen items-center justify-center text-white">
