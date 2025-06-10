@@ -148,12 +148,14 @@ const fetchAnomalies = async () => {
     if (error) throw error;
 
     // Only sort items that have a call and started_at
-    const sorted = (data || [])
-      .filter(item => item.call && item.call.started_at)
-      .sort(
-        (a, b) =>
-          new Date(b.call.started_at).getTime() - new Date(a.call.started_at).getTime()
-      );
+const sorted = (data || [])
+  .filter(item => item.call && !!item.call.started_at)
+  .sort((a, b) => {
+    const bTime = b.call && b.call.started_at ? new Date(b.call.started_at).getTime() : 0;
+    const aTime = a.call && a.call.started_at ? new Date(a.call.started_at).getTime() : 0;
+    return bTime - aTime;
+  });
+
 
     setRecentAnomalies(sorted);
     console.log('[AnalyticsUI] Anomalies fetched:', sorted.length || 0);
