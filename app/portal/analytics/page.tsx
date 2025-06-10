@@ -109,10 +109,10 @@ export default function AnalyticsPage() {
         const dayStart = new Date(date.setHours(0, 0, 0, 0));
         const dayEnd = new Date(date.setHours(23, 59, 59, 999));
 
-        const dayData = data?.filter(item => {
-          const callDate = new Date(item.call?.started_at);
-          return callDate >= dayStart && callDate <= dayEnd;
-        }) || [];
+const dayData = data?.filter(item => {
+  const callDate = item.call?.started_at ? new Date(item.call?.started_at) : null;
+  return callDate && callDate >= dayStart && callDate <= dayEnd;
+}) || [];
 
         const avgSentiment = dayData.length > 0 
           ? dayData.reduce((sum, item) => sum + (item.sentiment_score || 0), 0) / dayData.length
