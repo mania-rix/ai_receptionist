@@ -25,12 +25,6 @@ module.exports = {
           DEFAULT: 'hsl(var(--card))',
           foreground: 'hsl(var(--card-foreground))',
         },
-        colors: {
-          border: {
-            DEFAULT: 'hsl(var(--border))',
-            border: 'hsl(var(--border))',
-          },
-        },
         popover: {
           DEFAULT: 'hsl(var(--popover))',
           foreground: 'hsl(var(--popover-foreground))',
@@ -65,6 +59,12 @@ module.exports = {
           '4': 'hsl(var(--chart-4))',
           '5': 'hsl(var(--chart-5))',
         },
+      },
+              colors: {
+          border: {
+            DEFAULT: 'hsl(var(--border))',
+            border: 'hsl(var(--border))',
+          },
       },
       keyframes: {
         'accordion-down': {
