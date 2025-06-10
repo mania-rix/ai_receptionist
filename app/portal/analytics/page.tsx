@@ -143,7 +143,7 @@ const dayData = data?.filter(item => {
         call:calls(id, callee, started_at, agent:agents(name))
       `)
       .not('anomaly_flags', 'eq', '[]')
-      .limit(5); // REMOVE the .order('calls.started_at', ...) line
+      .limit(5); 
 
     if (error) throw error;
     // Sort on the client by call.started_at DESC
