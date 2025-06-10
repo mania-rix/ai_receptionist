@@ -60,7 +60,7 @@ module.exports = {
           '5': 'hsl(var(--chart-5))',
         },
       },
-              colors: {
+        colors: {
           border: {
             DEFAULT: 'hsl(var(--border))',
             border: 'hsl(var(--border))',
