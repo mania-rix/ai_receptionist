@@ -1,8 +1,6 @@
-echo > postcss.config.js << 'EOF'
-module.exports = {
+echo 'module.exports = {
   plugins: {
     tailwindcss: {},
     autoprefixer: {},
   },
-}
-EOF
+}' > postcss.config.js
