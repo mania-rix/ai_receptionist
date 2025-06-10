@@ -257,7 +257,7 @@ export function NotificationDrawer() {
               <TabsTrigger value="unread" className="text-xs">
                 Unread
                 {unreadCount > 0 && (
-                  <Badge variant="secondary" className="ml-1 h-4 w-4 p-0 text-xs">
+                  <Badge variant="secondary\" className="ml-1 h-4 w-4 p-0 text-xs">
                     {unreadCount}
                   </Badge>
                 )}
