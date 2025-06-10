@@ -87,7 +87,6 @@ const navItems = [
 export function SidebarNav() {
   const pathname = usePathname();
   const router = useRouter();
-  const supabase = createBrowserSupabaseClient();
 
   const handleSignOut = async () => {
     await supabase.auth.signOut();
