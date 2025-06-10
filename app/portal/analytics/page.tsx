@@ -134,25 +134,28 @@ const dayData = data?.filter(item => {
   };
 
   const fetchAnomalies = async () => {
-    console.log('[AnalyticsUI] Fetching anomalies...');
-    try {
-      const { data, error } = await supabase
-        .from('call_analytics')
-        .select(`
-          anomaly_flags,
-          call:calls(id, callee, started_at, agent:agents(name))
-        `)
-        .not('anomaly_flags', 'eq', '[]')
-        .order('calls.started_at', { ascending: false })
-        .limit(5);
+  console.log('[AnalyticsUI] Fetching anomalies...');
+  try {
+    const { data, error } = await supabase
+      .from('call_analytics')
+      .select(`
+        anomaly_flags,
+        call:calls(id, callee, started_at, agent:agents(name))
+      `)
+      .not('anomaly_flags', 'eq', '[]')
+      .limit(5); // REMOVE the .order('calls.started_at', ...) line
 
-      if (error) throw error;
-      setRecentAnomalies(data || []);
-      console.log('[AnalyticsUI] Anomalies fetched:', data?.length || 0);
-    } catch (error) {
-      console.error('[AnalyticsUI] Error fetching anomalies:', error);
-    }
-  };
+    if (error) throw error;
+    // Sort on the client by call.started_at DESC
+    const sorted = (data || []).sort(
+      (a, b) => new Date(b.call?.started_at) - new Date(a.call?.started_at)
+    );
+    setRecentAnomalies(sorted);
+    console.log('[AnalyticsUI] Anomalies fetched:', sorted.length || 0);
+  } catch (error) {
+    console.error('[AnalyticsUI] Error fetching anomalies:', error);
+  }
+};
 
   const getSentimentColor = (sentiment: number) => {
     if (sentiment > 0.3) return 'bg-green-500';
