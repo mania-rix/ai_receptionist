@@ -2,73 +2,57 @@
 
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Bell, X, Check, AlertTriangle, Info, CheckCircle, Clock, Filter } from 'lucide-react';
+import { Bell, X, Check, AlertTriangle, User, Phone, Calendar, Settings } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Card, CardContent } from '@/components/ui/card';
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
-} from '@/components/ui/sheet';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { supabase } from '@/lib/supabase-browser';
 
 interface Notification {
   id: string;
-  type: 'error' | 'warning' | 'info' | 'success' | 'task';
+  type: 'info' | 'warning' | 'error' | 'success';
+  category: 'system' | 'calls' | 'agents' | 'hr' | 'compliance';
   title: string;
   description: string;
   timestamp: string;
   isRead: boolean;
   actionUrl?: string;
   actionLabel?: string;
-  priority: 'low' | 'medium' | 'high' | 'critical';
 }
 
 const notificationIcons = {
-  error: AlertTriangle,
-  warning: AlertTriangle,
-  info: Info,
-  success: CheckCircle,
-  task: Clock,
+  system: Settings,
+  calls: Phone,
+  agents: User,
+  hr: User,
+  compliance: AlertTriangle,
 };
 
 const notificationColors = {
-  error: 'text-red-400',
-  warning: 'text-yellow-400',
-  info: 'text-blue-400',
-  success: 'text-green-400',
-  task: 'text-purple-400',
-};
-
-const priorityColors = {
-  low: 'bg-gray-500',
-  medium: 'bg-blue-500',
-  high: 'bg-orange-500',
-  critical: 'bg-red-500',
+  info: 'text-blue-400 bg-blue-500/10 border-blue-500/20',
+  warning: 'text-yellow-400 bg-yellow-500/10 border-yellow-500/20',
+  error: 'text-red-400 bg-red-500/10 border-red-500/20',
+  success: 'text-green-400 bg-green-500/10 border-green-500/20',
 };
 
 export function NotificationDrawer() {
-  const [notifications, setNotifications] = useState<Notification[]>([]);
   const [isOpen, setIsOpen] = useState(false);
+  const [notifications, setNotifications] = useState<Notification[]>([]);
   const [activeTab, setActiveTab] = useState('all');
   const [unreadCount, setUnreadCount] = useState(0);
 
   useEffect(() => {
     console.log('[NotificationDrawer] Component mounted');
-    generateMockNotifications();
+    fetchNotifications();
     
-    // Set up real-time subscription for notifications
+    // Set up real-time subscription
     const subscription = supabase
       .channel('notifications')
       .on('postgres_changes', 
         { event: 'INSERT', schema: 'public', table: 'activity_feed' },
         (payload) => {
-          console.log('[NotificationDrawer] New notification received:', payload.new);
-          const newNotification = transformToNotification(payload.new);
+          const newNotification = transformActivityToNotification(payload.new);
           setNotifications(prev => [newNotification, ...prev]);
           setUnreadCount(prev => prev + 1);
         }
@@ -81,126 +65,113 @@ export function NotificationDrawer() {
     };
   }, []);
 
-  useEffect(() => {
-    const unread = notifications.filter(n => !n.isRead).length;
-    setUnreadCount(unread);
-  }, [notifications]);
+  const fetchNotifications = async () => {
+    console.log('[NotificationDrawer] Fetching notifications...');
+    try {
+      // Generate mock notifications for demo
+      const mockNotifications: Notification[] = [
+        {
+          id: '1',
+          type: 'info',
+          category: 'calls',
+          title: 'New inbound call completed',
+          description: 'Call from +1234567890 handled by Agent Sarah',
+          timestamp: new Date(Date.now() - 5 * 60 * 1000).toISOString(),
+          isRead: false,
+          actionUrl: '/portal/calls-in',
+          actionLabel: 'View Call'
+        },
+        {
+          id: '2',
+          type: 'warning',
+          category: 'system',
+          title: 'High API usage detected',
+          description: 'API usage is at 85% of monthly limit',
+          timestamp: new Date(Date.now() - 15 * 60 * 1000).toISOString(),
+          isRead: false,
+          actionUrl: '/portal/settings',
+          actionLabel: 'View Usage'
+        },
+        {
+          id: '3',
+          type: 'success',
+          category: 'agents',
+          title: 'Agent performance improved',
+          description: 'Customer Support Agent v2 showing 23% better results',
+          timestamp: new Date(Date.now() - 30 * 60 * 1000).toISOString(),
+          isRead: true,
+          actionUrl: '/portal/analytics',
+          actionLabel: 'View Report'
+        },
+        {
+          id: '4',
+          type: 'error',
+          category: 'compliance',
+          title: 'Compliance violation detected',
+          description: 'Call missing required HIPAA disclosure',
+          timestamp: new Date(Date.now() - 45 * 60 * 1000).toISOString(),
+          isRead: false,
+          actionUrl: '/portal/compliance',
+          actionLabel: 'Review Call'
+        },
+        {
+          id: '5',
+          type: 'info',
+          category: 'hr',
+          title: 'New time-off request',
+          description: 'John Doe submitted sick leave request',
+          timestamp: new Date(Date.now() - 60 * 60 * 1000).toISOString(),
+          isRead: true,
+          actionUrl: '/portal/hr-center',
+          actionLabel: 'Review Request'
+        }
+      ];
 
-  const transformToNotification = (activityItem: any): Notification => {
-    return {
-      id: activityItem.id,
-      type: getNotificationType(activityItem.activity_type),
-      title: activityItem.title,
-      description: activityItem.description || '',
-      timestamp: activityItem.created_at,
-      isRead: false,
-      priority: activityItem.metadata?.priority || 'medium',
-    };
-  };
-
-  const getNotificationType = (activityType: string): Notification['type'] => {
-    switch (activityType) {
-      case 'alert': return 'error';
-      case 'compliance_violation': return 'warning';
-      case 'call_completed': return 'success';
-      case 'agent_created': return 'info';
-      default: return 'info';
+      setNotifications(mockNotifications);
+      setUnreadCount(mockNotifications.filter(n => !n.isRead).length);
+      console.log('[NotificationDrawer] Notifications loaded:', mockNotifications.length);
+    } catch (error) {
+      console.error('[NotificationDrawer] Error fetching notifications:', error);
     }
   };
 
-  const generateMockNotifications = () => {
-    console.log('[NotificationDrawer] Generating mock notifications...');
-    const mockNotifications: Notification[] = [
-      {
-        id: '1',
-        type: 'error',
-        title: 'API Rate Limit Exceeded',
-        description: 'Your application has exceeded the API rate limit. Some calls may fail.',
-        timestamp: new Date(Date.now() - 5 * 60 * 1000).toISOString(),
-        isRead: false,
-        actionUrl: '/portal/settings',
-        actionLabel: 'Upgrade Plan',
-        priority: 'critical',
-      },
-      {
-        id: '2',
-        type: 'warning',
-        title: 'Agent Performance Alert',
-        description: 'Customer Support Agent has a lower success rate than usual.',
-        timestamp: new Date(Date.now() - 15 * 60 * 1000).toISOString(),
-        isRead: false,
-        actionUrl: '/portal/agents',
-        actionLabel: 'Review Agent',
-        priority: 'high',
-      },
-      {
-        id: '3',
-        type: 'success',
-        title: 'Monthly Goal Achieved',
-        description: 'Congratulations! You\'ve reached your monthly call target.',
-        timestamp: new Date(Date.now() - 30 * 60 * 1000).toISOString(),
-        isRead: true,
-        priority: 'medium',
-      },
-      {
-        id: '4',
-        type: 'info',
-        title: 'New Feature Available',
-        description: 'Voice Analytics is now available in your dashboard.',
-        timestamp: new Date(Date.now() - 60 * 60 * 1000).toISOString(),
-        isRead: false,
-        actionUrl: '/portal/voice-analytics',
-        actionLabel: 'Try Now',
-        priority: 'low',
-      },
-      {
-        id: '5',
-        type: 'task',
-        title: 'Compliance Review Due',
-        description: 'Your monthly compliance review is due in 3 days.',
-        timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
-        isRead: false,
-        actionUrl: '/portal/compliance',
-        actionLabel: 'Start Review',
-        priority: 'medium',
-      },
-    ];
-
-    setNotifications(mockNotifications);
-    console.log('[NotificationDrawer] Mock notifications generated:', mockNotifications.length);
+  const transformActivityToNotification = (activity: any): Notification => {
+    return {
+      id: activity.id,
+      type: 'info',
+      category: activity.activity_type,
+      title: activity.title,
+      description: activity.description || '',
+      timestamp: activity.created_at,
+      isRead: false,
+    };
   };
 
-  const markAsRead = (notificationId: string) => {
-    console.log('[NotificationDrawer] Marking notification as read:', notificationId);
-    setNotifications(prev =>
-      prev.map(notification =>
-        notification.id === notificationId
+  const markAsRead = async (id: string) => {
+    console.log('[NotificationDrawer] Marking notification as read:', id);
+    setNotifications(prev => 
+      prev.map(notification => 
+        notification.id === id 
           ? { ...notification, isRead: true }
           : notification
       )
     );
+    setUnreadCount(prev => Math.max(0, prev - 1));
   };
 
-  const markAllAsRead = () => {
+  const markAllAsRead = async () => {
     console.log('[NotificationDrawer] Marking all notifications as read');
-    setNotifications(prev =>
+    setNotifications(prev => 
       prev.map(notification => ({ ...notification, isRead: true }))
     );
+    setUnreadCount(0);
   };
 
-  const handleAction = (notification: Notification) => {
-    console.log('[NotificationDrawer] Handling notification action:', notification.id);
-    if (notification.actionUrl) {
-      window.location.href = notification.actionUrl;
-    }
-    markAsRead(notification.id);
-  };
-
-  const getFilteredNotifications = (type: string) => {
-    if (type === 'all') return notifications;
-    if (type === 'unread') return notifications.filter(n => !n.isRead);
-    return notifications.filter(n => n.type === type);
-  };
+  const filteredNotifications = notifications.filter(notification => {
+    if (activeTab === 'all') return true;
+    if (activeTab === 'unread') return !notification.isRead;
+    return notification.category === activeTab;
+  });
 
   const formatTimestamp = (timestamp: string) => {
     const date = new Date(timestamp);
@@ -216,140 +187,180 @@ export function NotificationDrawer() {
   };
 
   return (
-    <Sheet open={isOpen} onOpenChange={setIsOpen}>
-      <SheetTrigger asChild>
-        <Button variant="ghost" size="sm" className="relative">
-          <Bell className="h-5 w-5" />
-          {unreadCount > 0 && (
-            <Badge 
-              variant="destructive" 
-              className="absolute -top-1 -right-1 h-5 w-5 rounded-full p-0 text-xs flex items-center justify-center"
+    <>
+      {/* Notification Bell Button */}
+      <Button
+        variant="ghost"
+        size="sm"
+        onClick={() => setIsOpen(!isOpen)}
+        className="relative h-9 w-9 p-0 text-gray-400 hover:text-white hover:bg-white/5"
+      >
+        <Bell className="h-5 w-5" />
+        {unreadCount > 0 && (
+          <Badge 
+            variant="destructive" 
+            className="absolute -top-1 -right-1 h-5 w-5 rounded-full p-0 text-xs flex items-center justify-center"
+          >
+            {unreadCount > 9 ? '9+' : unreadCount}
+          </Badge>
+        )}
+      </Button>
+
+      {/* Notification Drawer */}
+      <AnimatePresence>
+        {isOpen && (
+          <>
+            {/* Backdrop */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-black/20 backdrop-blur-sm z-40"
+              onClick={() => setIsOpen(false)}
+            />
+
+            {/* Drawer */}
+            <motion.div
+              initial={{ x: '100%' }}
+              animate={{ x: 0 }}
+              exit={{ x: '100%' }}
+              transition={{ 
+                type: "spring", 
+                stiffness: 400, 
+                damping: 40,
+                mass: 0.8
+              }}
+              className="fixed right-0 top-0 h-full w-96 bg-[#0A0A0A]/95 backdrop-blur-xl border-l border-gray-800 z-50 flex flex-col"
             >
-              {unreadCount > 9 ? '9+' : unreadCount}
-            </Badge>
-          )}
-        </Button>
-      </SheetTrigger>
-      
-      <SheetContent className="w-96 sm:w-[400px] bg-[#121212] border-gray-800">
-        <SheetHeader className="space-y-4">
-          <div className="flex items-center justify-between">
-            <SheetTitle className="flex items-center gap-2">
-              <Bell className="h-5 w-5" />
-              Notifications
-            </SheetTitle>
-            {unreadCount > 0 && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={markAllAsRead}
-                className="text-xs"
-              >
-                <Check className="h-3 w-3 mr-1" />
-                Mark all read
-              </Button>
-            )}
-          </div>
-          
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <TabsList className="grid w-full grid-cols-4 bg-gray-900">
-              <TabsTrigger value="all" className="text-xs">All</TabsTrigger>
-              <TabsTrigger value="unread" className="text-xs">
-                Unread
-                {unreadCount > 0 && (
-                  <Badge variant="secondary\" className="ml-1 h-4 w-4 p-0 text-xs">
-                    {unreadCount}
-                  </Badge>
-                )}
-              </TabsTrigger>
-              <TabsTrigger value="error" className="text-xs">Errors</TabsTrigger>
-              <TabsTrigger value="task" className="text-xs">Tasks</TabsTrigger>
-            </TabsList>
-            
-            <div className="mt-4 space-y-3 max-h-[calc(100vh-200px)] overflow-y-auto">
-              <AnimatePresence>
-                {getFilteredNotifications(activeTab).map((notification) => {
-                  const Icon = notificationIcons[notification.type];
-                  const colorClass = notificationColors[notification.type];
-                  const priorityColor = priorityColors[notification.priority];
-                  
-                  return (
-                    <motion.div
-                      key={notification.id}
-                      initial={{ opacity: 0, x: 20 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      exit={{ opacity: 0, x: -20 }}
-                      transition={{ duration: 0.2 }}
-                    >
-                      <Card 
-                        className={`border-gray-800 cursor-pointer transition-colors ${
-                          !notification.isRead ? 'bg-blue-950/20 border-blue-800/50' : 'bg-gray-900/50'
-                        }`}
-                        onClick={() => markAsRead(notification.id)}
-                      >
-                        <CardContent className="p-4">
-                          <div className="flex items-start gap-3">
-                            <div className="relative">
-                              <div className={`p-2 rounded-full bg-gray-900 ${colorClass}`}>
-                                <Icon className="h-4 w-4" />
-                              </div>
-                              <div className={`absolute -top-1 -right-1 w-3 h-3 rounded-full ${priorityColor}`} />
-                            </div>
-                            
-                            <div className="flex-1 min-w-0">
-                              <div className="flex items-center justify-between mb-1">
-                                <h4 className="text-sm font-medium truncate">
-                                  {notification.title}
-                                </h4>
-                                {!notification.isRead && (
-                                  <div className="w-2 h-2 bg-blue-500 rounded-full flex-shrink-0" />
-                                )}
-                              </div>
-                              
-                              <p className="text-xs text-gray-400 mb-2">
-                                {notification.description}
-                              </p>
-                              
-                              <div className="flex items-center justify-between">
-                                <span className="text-xs text-gray-500">
-                                  {formatTimestamp(notification.timestamp)}
-                                </span>
-                                
-                                {notification.actionLabel && (
-                                  <Button
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      handleAction(notification);
-                                    }}
-                                    className="text-xs h-6"
-                                  >
-                                    {notification.actionLabel}
-                                  </Button>
-                                )}
-                              </div>
-                            </div>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    </motion.div>
-                  );
-                })}
-              </AnimatePresence>
-              
-              {getFilteredNotifications(activeTab).length === 0 && (
-                <div className="text-center text-gray-400 py-8">
-                  <Bell className="h-8 w-8 mx-auto mb-2" />
-                  <p className="text-sm">
-                    {activeTab === 'unread' ? 'No unread notifications' : 'No notifications'}
+              {/* Header */}
+              <div className="flex items-center justify-between p-6 border-b border-gray-800">
+                <div>
+                  <h2 className="text-lg font-semibold text-white">Notifications</h2>
+                  <p className="text-sm text-gray-400">
+                    {unreadCount} unread notifications
                   </p>
                 </div>
-              )}
-            </div>
-          </Tabs>
-        </SheetHeader>
-      </SheetContent>
-    </Sheet>
+                <div className="flex items-center gap-2">
+                  {unreadCount > 0 && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={markAllAsRead}
+                      className="text-xs text-gray-400 hover:text-white"
+                    >
+                      <Check className="h-3 w-3 mr-1" />
+                      Mark all read
+                    </Button>
+                  )}
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setIsOpen(false)}
+                    className="h-8 w-8 p-0 text-gray-400 hover:text-white"
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+
+              {/* Tabs */}
+              <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col">
+                <TabsList className="grid grid-cols-4 mx-6 mt-4 bg-gray-900/50">
+                  <TabsTrigger value="all" className="text-xs">All</TabsTrigger>
+                  <TabsTrigger value="unread" className="text-xs">Unread</TabsTrigger>
+                  <TabsTrigger value="system" className="text-xs">System</TabsTrigger>
+                  <TabsTrigger value="calls" className="text-xs">Calls</TabsTrigger>
+                </TabsList>
+
+                {/* Content */}
+                <div className="flex-1 overflow-hidden">
+                  <TabsContent value={activeTab} className="h-full m-0">
+                    <div className="h-full overflow-y-auto px-6 py-4 space-y-3">
+                      <AnimatePresence mode="popLayout">
+                        {filteredNotifications.map((notification, index) => {
+                          const Icon = notificationIcons[notification.category] || Bell;
+                          
+                          return (
+                            <motion.div
+                              key={notification.id}
+                              initial={{ opacity: 0, y: 20 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              exit={{ opacity: 0, y: -20 }}
+                              transition={{ delay: index * 0.05 }}
+                              className={`relative p-4 rounded-lg border cursor-pointer transition-all duration-200 hover:bg-white/5 ${
+                                notification.isRead 
+                                  ? 'bg-gray-900/30 border-gray-800' 
+                                  : 'bg-white/5 border-gray-700'
+                              }`}
+                              onClick={() => !notification.isRead && markAsRead(notification.id)}
+                            >
+                              <div className="flex items-start gap-3">
+                                <div className={`p-2 rounded-lg ${notificationColors[notification.type]}`}>
+                                  <Icon className="h-4 w-4" />
+                                </div>
+                                
+                                <div className="flex-1 min-w-0">
+                                  <div className="flex items-center gap-2 mb-1">
+                                    <h4 className="text-sm font-medium text-white truncate">
+                                      {notification.title}
+                                    </h4>
+                                    {!notification.isRead && (
+                                      <div className="w-2 h-2 bg-blue-500 rounded-full flex-shrink-0" />
+                                    )}
+                                  </div>
+                                  
+                                  <p className="text-xs text-gray-400 mb-2 line-clamp-2">
+                                    {notification.description}
+                                  </p>
+                                  
+                                  <div className="flex items-center justify-between">
+                                    <span className="text-xs text-gray-500">
+                                      {formatTimestamp(notification.timestamp)}
+                                    </span>
+                                    
+                                    {notification.actionUrl && (
+                                      <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        className="h-6 px-2 text-xs text-blue-400 hover:text-blue-300"
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          window.location.href = notification.actionUrl!;
+                                        }}
+                                      >
+                                        {notification.actionLabel || 'View'}
+                                      </Button>
+                                    )}
+                                  </div>
+                                </div>
+                              </div>
+                            </motion.div>
+                          );
+                        })}
+                      </AnimatePresence>
+                      
+                      {filteredNotifications.length === 0 && (
+                        <div className="flex flex-col items-center justify-center py-12 text-center">
+                          <Bell className="h-12 w-12 text-gray-600 mb-4" />
+                          <h3 className="text-sm font-medium text-gray-400 mb-1">
+                            No notifications
+                          </h3>
+                          <p className="text-xs text-gray-500">
+                            {activeTab === 'unread' 
+                              ? "You're all caught up!" 
+                              : "New notifications will appear here"
+                            }
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  </TabsContent>
+                </div>
+              </Tabs>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+    </>
   );
 }

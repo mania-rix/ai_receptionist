@@ -1,5 +1,5 @@
-import { EnhancedSidebar } from '@/components/ui/enhanced-sidebar'
-import { NotificationDrawer } from '@/components/ui/notification-drawer'
+import { EnhancedSidebar } from '@/components/ui/enhanced-sidebar';
+import { NotificationDrawer } from '@/components/ui/notification-drawer';
 import type { ReactNode } from 'react'
 
 export default function PortalLayout({
