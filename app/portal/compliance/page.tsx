@@ -60,7 +60,7 @@ const fetchViolations = async () => {
         call:calls(id, callee, started_at, agent:agents(name), recording_url)
       `)
       .not('compliance_flags', 'eq', '[]')
-      .limit(20); // REMOVE the .order('calls.started_at', ...) line
+      .limit(20); 
 
     if (error) throw error;
     // Sort on the client by call.started_at DESC
