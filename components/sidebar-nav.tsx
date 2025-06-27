@@ -103,12 +103,12 @@ export function SidebarNav() {
       </div>
 
       <div className="flex flex-1 flex-col items-center gap-4">
-        <TooltipProvider delayDuration={100}>
+        <TooltipProvider>
           {navItems.map((item) => {
             const isActive = pathname === item.href;
             
             return (
-              <Tooltip key={item.href}>
+              <Tooltip key={item.href} delayDuration={100}>
                 <TooltipTrigger asChild>
                   <Link
                     href={item.href}
@@ -143,13 +143,6 @@ export function SidebarNav() {
         </TooltipProvider>
       </div>
 
-      <TooltipProvider>
-        <Tooltip delayDuration={100}>
-          <TooltipTrigger asChild>
-            <button
-              onClick={handleSignOut}
-              className="mt-auto flex h-10 w-10 items-center justify-center rounded-md text-gray-400 transition-colors hover:text-white"
-            >
               <LogOut className="h-5 w-5" />
             </button>
           </TooltipTrigger>
