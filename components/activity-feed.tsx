@@ -44,32 +44,34 @@ export function ActivityFeed() {
     };
   }, []);
 
-  const fetchActivities = async () => {
-    console.log('[ActivityFeed] Fetching activities...');
-    try {
-      const { data, error } = await supabase
-        .from('activity_feed')
-        .select('*')
-        .order('created_at', { ascending: false })
-        .limit(20);
+const fetchActivities = async () => {
+  console.log('[ActivityFeed] Fetching activities...');
+  try {
+    const { data, error } = await supabase
+      .from('activity_feed')
+      .select('*')
+      .order('created_at', { ascending: false })
+      .limit(20);
 
-      if (error) throw error;
+    if (error) throw error;
 
-      setActivities(
-  (data || []).map((item) => ({
-    ...item,
-    description: item.description ?? "",
-    created_at: item.created_at ?? "",
-    is_read: item.is_read ?? false,
-  }))
-);
+    setActivities(
+      (data || []).map((item) => ({
+        ...item,
+        description: item.description ?? "",
+        created_at: item.created_at ?? "",
+        is_read: item.is_read ?? false,
+      }))
+    );
+    setUnreadCount(
+      (data || []).filter(item => !item.is_read).length || 0
+    );
+    console.log('[ActivityFeed] Activities fetched:', data?.length || 0);
+  } catch (error) {
+    console.error('[ActivityFeed] Error fetching activities:', error);
+  }
+};
 
-      setUnreadCount(data?.filter(item => !item.is_read).length || 0);
-      console.log('[ActivityFeed] Activities fetched:', data?.length || 0);
-    } catch (error) {
-      console.error('[ActivityFeed] Error fetching activities:', error);
-    }
-  };
 
   const markAsRead = async (id: string) => {
     console.log('[ActivityFeed] Marking as read:', id);
