@@ -55,7 +55,7 @@ export const DEFAULT_PERMISSIONS: Record<UserRole, Permission[]> = {
 export class RBACManager {
   async getUserRoles(userId: string, cookies: any): Promise<UserRole[]> {
     console.log('[RBACLib] Getting user roles for:', userId);
-    const supabase = createServerSupabaseClient(cookies);
+    const supabase = createServerClient(cookies);
     
     // TODO: Review error handling for role queries
     const { data, error } = await supabase
@@ -102,7 +102,7 @@ export class RBACManager {
 
   async assignRole(assignerId: string, userId: string, role: UserRole, cookies: any): Promise<void> {
     console.log('[RBACLib] Assigning role:', { assignerId, userId, role });
-    const supabase = createServerSupabaseClient(cookies);
+    const supabase = createServerClient(cookies);
     
     // Check if assigner has admin role
     const assignerRoles = await this.getUserRoles(assignerId, cookies);
@@ -127,7 +127,7 @@ export class RBACManager {
 
   async removeRole(removerId: string, userId: string, role: UserRole, cookies: any): Promise<void> {
     console.log('[RBACLib] Removing role:', { removerId, userId, role });
-    const supabase = createServerSupabaseClient(cookies);
+    const supabase = createServerClient(cookies);
     
     // Check if remover has admin role
     const removerRoles = await this.getUserRoles(removerId, cookies);
