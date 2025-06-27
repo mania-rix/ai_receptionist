@@ -167,7 +167,7 @@ export function QuickActions() {
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-3 min-w-0">
           {quickActions.map((action, index) => {
             const Icon = action.icon;
             const isCurrentlyLoading = isLoading === action.id;
