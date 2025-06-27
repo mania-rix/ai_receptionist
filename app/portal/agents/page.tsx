@@ -242,12 +242,19 @@ const createOrUpdateAgent = async (data: FormData) => {
         <Dialog open={open} onOpenChange={(open) => {
           setOpen(open);
           if (!open) {
+            setEditingAgent(null);
+            form.reset();
+          }
         }}>
-      const response = await fetch(`/api/agents/${editingAgent.id}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data),
-      });
+          <DialogTrigger asChild>
+            <Button>
+              <Plus className="mr-2 h-4 w-4" />
+              Create Agent
+            </Button>
+          </DialogTrigger>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>
                 {editingAgent ? 'Edit Agent' : 'Create New Agent'}
               </DialogTitle>
             </DialogHeader>
