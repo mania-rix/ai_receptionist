@@ -1,5 +1,5 @@
 // Role-Based Access Control utilities
-import { createServerClient  } from '@supabase/ssr';
+import { createServerClient } from '@supabase/ssr';
 
 export type UserRole = 'admin' | 'manager' | 'staff' | 'hr' | 'compliance' | 'viewer';
 
