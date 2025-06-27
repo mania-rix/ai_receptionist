@@ -103,7 +103,7 @@ export function SidebarNav() {
       </div>
 
       <div className="flex flex-1 flex-col items-center gap-4">
-        <TooltipProvider>
+        <TooltipProvider delayDuration={100}>
           {navItems.map((item) => {
             const isActive = pathname === item.href;
             
