@@ -335,7 +335,7 @@ export type Database = {
           duration_seconds?: number | null
           ended_at?: string | null
           from_number?: string | null
-          id: string
+          id?: string
           provider?: string | null
           recording_url?: string | null
           started_at?: string | null
