@@ -108,7 +108,7 @@ export function SidebarNav() {
             const isActive = pathname === item.href;
             
             return (
-              <Tooltip key={item.href} delayDuration={0}>
+              <Tooltip key={item.href} delayDuration={100}>
                 <TooltipTrigger asChild>
                   <Link
                     href={item.href}
@@ -130,7 +130,11 @@ export function SidebarNav() {
                     <item.icon className="h-5 w-5" />
                   </Link>
                 </TooltipTrigger>
-                <TooltipContent side="right" className="border-gray-800 bg-[#1A1A1A] text-white">
+                <TooltipContent 
+                  side="right" 
+                  className="border-gray-800 bg-[#1A1A1A] text-white pointer-events-none z-50"
+                  sideOffset={8}
+                >
                   {item.title}
                 </TooltipContent>
               </Tooltip>
@@ -140,7 +144,7 @@ export function SidebarNav() {
       </div>
 
       <TooltipProvider>
-        <Tooltip delayDuration={0}>
+        <Tooltip delayDuration={100}>
           <TooltipTrigger asChild>
             <button
               onClick={handleSignOut}
@@ -149,7 +153,11 @@ export function SidebarNav() {
               <LogOut className="h-5 w-5" />
             </button>
           </TooltipTrigger>
-          <TooltipContent side="right" className="border-gray-800 bg-[#1A1A1A] text-white">
+          <TooltipContent 
+            side="right" 
+            className="border-gray-800 bg-[#1A1A1A] text-white pointer-events-none z-50"
+            sideOffset={8}
+          >
             Sign Out
           </TooltipContent>
         </Tooltip>
