@@ -11,10 +11,10 @@ interface ActivityItem {
   id: string;
   activity_type: string;
   title: string;
-  description: string;
+  description: string | null;
   metadata: any;
-  is_read: boolean;
-  created_at: string;
+  is_read: boolean | null;
+  created_at: string | null;
 }
 
 export function ActivityFeed() {
