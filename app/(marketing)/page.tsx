@@ -50,7 +50,7 @@ export default function MarketingPage() {
               id="enter-portal"
               size="lg"
               className="bg-gradient-to-r from-purple-600 to-blue-600 px-8 py-6 text-lg hover:from-purple-700 hover:to-blue-700"
-              onClick={() => router.push('/portal/overview')}  //disabling auth for dev 
+              onClick={() => router.push('/auth/blvckwall')}
             >
               Enter Portal <ArrowRight className="ml-2 h-5 w-5" />
             </Button>
