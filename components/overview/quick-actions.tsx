@@ -183,7 +183,7 @@ export function QuickActions() {
                   variant="outline"
                   onClick={action.action}
                   disabled={isCurrentlyLoading || action.disabled}
-                  className={`h-auto p-4 flex flex-col items-center gap-2 w-full border ${action.color} hover:scale-105 transition-all duration-200`}
+                  className={`h-auto p-4 flex flex-col items-center gap-2 w-full border ${action.color} hover:scale-105 transition-all duration-200 min-w-0`}
                 >
                   <div className="relative">
                     <Icon className="h-6 w-6" />
