@@ -108,7 +108,7 @@ export function SidebarNav() {
             const isActive = pathname === item.href;
             
             return (
-              <Tooltip key={item.href} >
+              <Tooltip key={item.href}>
                 <TooltipTrigger asChild>
                   <Link
                     href={item.href}
