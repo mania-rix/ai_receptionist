@@ -1,22 +1,3 @@
-/*
-  # Advanced Voice AI Platform Modules
-
-  1. New Tables
-    - `conversation_flows` - Visual conversation flow designs
-    - `user_roles` - Role-based access control
-    - `activity_feed` - Real-time activity tracking
-    - `anomaly_alerts` - Smart alerting system
-    - `calendar_integrations` - Calendar sync settings
-    - `voice_clones` - Custom voice cloning
-    - `brand_settings` - White-labeling configuration
-    - `data_exports` - Export tracking
-    - `feedback_submissions` - User feedback
-
-  2. Security
-    - Enable RLS on all new tables
-    - Add role-based access policies
-    - Maintain user data isolation
-*/
 
 -- User Roles and RBAC
 CREATE TABLE IF NOT EXISTS user_roles (
@@ -159,12 +140,13 @@ ALTER TABLE brand_settings ENABLE ROW LEVEL SECURITY;
 ALTER TABLE data_exports ENABLE ROW LEVEL SECURITY;
 ALTER TABLE feedback_submissions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE live_relay_sessions ENABLE ROW LEVEL SECURITY;
-
 -- User Roles Policies
+DROP POLICY IF EXISTS "Users can view their own roles" ON user_roles;
 CREATE POLICY "Users can view their own roles"
   ON user_roles FOR SELECT TO authenticated
   USING (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Admins can manage all roles" ON user_roles;
 CREATE POLICY "Admins can manage all roles"
   ON user_roles FOR ALL TO authenticated
   USING (EXISTS (
@@ -174,60 +156,71 @@ CREATE POLICY "Admins can manage all roles"
   ));
 
 -- Conversation Flows Policies
+DROP POLICY IF EXISTS "Users can manage their conversation flows" ON conversation_flows;
 CREATE POLICY "Users can manage their conversation flows"
   ON conversation_flows FOR ALL TO authenticated
   USING (auth.uid() = user_id)
   WITH CHECK (auth.uid() = user_id);
 
 -- Activity Feed Policies
+DROP POLICY IF EXISTS "Users can view their activity feed" ON activity_feed;
 CREATE POLICY "Users can view their activity feed"
   ON activity_feed FOR SELECT TO authenticated
   USING (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "System can insert activity" ON activity_feed;
 CREATE POLICY "System can insert activity"
   ON activity_feed FOR INSERT TO authenticated
   WITH CHECK (true);
 
 -- Anomaly Alerts Policies
+DROP POLICY IF EXISTS "Users can view their alerts" ON anomaly_alerts;
 CREATE POLICY "Users can view their alerts"
   ON anomaly_alerts FOR ALL TO authenticated
   USING (auth.uid() = user_id)
   WITH CHECK (auth.uid() = user_id);
 
 -- Calendar Integrations Policies
+DROP POLICY IF EXISTS "Users can manage their calendar integrations" ON calendar_integrations;
 CREATE POLICY "Users can manage their calendar integrations"
   ON calendar_integrations FOR ALL TO authenticated
   USING (auth.uid() = user_id)
   WITH CHECK (auth.uid() = user_id);
 
 -- Voice Clones Policies
+DROP POLICY IF EXISTS "Users can manage their voice clones" ON voice_clones;
 CREATE POLICY "Users can manage their voice clones"
   ON voice_clones FOR ALL TO authenticated
   USING (auth.uid() = user_id)
   WITH CHECK (auth.uid() = user_id);
 
 -- Brand Settings Policies
+DROP POLICY IF EXISTS "Users can manage their brand settings" ON brand_settings;
 CREATE POLICY "Users can manage their brand settings"
   ON brand_settings FOR ALL TO authenticated
   USING (auth.uid() = user_id)
   WITH CHECK (auth.uid() = user_id);
 
 -- Data Exports Policies
+DROP POLICY IF EXISTS "Users can view their exports" ON data_exports;
 CREATE POLICY "Users can view their exports"
   ON data_exports FOR ALL TO authenticated
   USING (auth.uid() = user_id)
   WITH CHECK (auth.uid() = user_id);
 
 -- Feedback Policies
+DROP POLICY IF EXISTS "Anyone can submit feedback" ON feedback_submissions;
 CREATE POLICY "Anyone can submit feedback"
   ON feedback_submissions FOR INSERT TO authenticated
   WITH CHECK (true);
 
+DROP POLICY IF EXISTS "Users can view their feedback" ON feedback_submissions;
 CREATE POLICY "Users can view their feedback"
   ON feedback_submissions FOR SELECT TO authenticated
   USING (auth.uid() = user_id OR user_id IS NULL);
 
 -- Live Relay Policies
+DROP POLICY IF EXISTS "Users can manage their relay sessions" ON live_relay_sessions;
 CREATE POLICY "Users can manage their relay sessions"
   ON live_relay_sessions FOR ALL TO authenticated
   USING (auth.uid() = user_id OR auth.uid() = operator_id)
