@@ -87,6 +87,7 @@ if (!response.ok) {
         callee: data.phoneNumber,
         direction: 'outbound',
         status: 'started',
+        user_id: user.id,
       });
 
       if (error) throw error;
