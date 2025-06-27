@@ -162,8 +162,8 @@ export function SessionNavBar() {
 
             <div className=" flex h-full w-full flex-col">
               <div className="flex grow flex-col gap-4">
-                <ScrollArea className="h-16 grow p-2">
-                  <div className={cn("flex w-full flex-col gap-1")}>
+                <ScrollArea className="h-16 grow p-2 scrollbar-thin scrollbar-thumb-gray-700 scrollbar-track-transparent">
+                  <div className={cn("flex w-full flex-col gap-1 min-w-0")}>
                     <Link
                       href="/dashboard"
                       className={cn(
