@@ -55,7 +55,15 @@ export function ActivityFeed() {
 
       if (error) throw error;
 
-      setActivities(data || []);
+      setActivities(
+  (data || []).map((item) => ({
+    ...item,
+    description: item.description ?? "",
+    created_at: item.created_at ?? "",
+    is_read: item.is_read ?? false,
+  }))
+);
+
       setUnreadCount(data?.filter(item => !item.is_read).length || 0);
       console.log('[ActivityFeed] Activities fetched:', data?.length || 0);
     } catch (error) {
