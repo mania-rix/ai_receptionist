@@ -79,7 +79,8 @@ if (!response.ok) {
   console.error("🔥 Retell call failed:", error);
   throw new Error(error || "Failed to start call");
 }
-
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error('Not authenticated');
 
       // Save call to Supabase
       const { error } = await supabase.from('calls').insert({
