@@ -118,26 +118,29 @@ const createOrUpdateAgent = async (data: FormData) => {
         .select()
         .single();
 
-      if (error) throw error;
-      console.log('[AgentUI] Agent updated:', savedAgent);
-      setAgents(prev => prev.map(agent => agent.id === editingAgent.id ? savedAgent : agent));
-    } else {
-      const { data: savedAgent, error } = await supabase
-        .from('agents')
-        .insert([
-          {
-            ...data,
-            user_id: user.id,
-            retell_agent_id: 'agent_d45ccf76ef7145a584ccf7d4e9',
-            retell_llm_id: 'llm_08507d646ed9a0c79da91ef05d67',
-          },
-        ])
-        .select()
-        .single();
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to update agent');
+      }
 
-      if (error) throw error;
-      console.log('[AgentUI] Agent created:', savedAgent);
-      setAgents((prev) => [savedAgent, ...prev]);
+      const result = await response.json();
+      console.log('[AgentUI] Agent updated:', result.agent);
+      setAgents(prev => prev.map(agent => agent.id === editingAgent.id ? result.agent : agent));
+    } else {
+      const response = await fetch('/api/agents', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to create agent');
+      }
+
+      const result = await response.json();
+      console.log('[AgentUI] Agent created:', result.agent);
+      setAgents((prev) => [result.agent, ...prev]);
     }
 
 
@@ -163,12 +166,14 @@ const createOrUpdateAgent = async (data: FormData) => {
   const deleteAgent = async (id: string) => {
     console.log('[AgentUI] Deleting agent:', id);
     try {
-      const { error } = await supabase
-        .from('agents')
-        .delete()
-        .eq('id', id);
+      const response = await fetch(`/api/agents/${id}`, {
+        method: 'DELETE',
+      });
 
-      if (error) throw error;
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to delete agent');
+      }
       
       console.log('[AgentUI] Agent deleted:', id);
       setAgents(prev => prev.filter(agent => agent.id !== id));
@@ -180,7 +185,7 @@ const createOrUpdateAgent = async (data: FormData) => {
       console.error('Error deleting agent:', error);
       toast({
         title: 'Error',
-        description: 'Failed to delete agent',
+        description: (error as Error).message || 'Failed to delete agent',
         variant: 'destructive',
       });
     }
@@ -215,20 +220,19 @@ const createOrUpdateAgent = async (data: FormData) => {
 
   const fetchAgents = async () => {
     console.log('[AgentUI] Fetching agents...');
-      const { data, error } = await supabase
-        .from('agents')
-        .select(`
-          *,
-          knowledge_base:knowledge_bases(name)
-        `)
-        .order('created_at', { ascending: false });
+    try {
+      const response = await fetch('/api/agents');
+      const data = await response.json();
 
-      if (error) {
-        console.error('Error fetching agents:', error);
+      if (!response.ok) {
+        console.error('Error fetching agents:', data.error);
         return;
       }
-      console.log('[AgentUI] Agents fetched:', data);
-      setAgents(data || []);
+      console.log('[AgentUI] Agents fetched:', data.agents);
+      setAgents(data.agents || []);
+    } catch (error) {
+      console.error('Error fetching agents:', error);
+    }
   };
 
   return (
@@ -238,19 +242,12 @@ const createOrUpdateAgent = async (data: FormData) => {
         <Dialog open={open} onOpenChange={(open) => {
           setOpen(open);
           if (!open) {
-            setEditingAgent(null);
-            form.reset();
-          }
         }}>
-          <DialogTrigger asChild>
-            <Button>
-              <Plus className="mr-2 h-4 w-4" />
-              New Agent
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle>
+      const response = await fetch(`/api/agents/${editingAgent.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
                 {editingAgent ? 'Edit Agent' : 'Create New Agent'}
               </DialogTitle>
             </DialogHeader>
