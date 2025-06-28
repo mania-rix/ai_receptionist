@@ -12,7 +12,7 @@ export async function POST(req: Request) {
     const { question, audio_data } = await req.json();
     console.log('[API:voice-analytics] POST payload:', { question, hasAudio: !!audio_data });
     const cookieStore = cookies();
-    const supabase = supabaseServer(cookieStore)
+    const supabase = supabaseServer(cookieStore);
 
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
@@ -45,17 +45,18 @@ export async function POST(req: Request) {
     // Generate audio response using ElevenLabs
     let audioData;
     try {
-      const audioBuffer = await elevenLabsAPI.generateSpeech({
-        text: result.response || "I couldn't process your query.",
-        voice_id: 'EXAVITQu4vr4xnSDxMaL', // Default voice
-      });
-      audioData = Buffer.from(audioBuffer).toString('base64');
-      console.log('[API:voice-analytics] Audio response generated');
+      if (result.response) {
+        const audioBuffer = await elevenLabsAPI.generateSpeech({
+          text: result.response,
+          voice_id: 'EXAVITQu4vr4xnSDxMaL', // Default voice
+        });
+        audioData = Buffer.from(audioBuffer).toString('base64');
+        console.log('[API:voice-analytics] Audio response generated');
+      }
     } catch (error) {
       console.error('[API:voice-analytics] Error generating audio response:', error);
       // Continue without audio if TTS fails
     }
-
 
     console.log('[API:voice-analytics] POST response:', result);
     return NextResponse.json({

@@ -5,6 +5,7 @@
 import { v4 as uuidv4 } from "uuid";
 import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
+import { useDemoMode } from '@/contexts/demo-mode-context';
 import { Phone, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -26,6 +27,7 @@ type FormData = {
 export default function OutboundCallsPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [agents, setAgents] = useState<any[]>([]);
+  const { isDemoMode } = useDemoMode();
   const { toast } = useToast();
   const form = useForm<FormData>();
 
@@ -59,12 +61,13 @@ export default function OutboundCallsPage() {
     console.log('[CallsOut] Starting call with data:', data);
     setIsLoading(true);
     
+    // In demo mode, we don't actually make a call
+    // Just simulate a successful response
+    console.log('[CallsOut] Demo mode - simulating call start');
+    
     try {
       const agent = agents.find((a) => a.id === data.agentId);
       if (!agent) throw new Error('Agent not found');
-      // In demo mode, we don't actually make a call
-      // Just simulate a successful response
-      console.log('[CallsOut] Demo mode - simulating call start');
       
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');
@@ -82,6 +85,25 @@ export default function OutboundCallsPage() {
       
       // Simulate a delay for the "call" to start
       await new Promise(resolve => setTimeout(resolve, 1500));
+      
+      // Add a demo call to the activity feed
+      try {
+        await supabase.from('activity_feed').insert([{
+          user_id: user.id,
+          activity_type: 'call',
+          title: 'Outbound call initiated',
+          description: `Call to ${data.phoneNumber} started successfully`,
+          metadata: {
+            agent_id: data.agentId,
+            agent_name: agent.name,
+            phone_number: data.phoneNumber,
+            demo: true
+          },
+          is_read: false
+        }]);
+      } catch (feedError) {
+        console.error('[CallsOut] Error adding to activity feed:', feedError);
+      }
 
       console.log('[CallsOut] Call started successfully');
       toast({

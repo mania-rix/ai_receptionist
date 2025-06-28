@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useDemoMode } from '@/contexts/demo-mode-context';
 import { useForm } from 'react-hook-form';
 import { Plus, Loader2, Phone, Settings, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -42,7 +43,7 @@ type FormData = {
 
 export default function PhoneNumbersPage() {
   const [isLoading, setIsLoading] = useState(false);
-  const [phoneNumbers, setPhoneNumbers] = useState<any[]>([]);
+  const { phoneNumbers, addPhoneNumber, removePhoneNumber, updatePhoneNumber } = useDemoMode();
   const [agents, setAgents] = useState<any[]>([]);
   const [open, setOpen] = useState(false);
   const { toast } = useToast();
@@ -53,21 +54,8 @@ export default function PhoneNumbersPage() {
 
   useEffect(() => {
     console.log('[PhoneNumbersUI] Component mounted');
-    fetchPhoneNumbers();
     fetchAgents();
   }, []);
-
-  const fetchPhoneNumbers = async () => {
-    console.log('[PhoneNumbersUI] Fetching phone numbers...');
-    try {
-      const response = await fetch('/api/phone-numbers');
-      const data = await response.json();
-      setPhoneNumbers(data.phoneNumbers || []);
-      console.log('[PhoneNumbersUI] Phone numbers fetched:', data.phoneNumbers?.length || 0);
-    } catch (error) {
-      console.error('[PhoneNumbersUI] Error fetching phone numbers:', error);
-    }
-  };
 
   const fetchAgents = async () => {
     console.log('[PhoneNumbersUI] Fetching agents...');
@@ -87,25 +75,27 @@ export default function PhoneNumbersPage() {
 
   const createPhoneNumber = async (data: FormData) => {
     console.log('[PhoneNumbersUI] Creating phone number:', data);
+    
     setIsLoading(true);
     try {
-      const response = await fetch('/api/phone-numbers', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data),
-      });
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || 'Failed to create phone number');
-      }
-
-      const result = await response.json();
-      setPhoneNumbers(prev => [result.phoneNumber, ...prev]);
+      // In demo mode, we just add the phone number to local state
+      const newPhoneNumber = {
+        id: `phone_${Date.now()}`,
+        phone_number: data.type === 'sip' ? data.phone_number : `+1${Math.floor(Math.random() * 9000000000) + 1000000000}`,
+        provider: data.provider,
+        type: data.type,
+        label: data.label,
+        assigned_agent_id: data.assigned_agent_id,
+        is_active: true,
+        created_at: new Date().toISOString()
+      };
+      
+      addPhoneNumber(newPhoneNumber);
+      
       setOpen(false);
       form.reset();
       
-      console.log('[PhoneNumbersUI] Phone number created successfully:', result.phoneNumber);
+      console.log('[PhoneNumbersUI] Phone number created successfully:', newPhoneNumber);
       toast({
         title: 'Success',
         description: 'Phone number added successfully',
@@ -124,14 +114,11 @@ export default function PhoneNumbersPage() {
 
   const deletePhoneNumber = async (id: string) => {
     console.log('[PhoneNumbersUI] Deleting phone number:', id);
+    
     try {
-      const response = await fetch(`/api/phone-numbers/${id}`, {
-        method: 'DELETE',
-      });
-
-      if (!response.ok) throw new Error('Failed to delete phone number');
-
-      setPhoneNumbers(prev => prev.filter(num => num.id !== id));
+      // In demo mode, we just remove the phone number from local state
+      removePhoneNumber(id);
+      
       console.log('[PhoneNumbersUI] Phone number deleted successfully:', id);
       toast({
         title: 'Success',
@@ -209,7 +196,7 @@ export default function PhoneNumbersPage() {
                   <div>
                     <label className="mb-2 block text-sm font-medium">Area Code</label>
                     <Input
-                      placeholder="415"
+                      placeholder="415 (Demo)"
                       {...form.register('area_code')}
                     />
                   </div>
@@ -237,7 +224,7 @@ export default function PhoneNumbersPage() {
                   <div>
                     <label className="mb-2 block text-sm font-medium">Phone Number</label>
                     <Input
-                      placeholder="+1234567890"
+                      placeholder="+1234567890 (Demo)"
                       {...form.register('phone_number', { required: watchType === 'sip' })}
                     />
                   </div>
@@ -245,7 +232,7 @@ export default function PhoneNumbersPage() {
                     <div>
                       <label className="mb-2 block text-sm font-medium">SIP Username</label>
                       <Input
-                        placeholder="username"
+                        placeholder="username (Demo)"
                         {...form.register('sip_config.username')}
                       />
                     </div>
@@ -253,7 +240,7 @@ export default function PhoneNumbersPage() {
                       <label className="mb-2 block text-sm font-medium">SIP Password</label>
                       <Input
                         type="password"
-                        placeholder="password"
+                        placeholder="password (Demo)"
                         {...form.register('sip_config.password')}
                       />
                     </div>
@@ -262,7 +249,7 @@ export default function PhoneNumbersPage() {
                     <div>
                       <label className="mb-2 block text-sm font-medium">SIP Domain</label>
                       <Input
-                        placeholder="sip.provider.com"
+                        placeholder="sip.provider.com (Demo)"
                         {...form.register('sip_config.domain')}
                       />
                     </div>
@@ -270,7 +257,7 @@ export default function PhoneNumbersPage() {
                       <label className="mb-2 block text-sm font-medium">Port</label>
                       <Input
                         type="number"
-                        placeholder="5060"
+                        placeholder="5060 (Demo)"
                         {...form.register('sip_config.port', { valueAsNumber: true })}
                       />
                     </div>
