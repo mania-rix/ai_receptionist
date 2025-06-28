@@ -1,9 +1,10 @@
 export const runtime = "nodejs";
 
 import { NextResponse } from 'next/server';
-import { supabaseServer } from '@/lib/supabase'
+import { supabaseServer } from '@/lib/supabase';
 import { cookies } from 'next/headers';
 import { voiceAnalyticsProcessor } from '@/lib/voice-analytics';
+import { elevenLabsAPI } from '@/lib/elevenlabs';
 
 export async function POST(req: Request) {
   console.log('[API:voice-analytics] POST request');
@@ -32,11 +33,28 @@ export async function POST(req: Request) {
       result = await voiceAnalyticsProcessor.processTextQuery(question, user.id);
     } else {
       console.error('[API:voice-analytics] No question or audio provided');
+    // Generate audio response using ElevenLabs
+    let audioData;
+    try {
+      const audioBuffer = await elevenLabsAPI.generateSpeech({
+        text: result.response || "I couldn't process your query.",
+        voice_id: 'EXAVITQu4vr4xnSDxMaL', // Default voice
+      });
+      audioData = Buffer.from(audioBuffer).toString('base64');
+      console.log('[API:voice-analytics] Audio response generated');
+    } catch (error) {
+      console.error('[API:voice-analytics] Error generating audio response:', error);
+      // Continue without audio if TTS fails
+    }
+
       return NextResponse.json({ error: 'No question or audio provided' }, { status: 400 });
     }
 
     console.log('[API:voice-analytics] POST response:', result);
-    return NextResponse.json(result);
+    return NextResponse.json({
+      ...result,
+      audio_data: audioData
+    });
   } catch (error) {
     console.error('[API:voice-analytics] POST Error:', error);
     return NextResponse.json(

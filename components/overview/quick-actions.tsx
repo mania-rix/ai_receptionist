@@ -274,7 +274,7 @@ export function QuickActions() {
                   </div>
                   <div className="text-center">
                     <div className="font-medium text-sm line-clamp-1 break-words">{action.title}</div>
-                    <div className="text-xs text-gray-400 mt-1 line-clamp-2 break-words leading-tight">{action.description}</div>
+                    <div className="text-xs text-gray-400 mt-1 line-clamp-2 break-words leading-tight h-8">{action.description}</div>
                   </div> 
                 </Button>
               </motion.div>

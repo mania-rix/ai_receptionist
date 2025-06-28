@@ -138,11 +138,11 @@ export function EnhancedSidebar() {
       <div className="mb-6 h-10 w-10 rounded-full bg-gradient-to-br from-purple-600 to-blue-600" />
       
       {/* Activity Feed */}
-      <div className="mb-4">
+      <div className="mb-4 z-50">
         <ActivityFeed />
       </div>
 
-      <div className="flex flex-1 flex-col items-center gap-4 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-600 scrollbar-track-transparent">
+      <div className="flex flex-1 flex-col items-center gap-4 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-600 scrollbar-track-transparent pr-1">
         <TooltipProvider delayDuration={0}>
           {navItems.map((item) => {
             const isActive = pathname === item.href;
@@ -172,7 +172,7 @@ export function EnhancedSidebar() {
                 </TooltipTrigger>
                 <TooltipContent 
                   side="right" 
-                  className="border-gray-800 bg-[#1A1A1A] text-white pointer-events-none z-50"
+                  className="border-gray-800 bg-[#1A1A1A] text-white pointer-events-none z-[100]"
                   sideOffset={8}
                 >
                   {item.title}
@@ -195,7 +195,7 @@ export function EnhancedSidebar() {
           </TooltipTrigger>
           <TooltipContent 
             side="right" 
-            className="border-gray-800 bg-[#1A1A1A] text-white pointer-events-none z-50"
+            className="border-gray-800 bg-[#1A1A1A] text-white pointer-events-none z-[100]"
             sideOffset={8}
           >
             Sign Out

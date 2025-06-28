@@ -66,20 +66,46 @@ export default function AgentsPage() {
   const watchVoiceEngine = form.watch('voice_engine');
 
   useEffect(() => {
-    fetchAgents();
-    fetchVoices();
+    fetchAgents(); 
+    fetchElevenLabsVoices();
     fetchKnowledgeBases();
   }, []);
 
-  const fetchVoices = async () => {
-    console.log('[AgentUI] Fetching voices...');
+  const fetchElevenLabsVoices = async () => {
+    console.log('[AgentUI] Fetching ElevenLabs voices...');
     try {
-      const response = await fetch('/api/voices');
+      const response = await fetch('/api/elevenlabs-voices');
       const data = await response.json();
       console.log('[AgentUI] Voices fetched:', data.voices || []);
-      setVoices(data.voices || []);
+      
+      // Combine with Retell voices
+      const retellVoices = [
+        { id: 'serena', name: 'Serena', provider: 'retell' },
+        { id: 'morgan', name: 'Morgan', provider: 'retell' },
+        { id: 'ava', name: 'Ava', provider: 'retell' },
+        { id: 'ryan', name: 'Ryan', provider: 'retell' },
+        { id: 'sophia', name: 'Sophia', provider: 'retell' },
+        { id: 'james', name: 'James', provider: 'retell' },
+      ];
+      
+      setVoices([...retellVoices, ...(data.voices || [])]);
     } catch (error) {
-      console.error('Error fetching voices:', error);
+      console.error('[AgentUI] Error fetching voices:', error);
+      
+      // Fallback to default voices
+      const defaultVoices = [
+        { id: 'serena', name: 'Serena', provider: 'retell' },
+        { id: 'morgan', name: 'Morgan', provider: 'retell' },
+        { id: 'ava', name: 'Ava', provider: 'retell' },
+        { id: 'ryan', name: 'Ryan', provider: 'retell' },
+        { id: 'sophia', name: 'Sophia', provider: 'retell' },
+        { id: 'james', name: 'James', provider: 'retell' },
+        { id: 'voice_1', name: 'Rachel', provider: 'elevenlabs' },
+        { id: 'voice_2', name: 'Thomas', provider: 'elevenlabs' },
+        { id: 'voice_3', name: 'Emily', provider: 'elevenlabs' },
+      ];
+      
+      setVoices(defaultVoices);
     }
   };
 

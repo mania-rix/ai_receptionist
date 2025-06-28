@@ -58,29 +58,16 @@ export default function OutboundCallsPage() {
   const startCall = async (data: FormData) => {
     console.log('[CallsOut] Starting call with data:', data);
     setIsLoading(true);
+    
     try {
       const agent = agents.find((a) => a.id === data.agentId);
       if (!agent) throw new Error('Agent not found');
-
-      // Start call using the agent_id from Supabase
-const response = await fetch('/api/start-call', {
-  method: 'POST',
-  headers: {
-    'Content-Type': 'application/json',
-  },
-  body: JSON.stringify({
-    agent_id: agent.retell_agent_id, // make sure it's not agent.agent_id
-    phone_number: data.phoneNumber,  // match API param naming
-  }),
-});
-
-if (!response.ok) {
-  const error = await response.text();
-  console.error("🔥 Retell call failed:", error);
-  throw new Error(error || "Failed to start call");
-}
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) throw new Error('Not authenticated');
+      // In demo mode, we don't actually make a call
+      // Just simulate a successful response
+      console.log('[CallsOut] Demo mode - simulating call start');
+      
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Not authenticated');
 
       // Save call to Supabase
       const { error } = await supabase.from('calls').insert({
@@ -92,6 +79,9 @@ if (!response.ok) {
       });
 
       if (error) throw error;
+      
+      // Simulate a delay for the "call" to start
+      await new Promise(resolve => setTimeout(resolve, 1500));
 
       console.log('[CallsOut] Call started successfully');
       toast({

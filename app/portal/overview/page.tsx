@@ -1,11 +1,12 @@
 'use client'
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { ActivityTimeline } from '@/components/overview/activity-timeline';
 import { AIInsights } from '@/components/overview/ai-insights';
 import { QuickActions } from '@/components/overview/quick-actions';
 import { VoiceAssistant } from '@/components/overview/voice-assistant';
 import { BusinessHealthScore } from '@/components/overview/business-health-score';
+import { supabase } from '@/lib/supabase-browser';
 
 import {
   Card,
@@ -16,15 +17,29 @@ import {
 } from '@/components/ui/card'
 
 export default function OverviewPage() {
-  const email = 'demo@blvckwall.ai'
+  const [email, setEmail] = useState('demo@blvckwall.ai');
 
   useEffect(() => {
-      console.log('[OverviewUI] Component mounted');
-      console.log('[OverviewUI] Loading dashboard for user:', email);
+    console.log('[OverviewUI] Component mounted');
+    
+    // Get user email from Supabase
+    const getUserEmail = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.user?.email) {
+        setEmail(session.user.email);
+        console.log('[OverviewUI] Loading dashboard for user:', session.user.email);
+      } else {
+        console.log('[OverviewUI] No user session, using demo email');
+      }
+    };
+    
+    getUserEmail();
+    
     return () => {
       console.log('[OverviewUI] Component unmounted');
     };
   }, []);
+  
   return (
     <div className="flex-1 space-y-6 p-8">
       <div className="flex items-center justify-between">
