@@ -33,6 +33,15 @@ export async function POST(req: Request) {
       result = await voiceAnalyticsProcessor.processTextQuery(question, user.id);
     } else {
       console.error('[API:voice-analytics] No question or audio provided');
+      return NextResponse.json({ error: 'No question or audio provided' }, { status: 400 });
+    }
+
+    // Ensure result is defined before proceeding
+    if (!result) {
+      console.error('[API:voice-analytics] Failed to process query - no result');
+      return NextResponse.json({ error: 'Failed to process query' }, { status: 500 });
+    }
+
     // Generate audio response using ElevenLabs
     let audioData;
     try {
@@ -47,8 +56,6 @@ export async function POST(req: Request) {
       // Continue without audio if TTS fails
     }
 
-      return NextResponse.json({ error: 'No question or audio provided' }, { status: 400 });
-    }
 
     console.log('[API:voice-analytics] POST response:', result);
     return NextResponse.json({
