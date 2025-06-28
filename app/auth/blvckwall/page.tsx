@@ -7,7 +7,6 @@ import { cn } from '@/lib/utils';
 import { supabase } from '@/lib/supabase-browser';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
-import { useToast } from '@/hooks/use-toast';
 
 // GlitchText Component
 interface GlitchTextProps extends React.HTMLAttributes<HTMLDivElement> {
