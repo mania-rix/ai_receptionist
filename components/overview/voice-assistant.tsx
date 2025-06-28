@@ -1,8 +1,8 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Mic, MicOff, Send, Volume2, Brain } from 'lucide-react';
+import { Mic, MicOff, Send, Volume2, Brain, Loader2 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -21,6 +21,7 @@ interface VoiceCommand {
   response: string;
   timestamp: string;
   type: 'voice' | 'text';
+  audio_url?: string;
 }
 
 export function VoiceAssistant() {
@@ -31,6 +32,13 @@ export function VoiceAssistant() {
   const [commands, setCommands] = useState<VoiceCommand[]>([]);
   const { toast } = useToast();
   const audioRef = useRef<HTMLAudioElement>(null);
+
+  useEffect(() => {
+    console.log('[VoiceAssistant] Component mounted');
+    return () => {
+      console.log('[VoiceAssistant] Component unmounted');
+    };
+  }, []);
 
   const handleVoiceToggle = () => {
     console.log('[VoiceAssistant] Toggling voice recording:', !isRecording);
@@ -67,7 +75,9 @@ export function VoiceAssistant() {
     try {
       const response = await fetch('/api/voice-analytics', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json'
+        },
         body: JSON.stringify({ question: query }),
       });
 
@@ -80,18 +90,28 @@ export function VoiceAssistant() {
 
       const result = await response.json();
       
+      // Create audio URL if available
+      let audioUrl;
+      if (result.audio_data) {
+        audioUrl = `data:audio/mpeg;base64,${result.audio_data}`;
+      }
+      
       const newCommand: VoiceCommand = {
         id: Date.now().toString(),
         query,
         response: result.response || 'I processed your request.',
         timestamp: new Date().toISOString(),
         type: isRecording ? 'voice' : 'text',
+        audio_url: audioUrl
       };
 
       setCommands(prev => [newCommand, ...prev.slice(0, 4)]);
       
-      // Speak the response
-      speakResponse(newCommand.response);
+      // Play audio if available
+      if (audioUrl && audioRef.current) {
+        audioRef.current.src = audioUrl;
+        audioRef.current.play();
+      }
       
       console.log('[VoiceAssistant] Command processed successfully');
       toast({
@@ -122,7 +142,17 @@ export function VoiceAssistant() {
 
   const playResponse = (command: VoiceCommand) => {
     console.log('[VoiceAssistant] Playing response for command:', command.id);
-    speakResponse(command.response);
+    
+    if (command.audio_url && audioRef.current) {
+      audioRef.current.src = command.audio_url;
+      audioRef.current.play();
+    } else {
+      // Fallback for commands without audio
+      toast({
+        title: 'Playing Response',
+        description: 'Audio response would play here',
+      });
+    }
   };
 
   return (

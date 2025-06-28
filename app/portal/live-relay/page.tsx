@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { Play, Square, Mic, MicOff, Send, Phone } from 'lucide-react';
+import { Play, Square, Mic, MicOff, Send, Phone, Globe, Loader2, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -16,34 +16,71 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 
+interface TranslationResult {
+  text: string;
+  source_language: string;
+  target_language: string;
+  translated_text: string;
+  confidence: number;
+}
+
+interface Language {
+  code: string;
+  name: string;
+  native_name: string;
+}
+
 export default function LiveRelayPage() {
   const [isSessionActive, setIsSessionActive] = useState(false);
   const [currentCallId, setCurrentCallId] = useState('');
   const [operatorMessage, setOperatorMessage] = useState('');
   const [targetLanguage, setTargetLanguage] = useState('en');
+  const [sourceLanguage, setSourceLanguage] = useState('en');
   const [transcript, setTranscript] = useState<any[]>([]);
   const [isRecording, setIsRecording] = useState(false);
+  const [isTranslating, setIsTranslating] = useState(false);
+  const [languages, setLanguages] = useState<Language[]>([]);
+  const [isLoadingLanguages, setIsLoadingLanguages] = useState(true);
   const { toast } = useToast();
   const audioRef = useRef<HTMLAudioElement>(null);
 
   useEffect(() => {
     console.log('[LiveRelay] Component mounted');
+    fetchSupportedLanguages();
     return () => {
       console.log('[LiveRelay] Component unmounted');
     };
   }, []);
-  const languages = [
-    { code: 'en', name: 'English' },
-    { code: 'es', name: 'Spanish' },
-    { code: 'fr', name: 'French' },
-    { code: 'de', name: 'German' },
-    { code: 'it', name: 'Italian' },
-    { code: 'pt', name: 'Portuguese' },
-    { code: 'zh', name: 'Chinese' },
-    { code: 'ja', name: 'Japanese' },
-    { code: 'ko', name: 'Korean' },
-    { code: 'ar', name: 'Arabic' },
-  ];
+  
+  const fetchSupportedLanguages = async () => {
+    console.log('[LiveRelay] Fetching supported languages...');
+    setIsLoadingLanguages(true);
+    try {
+      const response = await fetch('/api/lingo-translate');
+      if (!response.ok) throw new Error('Failed to fetch languages');
+      
+      const data = await response.json();
+      setLanguages(data.languages || []);
+      console.log('[LiveRelay] Languages fetched:', data.languages?.length || 0);
+    } catch (error) {
+      console.error('[LiveRelay] Error fetching languages:', error);
+      // Fallback to default languages
+      setLanguages([
+        { code: 'en', name: 'English', native_name: 'English' },
+        { code: 'es', name: 'Spanish', native_name: 'Español' },
+        { code: 'fr', name: 'French', native_name: 'Français' },
+        { code: 'de', name: 'German', native_name: 'Deutsch' },
+        { code: 'it', name: 'Italian', native_name: 'Italiano' },
+        { code: 'pt', name: 'Portuguese', native_name: 'Português' },
+        { code: 'zh', name: 'Chinese', native_name: '中文' },
+        { code: 'ja', name: 'Japanese', native_name: '日本語' },
+        { code: 'ko', name: 'Korean', native_name: '한국어' },
+        { code: 'ar', name: 'Arabic', native_name: 'العربية' },
+      ]);
+    } finally {
+      setIsLoadingLanguages(false);
+    }
+  };
 
   const startSession = async () => {
     console.log('[LiveRelay] Starting session for call:', currentCallId);
@@ -114,52 +151,56 @@ export default function LiveRelayPage() {
   const sendMessage = async () => {
     if (!operatorMessage.trim() || !isSessionActive) return;
 
-    console.log('[LiveRelay] Sending message:', operatorMessage);
+    console.log('[LiveRelay] Sending message:', operatorMessage, 'to language:', targetLanguage);
+    setIsTranslating(true);
     try {
-      const response = await fetch('/api/live-relay', {
+      // Translate the message using Lingo API
+      const translationResponse = await fetch('/api/lingo-translate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          action: 'send_message',
-          call_id: currentCallId,
-          message: operatorMessage,
+          text: operatorMessage,
           target_language: targetLanguage,
+          source_language: sourceLanguage,
         }),
       });
 
-      if (!response.ok) throw new Error('Failed to send message');
-
-      const result = await response.json();
+      if (!translationResponse.ok) throw new Error('Failed to translate message');
       
+      const translationResult = await translationResponse.json();
+      console.log('[LiveRelay] Translation result:', translationResult.translation);
+
       // Add message to transcript
       setTranscript(prev => [...prev, {
         type: 'operator',
         message: operatorMessage,
+        translated_message: translationResult.translation.translated_text,
         language: targetLanguage,
         timestamp: new Date().toISOString(),
       }]);
 
       // Play audio response if available
-      if (result.audio_url && audioRef.current) {
-        audioRef.current.src = result.audio_url;
+      if (translationResult.audio_url && audioRef.current) {
+        audioRef.current.src = translationResult.audio_url;
         audioRef.current.play();
       }
 
       setOperatorMessage('');
       
-      console.log('[LiveRelay] Message sent successfully');
+      console.log('[LiveRelay] Message translated and sent successfully');
       toast({
         title: 'Message Sent',
         description: 'Your message has been translated and spoken to the caller',
       });
     } catch (error) {
-      console.error('[LiveRelay] Error sending message:', error);
+      console.error('[LiveRelay] Error translating/sending message:', error);
       toast({
         title: 'Error',
-        description: 'Failed to send message',
+        description: 'Failed to translate and send message',
         variant: 'destructive',
       });
     }
+      setIsTranslating(false);
   };
 
   const toggleRecording = () => {
@@ -177,6 +218,9 @@ export default function LiveRelayPage() {
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-bold tracking-tight">Live Language Relay</h1>
         <div className="flex items-center gap-2">
+          <Button variant="outline" size="sm" onClick={fetchSupportedLanguages} disabled={isLoadingLanguages}>
+            <RefreshCw className={`h-4 w-4 ${isLoadingLanguages ? 'animate-spin' : ''}`} />
+          </Button>
           <Badge variant={isSessionActive ? 'default' : 'secondary'}>
             {isSessionActive ? 'Active' : 'Inactive'}
           </Badge>
@@ -215,15 +259,31 @@ export default function LiveRelayPage() {
             </div>
 
             <div>
-              <label className="mb-2 block text-sm font-medium">Target Language</label>
-              <Select value={targetLanguage} onValueChange={setTargetLanguage}>
+              <label className="mb-2 block text-sm font-medium">Your Language</label>
+              <Select value={sourceLanguage} onValueChange={setSourceLanguage} disabled={isLoadingLanguages}>
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
                   {languages.map((lang) => (
                     <SelectItem key={lang.code} value={lang.code}>
-                      {lang.name}
+                      {lang.name} ({lang.native_name})
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div>
+              <label className="mb-2 block text-sm font-medium">Caller's Language</label>
+              <Select value={targetLanguage} onValueChange={setTargetLanguage} disabled={isLoadingLanguages}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {languages.map((lang) => (
+                    <SelectItem key={lang.code} value={lang.code}>
+                      {lang.name} ({lang.native_name})
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -243,12 +303,21 @@ export default function LiveRelayPage() {
 
             <div className="flex gap-2">
               <Button
-                onClick={sendMessage}
-                disabled={!isSessionActive || !operatorMessage.trim()}
+                onClick={sendMessage} 
+                disabled={!isSessionActive || !operatorMessage.trim() || isTranslating}
                 className="flex-1"
               >
-                <Send className="mr-2 h-4 w-4" />
-                Send & Speak
+                {isTranslating ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Translating...
+                  </>
+                ) : (
+                  <>
+                    <Globe className="mr-2 h-4 w-4" />
+                    Translate & Speak
+                  </>
+                )}
               </Button>
               <Button
                 onClick={toggleRecording}
@@ -289,9 +358,9 @@ export default function LiveRelayPage() {
                   <div
                     key={index}
                     className={`p-3 rounded-lg ${
-                      entry.type === 'operator' 
-                        ? 'bg-blue-950/50 border-l-4 border-blue-500' 
-                        : 'bg-gray-900 border-l-4 border-gray-500'
+                      entry.type === 'operator'
+                        ? 'bg-blue-950/50 border-l-4 border-blue-500'
+                        : 'bg-gray-900 border-l-4 border-gray-500' 
                     }`}
                   >
                     <div className="flex items-center justify-between mb-1">
@@ -302,11 +371,17 @@ export default function LiveRelayPage() {
                         {new Date(entry.timestamp).toLocaleTimeString()}
                       </span>
                     </div>
-                    <p className="text-sm">{entry.message}</p>
-                    {entry.language && entry.language !== 'en' && (
-                      <Badge variant="secondary" className="text-xs mt-1">
-                        {languages.find(l => l.code === entry.language)?.name}
-                      </Badge>
+                    <p className="text-sm">{entry.message}</p> 
+                    {entry.translated_message && entry.translated_message !== entry.message && (
+                      <div className="mt-2 p-2 bg-gray-800 rounded-lg">
+                        <div className="flex items-center gap-2 mb-1">
+                          <Globe className="h-3 w-3 text-blue-400" />
+                          <span className="text-xs text-blue-400">
+                            Translated to {languages.find(l => l.code === entry.language)?.name || entry.language}:
+                          </span>
+                        </div>
+                        <p className="text-sm italic">{entry.translated_message}</p>
+                      </div>
                     )}
                   </div>
                 ))
@@ -327,9 +402,9 @@ export default function LiveRelayPage() {
               <h4 className="font-medium mb-2">Getting Started</h4>
               <ul className="text-sm text-gray-400 space-y-1">
                 <li>1. Enter a call ID or start a new session</li>
-                <li>2. Select the target language for translation</li>
+                <li>2. Select your language and the caller's language</li>
                 <li>3. Type your message or use voice input</li>
-                <li>4. Click &quot;Send & Speak&quot; to relay to caller</li>
+                <li>4. Click "Translate & Speak" to relay to caller</li>
               </ul>
             </div>
             <div>
@@ -337,7 +412,7 @@ export default function LiveRelayPage() {
               <ul className="text-sm text-gray-400 space-y-1">
                 <li>• Real-time language translation</li>
                 <li>• Voice synthesis in target language</li>
-                <li>• Live transcript monitoring</li>
+                <li>• Live transcript with translations</li>
                 <li>• Multi-language support</li>
               </ul>
             </div>

@@ -7,6 +7,7 @@ import { cn } from '@/lib/utils';
 import { supabase } from '@/lib/supabase-browser';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
+import { useToast } from '@/hooks/use-toast';
 
 // GlitchText Component
 interface GlitchTextProps extends React.HTMLAttributes<HTMLDivElement> {
@@ -374,6 +375,7 @@ Input.displayName = "Input";
 const BlvckwallAuth = () => {
   const router = useRouter();
   const { toast } = useToast();
+  const { toast } = useToast();
   
   const [isSignUp, setIsSignUp] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -385,7 +387,8 @@ const BlvckwallAuth = () => {
   const [lastName, setLastName] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [focusedInput, setFocusedInput] = useState<string | null>(null);
-  const [isDarkMode, setIsDarkMode] = useState(true);
+  const [isDarkMode, setIsDarkMode] = useState(true); 
+  const [errors, setErrors] = useState<{[key: string]: string}>({});
   const [errors, setErrors] = useState<{[key: string]: string}>({});
 
   // 3D card effect
@@ -393,6 +396,17 @@ const BlvckwallAuth = () => {
   const mouseY = useMotionValue(0);
   const rotateX = useTransform(mouseY, [-300, 300], [8, -8]);
   const rotateY = useTransform(mouseX, [-300, 300], [-8, 8]);
+
+  // Check if user is already logged in
+  useEffect(() => {
+    const checkUser = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session) {
+        router.push('/portal/overview');
+      }
+    };
+    checkUser();
+  }, [router]);
 
   // Check if user is already logged in
   useEffect(() => {
@@ -448,7 +462,43 @@ const BlvckwallAuth = () => {
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
+    const newErrors: {[key: string]: string} = {};
+
+    if (!email) {
+      newErrors.email = "Email is required";
+    } else if (!/\S+@\S+\.\S+/.test(email)) {
+      newErrors.email = "Email is invalid";
+    }
+
+    if (!password) {
+      newErrors.password = "Password is required";
+    } else if (password.length < 6) {
+      newErrors.password = "Password must be at least 6 characters";
+    }
+
+    if (isSignUp) {
+      if (!firstName) {
+        newErrors.firstName = "First name is required";
+      }
+      if (!lastName) {
+        newErrors.lastName = "Last name is required";
+      }
+      if (password !== confirmPassword) {
+        newErrors.confirmPassword = "Passwords do not match";
+      }
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!validateForm()) {
+      return;
+    }
+
     
     if (!validateForm()) {
       return;
@@ -456,6 +506,73 @@ const BlvckwallAuth = () => {
 
     setIsLoading(true);
     setErrors({});
+
+    try {
+      if (isSignUp) {
+        const { data, error } = await supabase.auth.signUp({
+          email,
+          password,
+          options: {
+            data: {
+              firstName,
+              lastName,
+              name: `${firstName} ${lastName}`,
+            }
+          }
+        });
+
+        if (error) throw error;
+
+        if (data.user && !data.session) {
+          toast({
+            title: "Check your email",
+            description: "We've sent you a confirmation link to complete your registration.",
+          });
+        } else {
+          toast({
+            title: "Account created successfully",
+            description: "Welcome to BlvckWall AI!",
+          });
+          router.push('/portal/overview');
+        }
+      } else {
+        const { data, error } = await supabase.auth.signInWithPassword({
+          email,
+          password,
+        });
+
+        if (error) throw error;
+
+        toast({
+          title: "Welcome back",
+          description: "Successfully signed in to BlvckWall AI.",
+        });
+        router.push('/portal/overview');
+      }
+    } catch (error: any) {
+      console.error('Auth error:', error);
+      
+      let errorMessage = "An unexpected error occurred";
+      
+      if (error.message?.includes("Invalid login credentials")) {
+        errorMessage = "Invalid email or password";
+      } else if (error.message?.includes("User already registered")) {
+        errorMessage = "An account with this email already exists";
+      } else if (error.message?.includes("Password should be at least")) {
+        errorMessage = "Password must be at least 6 characters long";
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+
+      setErrors({ general: errorMessage });
+      toast({
+        title: "Authentication failed",
+        description: errorMessage,
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
 
     try {
       if (isSignUp) {
@@ -744,7 +861,7 @@ const BlvckwallAuth = () => {
                 )}
 
                 {/* Auth toggle */}
-                <div className={cn(
+                <div className={cn( 
                   "flex mb-6 rounded-lg p-1",
                   isDarkMode ? "bg-black/40 border border-cyan-500/20" : "bg-white/40 border border-teal-500/20"
                 )}>
@@ -798,6 +915,17 @@ const BlvckwallAuth = () => {
                   </button>
                 </div>
 
+                {/* General error message */}
+                {errors.general && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="mb-4 p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 text-sm text-center"
+                  >
+                    {errors.general}
+                  </motion.div>
+                )}
+
                 {/* Form */}
                 <form onSubmit={handleSubmit} className="space-y-4">
                   <AnimatePresence mode="wait">
@@ -822,6 +950,7 @@ const BlvckwallAuth = () => {
                               onFocus={() => setFocusedInput("firstName")}
                               onBlur={() => setFocusedInput(null)}
                               error={errors.firstName}
+                              error={errors.firstName}
                             />
                           </div>
                           <div className="relative">
@@ -834,6 +963,7 @@ const BlvckwallAuth = () => {
                               className="pl-10"
                               onFocus={() => setFocusedInput("lastName")}
                               onBlur={() => setFocusedInput(null)}
+                              error={errors.lastName}
                               error={errors.lastName}
                             />
                           </div>
@@ -851,6 +981,7 @@ const BlvckwallAuth = () => {
                           onFocus={() => setFocusedInput("email")}
                           onBlur={() => setFocusedInput(null)}
                           error={errors.email}
+                          error={errors.email}
                         />
                       </div>
 
@@ -864,6 +995,7 @@ const BlvckwallAuth = () => {
                           className="pl-10 pr-10"
                           onFocus={() => setFocusedInput("password")}
                           onBlur={() => setFocusedInput(null)}
+                          error={errors.password}
                           error={errors.password}
                         />
                         <button
@@ -886,6 +1018,7 @@ const BlvckwallAuth = () => {
                             className="pl-10 pr-10"
                             onFocus={() => setFocusedInput("confirmPassword")}
                             onBlur={() => setFocusedInput(null)}
+                            error={errors.confirmPassword}
                             error={errors.confirmPassword}
                           />
                           <button
@@ -968,7 +1101,7 @@ const BlvckwallAuth = () => {
                     className={cn("text-center text-xs mt-6", isDarkMode ? "text-cyan-400/60" : "text-teal-600/60")}
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
-                    transition={{ delay: 0.5 }}
+                    transition={{ delay: 0.5 }} 
                   >
                     {isSignUp ? (
                       <>Already have access? <button type="button" onClick={() => setIsSignUp(false)} className={cn("font-medium", isDarkMode ? "text-cyan-400 hover:text-cyan-300" : "text-teal-600 hover:text-teal-500")}>Sign In</button></>

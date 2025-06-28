@@ -82,31 +82,46 @@
   
   /* Custom scrollbar styles */
   .scrollbar-thin {
-    scrollbar-width: thin;
+    scrollbar-width: thin !important;
   }
   
   .scrollbar-thin::-webkit-scrollbar {
-    width: 6px;
+    width: 6px !important;
   }
   
   .scrollbar-thin::-webkit-scrollbar-track {
-    background: transparent;
+    background: transparent !important;
   }
   
   .scrollbar-thin::-webkit-scrollbar-thumb {
-    background-color: #4b5563;
-    border-radius: 3px;
+    background-color: #4b5563 !important;
+    border-radius: 3px !important;
   }
   
   .scrollbar-thin::-webkit-scrollbar-thumb:hover {
-    background-color: #6b7280;
+    background-color: #6b7280 !important;
   }
   
   .scrollbar-thumb-gray-600::-webkit-scrollbar-thumb {
-    background-color: #4b5563;
+    background-color: #4b5563 !important;
   }
   
   .scrollbar-track-transparent::-webkit-scrollbar-track {
-    background: transparent;
+    background: transparent !important;
+  }
+  
+  /* Fix tooltip z-index issues */
+  .radix-tooltip-content {
+    z-index: 9999 !important;
+    pointer-events: none !important;
+  }
+  
+  /* Fix line clamping for card descriptions */
+  .line-clamp-2 {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    word-break: break-word;
   }
 }
