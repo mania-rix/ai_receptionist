@@ -388,7 +388,6 @@ const BlvckwallAuth = () => {
   const [focusedInput, setFocusedInput] = useState<string | null>(null);
   const [isDarkMode, setIsDarkMode] = useState(true); 
   const [errors, setErrors] = useState<{[key: string]: string}>({});
-  const [errors, setErrors] = useState<{[key: string]: string}>({});
 
   // 3D card effect
   const mouseX = useMotionValue(0);
