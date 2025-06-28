@@ -448,37 +448,6 @@ const BlvckwallAuth = () => {
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
-    const newErrors: {[key: string]: string} = {};
-
-    if (!email) {
-      newErrors.email = "Email is required";
-    } else if (!/\S+@\S+\.\S+/.test(email)) {
-      newErrors.email = "Email is invalid";
-    }
-
-    if (!password) {
-      newErrors.password = "Password is required";
-    } else if (password.length < 6) {
-      newErrors.password = "Password must be at least 6 characters";
-    }
-
-    if (isSignUp) {
-      if (!firstName) {
-        newErrors.firstName = "First name is required";
-      }
-      if (!lastName) {
-        newErrors.lastName = "Last name is required";
-      }
-      if (password !== confirmPassword) {
-        newErrors.confirmPassword = "Passwords do not match";
-      }
-    }
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!validateForm()) {
