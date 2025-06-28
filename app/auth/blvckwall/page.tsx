@@ -405,17 +405,6 @@ const BlvckwallAuth = () => {
     checkUser();
   }, [router]);
 
-  // Check if user is already logged in
-  useEffect(() => {
-    const checkUser = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session) {
-        router.push('/portal/overview');
-      }
-    };
-    checkUser();
-  }, [router]);
-
   const handleMouseMove = (e: React.MouseEvent) => {
     const rect = e.currentTarget.getBoundingClientRect();
     mouseX.set(e.clientX - rect.left - rect.width / 2);
