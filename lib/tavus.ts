@@ -107,7 +107,6 @@ class TavusAPI {
   }
 }
 
-export const tavusAPI = new TavusAPI();
 
 // Helper functions
 export async function generateDoctorsNoteVideo(data: {
