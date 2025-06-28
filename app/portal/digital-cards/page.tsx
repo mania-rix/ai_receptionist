@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
-import { CreditCard, Upload, QrCode, Share2, Verify, User, Mail, Phone, Building, Loader2, Download, Eye } from 'lucide-react';
+import { CreditCard, Upload, QrCode, Share2, Verified as Verify, User, Mail, Phone, Building, Loader2, Download, Eye } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
