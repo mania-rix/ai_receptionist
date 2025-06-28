@@ -374,7 +374,6 @@ Input.displayName = "Input";
 const BlvckwallAuth = () => {
   const router = useRouter();
   const { toast } = useToast();
-  const { toast } = useToast();
   
   const [isSignUp, setIsSignUp] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
