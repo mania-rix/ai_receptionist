@@ -1,7 +1,8 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { Play, Square, Mic, MicOff, Send, Phone, Globe, Loader2, RefreshCw } from 'lucide-react';
+import { motion } from 'framer-motion';
+import { Play, Square, Mic, MicOff, Send, Phone, Globe, Loader2, RefreshCw, User, Clock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -13,8 +14,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/lib/supabase-browser';
 
 interface TranslationResult {
   text: string;
@@ -30,17 +38,39 @@ interface Language {
   native_name: string;
 }
 
+interface TranscriptEntry {
+  type: 'operator' | 'caller';
+  message: string;
+  translated_message?: string;
+  language: string;
+  timestamp: string;
+}
+
+interface CallerInfo {
+  name: string;
+  phone: string;
+  language: string;
+}
+
 export default function LiveRelayPage() {
   const [isSessionActive, setIsSessionActive] = useState(false);
   const [currentCallId, setCurrentCallId] = useState('');
   const [operatorMessage, setOperatorMessage] = useState('');
-  const [targetLanguage, setTargetLanguage] = useState('en');
+  const [targetLanguage, setTargetLanguage] = useState('es');
   const [sourceLanguage, setSourceLanguage] = useState('en');
-  const [transcript, setTranscript] = useState<any[]>([]);
+  const [transcript, setTranscript] = useState<TranscriptEntry[]>([]);
   const [isRecording, setIsRecording] = useState(false);
   const [isTranslating, setIsTranslating] = useState(false);
   const [languages, setLanguages] = useState<Language[]>([]);
   const [isLoadingLanguages, setIsLoadingLanguages] = useState(true);
+  const [callerInfoOpen, setCallerInfoOpen] = useState(false);
+  const [callerInfo, setCallerInfo] = useState<CallerInfo>({
+    name: 'Maria Rodriguez',
+    phone: '+1 (555) 123-4567',
+    language: 'es'
+  });
+  const [callDuration, setCallDuration] = useState(0);
+  const [callTimer, setCallTimer] = useState<NodeJS.Timeout | null>(null);
   const { toast } = useToast();
   const audioRef = useRef<HTMLAudioElement>(null);
 
@@ -49,6 +79,9 @@ export default function LiveRelayPage() {
     fetchSupportedLanguages();
     return () => {
       console.log('[LiveRelay] Component unmounted');
+      if (callTimer) {
+        clearInterval(callTimer);
+      }
     };
   }, []);
   
@@ -85,26 +118,39 @@ export default function LiveRelayPage() {
   const startSession = async () => {
     console.log('[LiveRelay] Starting session for call:', currentCallId);
     try {
-      const response = await fetch('/api/live-relay', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          action: 'start_session',
-          call_id: currentCallId || `call_${Date.now()}`,
-        }),
-      });
-
-      if (!response.ok) throw new Error('Failed to start session');
-
-      const result = await response.json();
-      setIsSessionActive(true);
-      setCurrentCallId(result.session.call_id);
+      // Set caller language from caller info
+      setTargetLanguage(callerInfo.language);
       
-      console.log('[LiveRelay] Session started successfully:', result.session);
+      // Generate a call ID if not provided
+      const callId = currentCallId || `call_${Date.now()}`;
+      setCurrentCallId(callId);
+      
+      // Start the session
+      setIsSessionActive(true);
+      
+      // Start call timer
+      const timer = setInterval(() => {
+        setCallDuration(prev => prev + 1);
+      }, 1000);
+      setCallTimer(timer);
+      
+      // Add initial transcript entry
+      const initialEntry: TranscriptEntry = {
+        type: 'caller',
+        message: getInitialCallerMessage(callerInfo.language),
+        language: callerInfo.language,
+        timestamp: new Date().toISOString()
+      };
+      setTranscript([initialEntry]);
+      
+      console.log('[LiveRelay] Session started successfully');
       toast({
         title: 'Session Started',
         description: 'Live relay session is now active',
       });
+      
+      // Simulate caller messages
+      scheduleCallerMessages();
     } catch (error) {
       console.error('[LiveRelay] Error starting session:', error);
       toast({
@@ -115,29 +161,86 @@ export default function LiveRelayPage() {
     }
   };
 
+  const getInitialCallerMessage = (language: string) => {
+    const messages: { [key: string]: string } = {
+      'en': 'Hello, I need some help with scheduling an appointment.',
+      'es': 'Hola, necesito ayuda para programar una cita.',
+      'fr': 'Bonjour, j\'ai besoin d\'aide pour prendre rendez-vous.',
+      'de': 'Hallo, ich brauche Hilfe bei der Terminvereinbarung.',
+      'it': 'Ciao, ho bisogno di aiuto per fissare un appuntamento.',
+      'pt': 'Olá, preciso de ajuda para agendar uma consulta.',
+      'zh': '你好，我需要帮助预约。',
+      'ja': 'こんにちは、予約の手続きについて助けが必要です。',
+      'ko': '안녕하세요, 약속 일정을 잡는 데 도움이 필요합니다.',
+      'ar': 'مرحبًا، أحتاج إلى مساعدة في تحديد موعد.'
+    };
+    
+    return messages[language] || messages['en'];
+  };
+
+  const scheduleCallerMessages = () => {
+    // Schedule some simulated caller messages
+    const messages = [
+      {
+        en: "What times do you have available next week?",
+        es: "¿Qué horarios tienen disponibles la próxima semana?",
+        fr: "Quels sont les horaires disponibles la semaine prochaine?",
+        de: "Welche Termine sind nächste Woche verfügbar?",
+        delay: 15000
+      },
+      {
+        en: "I would prefer morning appointments if possible.",
+        es: "Preferiría citas por la mañana si es posible.",
+        fr: "Je préférerais des rendez-vous le matin si possible.",
+        de: "Ich würde Termine am Morgen bevorzugen, wenn möglich.",
+        delay: 30000
+      },
+      {
+        en: "Do I need to bring anything specific to the appointment?",
+        es: "¿Necesito traer algo específico a la cita?",
+        fr: "Dois-je apporter quelque chose de spécifique au rendez-vous?",
+        de: "Muss ich etwas Bestimmtes zum Termin mitbringen?",
+        delay: 45000
+      }
+    ];
+    
+    messages.forEach((msg, index) => {
+      setTimeout(() => {
+        if (isSessionActive) {
+          const message = msg[callerInfo.language as keyof typeof msg] || msg.en;
+          const newEntry: TranscriptEntry = {
+            type: 'caller',
+            message,
+            language: callerInfo.language,
+            timestamp: new Date().toISOString()
+          };
+          setTranscript(prev => [...prev, newEntry]);
+        }
+      }, msg.delay);
+    });
+  };
+
   const endSession = async () => {
     console.log('[LiveRelay] Ending session for call:', currentCallId);
     try {
-      const response = await fetch('/api/live-relay', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          action: 'end_session',
-          call_id: currentCallId,
-        }),
-      });
-
-      if (!response.ok) throw new Error('Failed to end session');
-
       setIsSessionActive(false);
-      setCurrentCallId('');
-      setTranscript([]);
+      
+      // Stop call timer
+      if (callTimer) {
+        clearInterval(callTimer);
+        setCallTimer(null);
+      }
+      
+      // Reset state
+      setCallDuration(0);
       
       console.log('[LiveRelay] Session ended successfully');
       toast({
         title: 'Session Ended',
         description: 'Live relay session has been terminated',
       });
+      
+      // Don't clear transcript to allow reviewing the conversation
     } catch (error) {
       console.error('[LiveRelay] Error ending session:', error);
       toast({
@@ -192,6 +295,13 @@ export default function LiveRelayPage() {
         title: 'Message Sent',
         description: 'Your message has been translated and spoken to the caller',
       });
+      
+      // Simulate a response from the caller after a delay
+      setTimeout(() => {
+        if (isSessionActive) {
+          simulateCallerResponse(operatorMessage);
+        }
+      }, 5000);
     } catch (error) {
       console.error('[LiveRelay] Error translating/sending message:', error);
       toast({
@@ -199,8 +309,39 @@ export default function LiveRelayPage() {
         description: 'Failed to translate and send message',
         variant: 'destructive',
       });
-    }
+    } finally {
       setIsTranslating(false);
+    }
+  };
+
+  const simulateCallerResponse = (lastMessage: string) => {
+    // Generate a contextual response based on the last message
+    let response = '';
+    const lowerMessage = lastMessage.toLowerCase();
+    
+    if (lowerMessage.includes('appointment') || lowerMessage.includes('schedule') || lowerMessage.includes('book')) {
+      response = "Yes, I would like to book for next Tuesday if possible.";
+    } else if (lowerMessage.includes('morning') || lowerMessage.includes('afternoon') || lowerMessage.includes('time')) {
+      response = "Morning works best for me, around 10am if available.";
+    } else if (lowerMessage.includes('name') || lowerMessage.includes('information')) {
+      response = "My name is " + callerInfo.name + " and my phone number is " + callerInfo.phone;
+    } else if (lowerMessage.includes('insurance') || lowerMessage.includes('coverage')) {
+      response = "I have Blue Cross insurance. Do you accept that?";
+    } else if (lowerMessage.includes('thank')) {
+      response = "Thank you for your help. I appreciate it.";
+    } else {
+      response = "I understand. Is there anything else I need to know?";
+    }
+    
+    // Add the response to the transcript
+    const newEntry: TranscriptEntry = {
+      type: 'caller',
+      message: response,
+      language: callerInfo.language,
+      timestamp: new Date().toISOString()
+    };
+    
+    setTranscript(prev => [...prev, newEntry]);
   };
 
   const toggleRecording = () => {
@@ -211,15 +352,38 @@ export default function LiveRelayPage() {
       title: isRecording ? 'Recording Stopped' : 'Recording Started',
       description: isRecording ? 'Voice input disabled' : 'Speak your message',
     });
+    
+    // Simulate voice recognition after a delay
+    if (!isRecording) {
+      setTimeout(() => {
+        if (isRecording) {
+          const recognizedText = "I can schedule you for next Tuesday at 10am. Does that work for you?";
+          setOperatorMessage(recognizedText);
+          setIsRecording(false);
+        }
+      }, 3000);
+    }
+  };
+
+  const formatTime = (seconds: number) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
 
   return (
     <div className="flex-1 space-y-6 p-8">
       <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold tracking-tight">Live Language Relay</h1>
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">Live Language Relay</h1>
+          <p className="text-gray-400 mt-1">Real-time translation for multilingual calls</p>
+        </div>
         <div className="flex items-center gap-2">
           <Button variant="outline" size="sm" onClick={fetchSupportedLanguages} disabled={isLoadingLanguages}>
             <RefreshCw className={`h-4 w-4 ${isLoadingLanguages ? 'animate-spin' : ''}`} />
+          </Button>
+          <Button variant="outline" size="sm" onClick={() => setCallerInfoOpen(true)} disabled={isSessionActive}>
+            <User className="h-4 w-4" />
           </Button>
           <Badge variant={isSessionActive ? 'default' : 'secondary'}>
             {isSessionActive ? 'Active' : 'Inactive'}
@@ -237,6 +401,30 @@ export default function LiveRelayPage() {
           )}
         </div>
       </div>
+
+      {isSessionActive && (
+        <div className="flex items-center justify-between bg-gray-900/50 rounded-lg p-3 border border-gray-800">
+          <div className="flex items-center gap-4">
+            <div className="h-10 w-10 rounded-full bg-gradient-to-br from-purple-600 to-blue-600 flex items-center justify-center">
+              <User className="h-5 w-5 text-white" />
+            </div>
+            <div>
+              <div className="font-medium">{callerInfo.name}</div>
+              <div className="text-sm text-gray-400 flex items-center gap-2">
+                <Phone className="h-3 w-3" /> {callerInfo.phone}
+                <span className="mx-1">•</span>
+                <Globe className="h-3 w-3" /> {languages.find(l => l.code === callerInfo.language)?.name || callerInfo.language}
+              </div>
+            </div>
+          </div>
+          <div className="flex items-center gap-3">
+            <Badge variant="outline" className="flex items-center gap-1">
+              <Clock className="h-3 w-3" />
+              {formatTime(callDuration)}
+            </Badge>
+          </div>
+        </div>
+      )}
 
       <div className="grid gap-6 lg:grid-cols-2">
         {/* Operator Panel */}
@@ -260,23 +448,7 @@ export default function LiveRelayPage() {
 
             <div>
               <label className="mb-2 block text-sm font-medium">Your Language</label>
-              <Select value={sourceLanguage} onValueChange={setSourceLanguage} disabled={isLoadingLanguages}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {languages.map((lang) => (
-                    <SelectItem key={lang.code} value={lang.code}>
-                      {lang.name} ({lang.native_name})
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div>
-              <label className="mb-2 block text-sm font-medium">Caller's Language</label>
-              <Select value={targetLanguage} onValueChange={setTargetLanguage} disabled={isLoadingLanguages}>
+              <Select value={sourceLanguage} onValueChange={setSourceLanguage} disabled={isLoadingLanguages || isSessionActive}>
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
@@ -330,7 +502,17 @@ export default function LiveRelayPage() {
 
             {isRecording && (
               <div className="text-center text-sm text-gray-400">
-                🎤 Listening... Speak your message
+                <motion.div
+                  animate={{ opacity: [0.5, 1, 0.5] }}
+                  transition={{ repeat: Infinity, duration: 1.5 }}
+                  className="flex items-center justify-center gap-2"
+                >
+                  <span className="relative flex h-3 w-3">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-3 w-3 bg-red-500"></span>
+                  </span>
+                  Listening... Speak your message
+                </motion.div>
               </div>
             )}
           </CardContent>
@@ -355,8 +537,11 @@ export default function LiveRelayPage() {
                 </div>
               ) : (
                 transcript.map((entry, index) => (
-                  <div
+                  <motion.div
                     key={index}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.3 }}
                     className={`p-3 rounded-lg ${
                       entry.type === 'operator'
                         ? 'bg-blue-950/50 border-l-4 border-blue-500'
@@ -383,7 +568,7 @@ export default function LiveRelayPage() {
                         <p className="text-sm italic">{entry.translated_message}</p>
                       </div>
                     )}
-                  </div>
+                  </motion.div>
                 ))
               )}
             </div>
@@ -419,6 +604,53 @@ export default function LiveRelayPage() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Caller Info Dialog */}
+      <Dialog open={callerInfoOpen} onOpenChange={setCallerInfoOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Caller Information</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <label className="mb-2 block text-sm font-medium">Caller Name</label>
+              <Input
+                placeholder="Enter caller name"
+                value={callerInfo.name}
+                onChange={(e) => setCallerInfo(prev => ({ ...prev, name: e.target.value }))}
+              />
+            </div>
+            <div>
+              <label className="mb-2 block text-sm font-medium">Phone Number</label>
+              <Input
+                placeholder="Enter phone number"
+                value={callerInfo.phone}
+                onChange={(e) => setCallerInfo(prev => ({ ...prev, phone: e.target.value }))}
+              />
+            </div>
+            <div>
+              <label className="mb-2 block text-sm font-medium">Caller's Language</label>
+              <Select 
+                value={callerInfo.language} 
+                onValueChange={(value) => setCallerInfo(prev => ({ ...prev, language: value }))}
+                disabled={isLoadingLanguages}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {languages.map((lang) => (
+                    <SelectItem key={lang.code} value={lang.code}>
+                      {lang.name} ({lang.native_name})
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <Button onClick={() => setCallerInfoOpen(false)}>Save</Button>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* Hidden audio element for playing TTS responses */}
       <audio ref={audioRef} style={{ display: 'none' }} />

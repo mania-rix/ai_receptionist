@@ -5,20 +5,20 @@ import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { motion } from 'framer-motion';
 import { 
-  LayoutDashboard, User, PhoneOutgoing, PhoneIncoming, FileText, Video, Settings, LogOut, 
-  Phone, Book, BarChart3, Calendar, Users, Shield, GitBranch, MessageSquare, Mic, 
-  CreditCard, Hash, Bug, Rocket
+  LayoutDashboard, User, PhoneOutgoing, PhoneIncoming, FileText, 
+  Video, Settings, LogOut, Phone, Book, BarChart3, Calendar, 
+  Users, Shield, GitBranch, MessageSquare, Mic, CreditCard, 
+  Hash, Bug, Rocket, Zap
 } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { supabase } from '@/lib/supabase-browser';
+import { supabase } from '@/lib/supabase-browser'
 import { useRouter } from 'next/navigation';
 import { ActivityFeed } from '@/components/activity-feed';
 import { FeedbackWidget } from '@/components/feedback-widget';
 
-// Define sidebar sections for better organization
-const sections = [
+const navItems = [
   {
-    title: 'OVERVIEW',
+    section: 'OVERVIEW',
     items: [
       {
         title: 'Overview',
@@ -28,7 +28,7 @@ const sections = [
     ]
   },
   {
-    title: 'OPERATIONS',
+    section: 'OPERATIONS',
     items: [
       {
         title: 'Agents',
@@ -50,61 +50,16 @@ const sections = [
         href: '/portal/phone-numbers',
         icon: Phone,
       },
+    ]
+  },
+  {
+    section: 'HACKATHON FEATURES',
+    items: [
       {
         title: 'Live Relay',
         href: '/portal/live-relay',
         icon: MessageSquare,
-      }
-    ]
-  },
-  {
-    title: 'KNOWLEDGE & INSIGHTS',
-    items: [
-      {
-        title: 'Knowledge Base',
-        href: '/portal/knowledge-base',
-        icon: Book,
       },
-      {
-        title: 'Analytics',
-        href: '/portal/analytics',
-        icon: BarChart3,
-      },
-      {
-        title: 'Voice Analytics',
-        href: '/portal/voice-analytics',
-        icon: Mic,
-      }
-    ]
-  },
-  {
-    title: 'COMMUNITY & COMPLIANCE',
-    items: [
-      {
-        title: 'Events',
-        href: '/portal/events',
-        icon: Calendar,
-      },
-      {
-        title: 'HR Center',
-        href: '/portal/hr-center',
-        icon: Users,
-      },
-      {
-        title: 'Compliance',
-        href: '/portal/compliance',
-        icon: Shield,
-      },
-      {
-        title: 'Conversation Flows',
-        href: '/portal/conversation-flows',
-        icon: GitBranch,
-      }
-    ]
-  },
-  {
-    title: 'HACKATHON FEATURES',
-    items: [
       {
         title: 'Video Summaries',
         href: '/portal/video-summaries',
@@ -126,20 +81,65 @@ const sections = [
         icon: Bug,
       },
       {
-        title: 'Deploy',
+        title: 'Deployment',
         href: '/portal/deploy',
         icon: Rocket,
-      }
+      },
     ]
   },
   {
-    title: 'SETTINGS & ACCOUNT',
+    section: 'KNOWLEDGE & INSIGHTS',
+    items: [
+      {
+        title: 'Knowledge Base',
+        href: '/portal/knowledge-base',
+        icon: Book,
+      },
+      {
+        title: 'Analytics',
+        href: '/portal/analytics',
+        icon: BarChart3,
+      },
+      {
+        title: 'Voice Analytics',
+        href: '/portal/voice-analytics',
+        icon: Mic,
+      },
+      {
+        title: 'Conversation Flows',
+        href: '/portal/conversation-flows',
+        icon: GitBranch,
+      },
+    ]
+  },
+  {
+    section: 'ORGANIZATION',
+    items: [
+      {
+        title: 'Events',
+        href: '/portal/events',
+        icon: Calendar,
+      },
+      {
+        title: 'HR Center',
+        href: '/portal/hr-center',
+        icon: Users,
+      },
+      {
+        title: 'Compliance',
+        href: '/portal/compliance',
+        icon: Shield,
+      },
+    ]
+  },
+  {
+    section: 'SETTINGS & ACCOUNT',
     items: [
       {
         title: 'Settings',
         href: '/portal/settings',
         icon: Settings,
-      }
+      },
     ]
   }
 ];
@@ -155,65 +155,56 @@ export function EnhancedSidebar() {
 
   return (
     <div className="flex h-full w-[72px] flex-col items-center border-r border-gray-800 bg-[#121212] py-4 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-600 scrollbar-track-transparent">
-      <div className="mb-6 h-10 w-10 rounded-full bg-gradient-to-br from-purple-600 to-blue-600" />
+      <div className="mb-6 h-10 w-10 rounded-full bg-gradient-to-br from-purple-600 to-blue-600 flex items-center justify-center">
+        <Zap className="h-5 w-5 text-white" />
+      </div>
       
       {/* Activity Feed */}
       <div className="mb-4">
         <ActivityFeed />
       </div>
 
-      <div className="flex flex-1 flex-col items-center gap-1 w-full">
+      <div className="flex flex-1 flex-col items-center gap-4 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-600 scrollbar-track-transparent">
         <TooltipProvider>
-          {sections.map((section, sectionIndex) => (
-            <div key={section.title} className="w-full">
-              {sectionIndex > 0 && (
-                <div className="my-3 px-2">
-                  <div className="h-px w-full bg-gray-800" />
-                </div>
-              )}
-              
-              <div className="px-2 py-1">
-                <p className="text-[9px] text-gray-500 font-medium tracking-wider px-2 mb-2 hidden">
-                  {section.title}
-                </p>
+          {navItems.map((section) => (
+            <div key={section.section} className="w-full flex flex-col items-center">
+              {section.items.map((item) => {
+                const isActive = pathname === item.href;
                 
-                {section.items.map((item) => {
-                  const isActive = pathname === item.href;
-                  
-                  return (
-                    <Tooltip key={item.href} delayDuration={100}>
-                      <TooltipTrigger asChild>
-                        <Link
-                          href={item.href}
-                          className={cn(
-                            "group relative flex h-10 w-full items-center justify-center rounded-md text-gray-400 transition-colors hover:text-white",
-                            isActive && "text-white"
-                          )}
-                        >
-                          {isActive && (
-                            <motion.div
-                              layoutId="activeNav"
-                              className="absolute left-0 h-full w-1 rounded-r-md bg-gradient-to-b from-purple-600 to-blue-600"
-                              initial={{ opacity: 0 }}
-                              animate={{ opacity: 1 }}
-                              exit={{ opacity: 0 }}
-                              transition={{ duration: 0.2 }}
-                            />
-                          )}
-                          <item.icon className="h-5 w-5" />
-                        </Link>
-                      </TooltipTrigger>
-                      <TooltipContent 
-                        side="right" 
-                        className="border-gray-800 bg-[#1A1A1A] text-white pointer-events-none z-50"
-                        sideOffset={8}
+                return (
+                  <Tooltip key={item.href} delayDuration={100}>
+                    <TooltipTrigger asChild>
+                      <Link
+                        href={item.href}
+                        className={cn(
+                          "group relative flex h-10 w-10 items-center justify-center rounded-md text-gray-400 transition-colors hover:text-white",
+                          isActive && "text-white"
+                        )}
                       >
-                        {item.title}
-                      </TooltipContent>
-                    </Tooltip>
-                  );
-                })}
-              </div>
+                        {isActive && (
+                          <motion.div
+                            layoutId="activeNav"
+                            className="absolute left-0 h-full w-1 rounded-r-md bg-gradient-to-b from-purple-600 to-blue-600"
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            transition={{ duration: 0.2 }}
+                          />
+                        )}
+                        <item.icon className="h-5 w-5" />
+                      </Link>
+                    </TooltipTrigger>
+                    <TooltipContent 
+                      side="right" 
+                      className="border-gray-800 bg-[#1A1A1A] text-white pointer-events-none z-[9999]"
+                      sideOffset={8}
+                    >
+                      {item.title}
+                    </TooltipContent>
+                  </Tooltip>
+                );
+              })}
+              <div className="w-8 border-t border-gray-800 my-2"></div>
             </div>
           ))}
         </TooltipProvider>
@@ -231,7 +222,7 @@ export function EnhancedSidebar() {
           </TooltipTrigger>
           <TooltipContent 
             side="right" 
-            className="border-gray-800 bg-[#1A1A1A] text-white pointer-events-none z-50"
+            className="border-gray-800 bg-[#1A1A1A] text-white pointer-events-none z-[9999]"
             sideOffset={8}
           >
             Sign Out

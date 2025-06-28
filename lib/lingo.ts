@@ -77,7 +77,7 @@ class LingoAPI {
 
     if (endpoint === '/translate' && options.method === 'POST') {
       const body = JSON.parse(options.body as string);
-      const mockTranslations: { [key: string]: string } = {
+      const mockTranslations: { [key: string]: { [key: string]: string } } = {
         'Hello, how can I help you today?': {
           es: 'Hola, ¿cómo puedo ayudarte hoy?',
           fr: 'Bonjour, comment puis-je vous aider aujourd\'hui?',
@@ -88,18 +88,89 @@ class LingoAPI {
           ja: 'こんにちは、今日はどのようにお手伝いできますか？',
           ko: '안녕하세요, 오늘 어떻게 도와드릴까요?',
           ar: 'مرحبا، كيف يمكنني مساعدتك اليوم؟'
+        },
+        'I need to schedule an appointment': {
+          es: 'Necesito programar una cita',
+          fr: 'J\'ai besoin de prendre rendez-vous',
+          de: 'Ich muss einen Termin vereinbaren',
+          it: 'Ho bisogno di fissare un appuntamento',
+          pt: 'Preciso agendar uma consulta',
+          zh: '我需要预约',
+          ja: '予約を取る必要があります',
+          ko: '약속을 잡아야 합니다',
+          ar: 'أحتاج إلى تحديد موعد'
+        },
+        'What time works for you?': {
+          es: '¿Qué hora te funciona?',
+          fr: 'Quelle heure vous convient?',
+          de: 'Welche Zeit passt Ihnen?',
+          it: 'Quale orario ti va bene?',
+          pt: 'Que horas funcionam para você?',
+          zh: '什么时间适合你？',
+          ja: 'どの時間が都合がよいですか？',
+          ko: '언제가 괜찮으세요?',
+          ar: 'ما هو الوقت المناسب لك؟'
+        },
+        'Thank you for your help': {
+          es: 'Gracias por tu ayuda',
+          fr: 'Merci pour votre aide',
+          de: 'Danke für Ihre Hilfe',
+          it: 'Grazie per il tuo aiuto',
+          pt: 'Obrigado pela sua ajuda',
+          zh: '谢谢你的帮助',
+          ja: 'ご協力ありがとうございます',
+          ko: '도움을 주셔서 감사합니다',
+          ar: 'شكرا لمساعدتك'
         }
       };
 
-      const translated = mockTranslations[body.text]?.[body.target_language] || 
-                        `[${body.target_language.toUpperCase()}] ${body.text}`;
-
+      // Check if we have a direct match in our mock translations
+      const directTranslation = mockTranslations[body.text]?.[body.target_language];
+      
+      // If we have a direct match, use it
+      if (directTranslation) {
+        return {
+          text: body.text,
+          source_language: body.source_language || 'en',
+          target_language: body.target_language,
+          translated_text: directTranslation,
+          confidence: 0.95
+        };
+      }
+      
+      // Otherwise, generate a mock translation by adding a language prefix
       return {
         text: body.text,
         source_language: body.source_language || 'en',
         target_language: body.target_language,
-        translated_text: translated,
-        confidence: 0.95
+        translated_text: `[${body.target_language.toUpperCase()}] ${body.text}`,
+        confidence: 0.85
+      };
+    }
+
+    if (endpoint === '/detect' && options.method === 'POST') {
+      const body = JSON.parse(options.body as string);
+      const text = body.text.toLowerCase();
+      
+      const mockDetections: { [key: string]: string } = {
+        'hola': 'es',
+        'bonjour': 'fr',
+        'guten tag': 'de',
+        'ciao': 'it',
+        'olá': 'pt',
+        '你好': 'zh',
+        'こんにちは': 'ja',
+        '안녕하세요': 'ko',
+        'مرحبا': 'ar'
+      };
+
+      const detected = Object.keys(mockDetections).find(key => 
+        text.includes(key)
+      );
+
+      return {
+        language: detected ? mockDetections[detected] : 'en',
+        confidence: 0.9
       };
     }
 
