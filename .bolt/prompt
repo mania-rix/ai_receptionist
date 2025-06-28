@@ -1,11 +1,18 @@
-For all designs I ask you to make, have them be beautiful, not cookie cutter. Make webpages that are fully featured and worthy for production.
+# BlvckWall AI — .bolt/prompt (Universal Rules)
 
-When using client-side hooks (useState and useEffect) in a component that's being treated as a Server Component by Next.js, always add the "use client" directive at the top of the file.
-
-Do not write code that will trigger this error: "Warning: Extra attributes from the server: %s%s""class,style"
-
-By default, this template supports JSX syntax with Tailwind CSS classes, the shadcn/ui library, React hooks, and Lucide React for icons. Do not install other packages for UI themes, icons, etc unless absolutely necessary or I request them.
-
-Use icons from lucide-react for logos.
-
+- All design and UI components must be modern, beautiful, and feel worthy of a real, production-grade SaaS product. Consistency, clarity, and polish are required at every level.
+- Never introduce “cookie cutter” or generic-feeling layouts. Every element should feel intentional, clean, and aligned with a premium business dashboard.
+- Fix visible UI/UX issues: avoid scrollbars that break the visual flow, fix tooltip and overlay overlaps, ensure readable font rendering, and prevent text collisions in all states.
+- For any sidebar or navigation, the user experience must be smooth: no ugly or default scrollbars, all hover/active/tooltip states must be visually clear, and navigation should never obscure content.
+- When implementing tooltips, overlays, or modals, ensure correct z-index stacking and spacing so elements never overlap unintentionally. All overlays must display text above background elements, with no font bleed or collision.
+- Use only mock/sample/fake data for all demo features unless explicitly told to connect to real sources. Do not require real phone numbers, sensitive data, or production integrations by default.
+- Do not make any database or schema changes automatically. If new tables or fields are needed, provide a clear description or migration summary for manual review.
+- Never break or overwrite existing authentication, user management, or project logic—especially if using Supabase or a similar auth system.
+- All code must be deployable and compatible with both Vercel and Netlify, with no environment-specific breakage.
+- By default, use JSX with Tailwind CSS, shadcn/ui components, React hooks, and Lucide React for icons. Do not install or use other UI libraries or icon packs unless specifically requested.
+- When using React client-side hooks in a Server Component, always add the `"use client"` directive at the top of the file.
+- Do not write code that will cause extra attributes or hydration mismatch warnings in Next.js or React.
+- Add debug logging and clear error handling to all new features to make tracing and diagnosing issues straightforward.
+- All new code must include comments explaining the purpose and logic of major functions or code blocks.
+- If there is uncertainty about layout, interaction, or style, default to clean, professional, and user-friendly design choices in line with modern SaaS UI standards.
 
