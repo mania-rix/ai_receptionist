@@ -113,108 +113,38 @@ export default function KnowledgeBasePage() {
     }
   };
 
-  const createOrUpdateKnowledgeBase = async (data: FormData) => {
-    console.log('[KBUI] Creating/updating knowledge base:', data);
-    setIsLoading(true);
-    try {
-      // Get the authenticated user
-      const { data: { session } } = await supabase.auth.getSession();
-      const user = session?.user;
-
-      if (!user) {
-        throw new Error('Not authenticated');
-      }
-
-      let result;
-      
-      if (editingKB) {
-        // Update existing knowledge base
-        const { data: updatedKB, error } = await supabase
-          .from('knowledge_bases')
-          .update({
-            name: data.name,
-            description: data.description,
-            content: data.content,
-            languages: data.languages,
-            updated_at: new Date().toISOString(),
-          })
-          .eq('id', editingKB.id)
-          .select()
-          .single();
-          
-        if (error) throw error;
-        result = { knowledgeBase: updatedKB };
-      } else {
-        // Create new knowledge base
-        const { data: newKB, error } = await supabase
-          .from('knowledge_bases')
-          .insert([
-            {
-              user_id: user.id,
-              name: data.name,
-              description: data.description,
-              content: data.content || {},
-              languages: data.languages || ['en'],
-            },
-          ])
-          .select()
-          .single();
-          
-        if (error) throw error;
-        result = { knowledgeBase: newKB };
-      }
-      
-      if (editingKB) {
-        setKnowledgeBases(prev => 
-          prev.map(kb => kb.id === editingKB.id ? result.knowledgeBase : kb)
-        );
-      } else {
-        setKnowledgeBases(prev => [result.knowledgeBase, ...prev]);
-      }
-
-      setOpen(false);
-      setEditingKB(null);
-      form.reset();
-      
-      console.log('[KBUI] Knowledge base saved successfully:', result.knowledgeBase);
-      toast({
-        title: 'Success',
-        description: `Knowledge base ${editingKB ? 'updated' : 'created'} successfully`,
-      });
-    } catch (error) {
-      console.error('[KBUI] Error saving knowledge base:', error);
-      
-      // For demo mode, simulate success with mock data
-      const mockKB = {
-        id: editingKB ? editingKB.id : `demo-kb-${Date.now()}`,
-        name: data.name,
-        description: data.description,
+ // CREATE
+const { data: newKB, error } = await supabase
+  .from('knowledge_bases')
+  .insert([
+    {
+      user_id: user.id,
+      name: data.name,
+      description: data.description,
+      data: {
         content: data.content || {},
         languages: data.languages || ['en'],
-        created_at: editingKB ? editingKB.created_at : new Date().toISOString(),
-        updated_at: new Date().toISOString()
-      };
-      
-      if (editingKB) {
-        setKnowledgeBases(prev => 
-          prev.map(kb => kb.id === editingKB.id ? mockKB : kb)
-        );
-      } else {
-        setKnowledgeBases(prev => [mockKB, ...prev]);
-      }
-      
-      toast({
-        title: 'Success',
-        description: `Knowledge base ${editingKB ? 'updated' : 'created'} successfully (Demo Mode)`,
-      });
-      
-      setOpen(false);
-      setEditingKB(null);
-      form.reset();
-    } finally {
-      setIsLoading(false);
-    }
-  };
+      },
+    },
+  ])
+  .select()
+  .single();
+
+// UPDATE
+const { data: updatedKB, error } = await supabase
+  .from('knowledge_bases')
+  .update({
+    name: data.name,
+    description: data.description,
+    data: {
+      content: data.content || {},
+      languages: data.languages || ['en'],
+    },
+    updated_at: new Date().toISOString(),
+  })
+  .eq('id', editingKB.id)
+  .select()
+  .single();
 
   const deleteKnowledgeBase = async (id: string) => {
     console.log('[KBUI] Deleting knowledge base:', id);
