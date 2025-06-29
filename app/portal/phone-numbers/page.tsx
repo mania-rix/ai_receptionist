@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useDemoMode } from '@/contexts/demo-mode-context';
+
 import { useForm } from 'react-hook-form';
 import { Plus, Loader2, Phone, Settings, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -23,7 +23,7 @@ import {
 } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
-import { supabase } from '@/lib/supabase-browser';
+
 import { useStorage } from '@/contexts/storage-context';
 
 type FormData = {
