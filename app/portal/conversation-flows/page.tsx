@@ -1,6 +1,6 @@
 'use client';
 
-import { supabase } from '@/lib/supabase-browser';
+import { useStorage } from '@/contexts/storage-context';
 
 import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
@@ -34,7 +34,7 @@ interface FlowNode {
 
 export default function ConversationFlowsPage() {
   const [isLoading, setIsLoading] = useState(false);
-  const [flows, setFlows] = useState<any[]>([]);
+  const { conversationFlows, addItem, updateItem, deleteItem } = useStorage();
   const [open, setOpen] = useState(false);
   const [editingFlow, setEditingFlow] = useState<any>(null);
   const [designerOpen, setDesignerOpen] = useState(false);
@@ -45,164 +45,45 @@ export default function ConversationFlowsPage() {
 
   useEffect(() => {
     console.log('[FlowDesigner] Component mounted');
-    checkAuthentication();
-    fetchFlows();
   }, []);
-
-  const checkAuthentication = async () => {
-    try {
-      const { data: { session }, error } = await supabase.auth.getSession();
-      if (error) {
-        console.error('[FlowDesigner] Auth error:', error);
-        return;
-      }
-      
-      if (!session) {
-        console.log('[FlowDesigner] No session found');
-        return;
-      }
-      
-      console.log('[FlowDesigner] User authenticated:', session.user.id);
-    } catch (error) {
-      console.error('[FlowDesigner] Error checking authentication:', error);
-    }
-  };
-
-  const fetchFlows = async () => {
-    console.log('[FlowDesigner] Fetching flows...');
-    try {
-      const response = await fetch('/api/conversation-flows');
-      const data = await response.json();
-      setFlows(data.flows || []);
-      console.log('[FlowDesigner] Flows fetched:', data.flows?.length || 0);
-    } catch (error) {
-      // For demo, provide mock data if API fails
-      const mockFlows = [
-        {
-          id: 'demo-flow-1',
-          name: 'Patient Intake',
-          description: 'Initial patient information gathering flow',
-          flow_data: { nodes: [{ id: 'start', type: 'start', content: 'Conversation Start', position: { x: 100, y: 100 } }] },
-          is_active: true,
-          version: 1,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
-        },
-        {
-          id: 'demo-flow-2',
-          name: 'Appointment Scheduling',
-          description: 'Flow for scheduling patient appointments',
-          flow_data: { nodes: [{ id: 'start', type: 'start', content: 'Conversation Start', position: { x: 100, y: 100 } }] },
-          is_active: true,
-          version: 1,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
-        }
-      ];
-      setFlows(mockFlows);
-      console.error('[FlowDesigner] Error fetching flows:', error);
-    }
-  };
 
   const createOrUpdateFlow = async (data: FormData) => {
     console.log('[FlowDesigner] Creating/updating flow:', data);
     setIsLoading(true);
     try {
-      // Get the authenticated user
-      const { data: { session } } = await supabase.auth.getSession();
-      const user = session?.user;
-
-      if (!user) {
-        throw new Error('Not authenticated');
-      }
-
-      let result;
-      
       if (editingFlow) {
-        // Update existing flow
-        const { data: updatedFlow, error } = await supabase
-          .from('conversation_flows')
-          .update({
-            name: data.name,
-            description: data.description,
-            flow_data: editingFlow.flow_data,
-            is_active: editingFlow.is_active,
-            updated_at: new Date().toISOString(),
-          })
-          .eq('id', editingFlow.id)
-          .select()
-          .single();
-          
-        if (error) throw error;
-        result = { flow: updatedFlow };
+        await updateItem('conversationFlows', editingFlow.id, {
+          name: data.name,
+          description: data.description,
+          flow_data: editingFlow.flow_data,
+          is_active: editingFlow.is_active,
+        });
       } else {
-        // Create new flow
-        const { data: newFlow, error } = await supabase
-          .from('conversation_flows')
-          .insert([
-            {
-              user_id: user.id,
-              name: data.name,
-              description: data.description,
-              flow_data: { nodes: [], connections: [] },
-              is_active: true,
-            },
-          ])
-          .select()
-          .single();
-          
-        if (error) throw error;
-        result = { flow: newFlow };
+        await addItem('conversationFlows', {
+          name: data.name,
+          description: data.description,
+          flow_data: { nodes: [], connections: [] },
+          is_active: true,
+          version: 1,
+        });
       }
       
-      if (editingFlow) {
-        setFlows(prev => 
-          prev.map(flow => flow.id === editingFlow.id ? result.flow : flow)
-        );
-      } else {
-        setFlows(prev => [result.flow, ...prev]);
-      }
-
       setOpen(false);
       setEditingFlow(null);
       form.reset();
       
-      console.log('[FlowDesigner] Flow saved successfully:', result.flow);
+      console.log('[FlowDesigner] Flow saved successfully');
       toast({
         title: 'Success',
         description: `Flow ${editingFlow ? 'updated' : 'created'} successfully`,
       });
     } catch (error) {
       console.error('[FlowDesigner] Error saving flow:', error);
-      
-      // For demo mode, simulate success with mock data
-      const mockFlow = {
-        id: editingFlow ? editingFlow.id : `demo-flow-${Date.now()}`,
-        name: data.name,
-        description: data.description,
-        flow_data: editingFlow ? editingFlow.flow_data : { nodes: [], connections: [] },
-        is_active: true,
-        version: 1,
-        created_at: editingFlow ? editingFlow.created_at : new Date().toISOString(),
-        updated_at: new Date().toISOString()
-      };
-      
-      if (editingFlow) {
-        setFlows(prev => 
-          prev.map(flow => flow.id === editingFlow.id ? mockFlow : flow)
-        );
-      } else {
-        setFlows(prev => [mockFlow, ...prev]);
-      }
-      
       toast({
-        title: 'Success',
-        description: `Flow ${editingFlow ? 'updated' : 'created'} successfully (Demo Mode)`,
+        title: 'Error',
+        description: 'Failed to save flow',
+        variant: 'destructive',
       });
-      
-      setOpen(false);
-      setEditingFlow(null);
-      form.reset();
     } finally {
       setIsLoading(false);
     }
@@ -211,13 +92,8 @@ export default function ConversationFlowsPage() {
   const deleteFlow = async (id: string) => {
     console.log('[FlowDesigner] Deleting flow:', id);
     try {
-      const response = await fetch(`/api/conversation-flows/${id}`, {
-        method: 'DELETE',
-      });
-
-      if (!response.ok) throw new Error('Failed to delete flow');
-
-      setFlows(prev => prev.filter(flow => flow.id !== id));
+      await deleteItem('conversationFlows', id);
+      
       console.log('[FlowDesigner] Flow deleted successfully:', id);
       toast({
         title: 'Success',
@@ -285,15 +161,9 @@ export default function ConversationFlowsPage() {
 
     console.log('[FlowDesigner] Saving flow design for:', currentFlow.id);
     try {
-      const response = await fetch(`/api/conversation-flows/${currentFlow.id}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          flow_data: { nodes, connections: [] },
-        }),
+      await updateItem('conversationFlows', currentFlow.id, {
+        flow_data: { nodes, connections: [] },
       });
-
-      if (!response.ok) throw new Error('Failed to save flow design');
 
       console.log('[FlowDesigner] Flow design saved successfully');
       toast({
@@ -302,7 +172,6 @@ export default function ConversationFlowsPage() {
       });
       
       setDesignerOpen(false);
-      fetchFlows();
     } catch (error) {
       console.error('[FlowDesigner] Error saving flow design:', error);
       toast({
@@ -377,7 +246,7 @@ export default function ConversationFlowsPage() {
       </div>
 
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-        {flows.map((flow) => (
+        {conversationFlows.map((flow) => (
           <Card key={flow.id} className="border-gray-800 bg-[#121212]">
             <CardHeader className="pb-3">
               <div className="flex items-center justify-between">
@@ -436,7 +305,7 @@ export default function ConversationFlowsPage() {
         ))}
       </div>
 
-      {flows.length === 0 && (
+      {conversationFlows.length === 0 && (
         <Card className="border-gray-800 bg-[#121212]">
           <CardContent className="flex flex-col items-center justify-center py-12">
             <GitBranch className="h-12 w-12 text-gray-400 mb-4" />

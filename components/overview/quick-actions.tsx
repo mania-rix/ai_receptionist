@@ -238,13 +238,13 @@ export function QuickActions() {
   return (
     <Card className="border-gray-800 bg-[#121212]">
       <CardHeader>
-        <CardTitle className="flex items-center gap-2">
+        <CardTitle className="flex items-center gap-2 mb-1">
           <Zap className="h-5 w-5 text-yellow-400" />
           Quick Actions
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-3 min-w-0 relative">
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-3 min-w-0 relative pb-6">
           {(showAllActions ? allActions : mainActions).map((action, index) => {
             const Icon = action.icon;
             const isCurrentlyLoading = isLoading === action.id;
@@ -260,7 +260,7 @@ export function QuickActions() {
                   variant="outline"
                   onClick={action.action}
                   disabled={isCurrentlyLoading || action.disabled}
-                  className={`h-auto p-4 flex flex-col items-center gap-2 w-full border ${action.color} hover:scale-105 transition-all duration-200 min-w-0`}
+                  className={`h-auto py-4 px-3 flex flex-col items-center gap-2 w-full border ${action.color} hover:scale-105 transition-all duration-200 min-w-0`}
                 >
                   <div className="relative">
                     <Icon className="h-6 w-6" />
@@ -273,8 +273,8 @@ export function QuickActions() {
                     )}
                   </div>
                   <div className="text-center">
-                    <div className="font-medium text-sm line-clamp-1 break-words">{action.title}</div>
-                    <div className="text-xs text-gray-400 mt-1 line-clamp-2 break-words leading-tight h-8">{action.description}</div>
+                    <div className="font-medium text-sm line-clamp-1 break-all">{action.title}</div>
+                    <div className="text-xs text-gray-400 mt-1 line-clamp-2 break-all leading-tight h-8 overflow-hidden">{action.description}</div>
                   </div> 
                 </Button>
               </motion.div>
@@ -284,7 +284,7 @@ export function QuickActions() {
           <motion.div
             initial={{ opacity: 0, scale: 0.8 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="absolute -bottom-4 right-0"
+            className="absolute bottom-0 right-0"
           >
             <Button
               variant="ghost"

@@ -1,5 +1,6 @@
 'use client';
 
+import { useStorage } from '@/contexts/storage-context';
 import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { Plus, Loader2, Shield, AlertTriangle, Play, Trash2 } from 'lucide-react';
@@ -26,77 +27,17 @@ type FormData = {
 
 export default function CompliancePage() {
   const [isLoading, setIsLoading] = useState(false);
-  const [scripts, setScripts] = useState<any[]>([]);
+  const { complianceScripts, addItem, updateItem, deleteItem } = useStorage();
   const [violations, setViolations] = useState<any[]>([]);
   const [open, setOpen] = useState(false);
+  const [editingScript, setEditingScript] = useState<any>(null);
   const { toast } = useToast();
   const form = useForm<FormData>();
 
   useEffect(() => {
-    checkAuthentication();
-    fetchComplianceScripts();
+    console.log('[Compliance] Component mounted');
     fetchViolations();
   }, []);
-
-  const checkAuthentication = async () => {
-    try {
-      const { data: { session }, error } = await supabase.auth.getSession();
-      if (error) {
-        console.error('[Compliance] Auth error:', error);
-        return;
-      }
-      
-      if (!session) {
-        console.log('[Compliance] No session found');
-        return;
-      }
-      
-      console.log('[Compliance] User authenticated:', session.user.id);
-    } catch (error) {
-      console.error('[Compliance] Error checking authentication:', error);
-    }
-  };
-
-  const fetchComplianceScripts = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('compliance_scripts')
-        .select('*')
-        .order('created_at', { ascending: false });
-
-      if (error) throw error;
-      setScripts(data || []);
-    } catch (error) {
-      console.error('Error fetching compliance scripts:', error);
-      // For demo, provide mock data if database fails
-      setScripts([
-        {
-          id: 'demo-script-1',
-          name: 'HIPAA Compliance',
-          description: 'Healthcare privacy compliance requirements',
-          required_phrases: [
-            'This call may be recorded for quality assurance',
-            'Your information is protected under HIPAA',
-            'Do you consent to this recording?'
-          ],
-          is_active: true,
-          created_at: new Date().toISOString()
-        },
-        {
-          id: 'demo-script-2',
-          name: 'Financial Disclosure',
-          description: 'Required financial service disclosures',
-          required_phrases: [
-            'This call is being monitored',
-            'Investment products are not FDIC insured',
-            'Past performance does not guarantee future results'
-          ],
-          is_active: true,
-          created_at: new Date().toISOString()
-        }
-      ]);
-    }
-  };
 
 const fetchViolations = async () => {
   try {
@@ -129,24 +70,17 @@ const sorted = (data || [])
 
 
   const createComplianceScript = async (data: FormData) => {
+    console.log('[Compliance] Creating compliance script:', data);
     setIsLoading(true);
+    
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-      const user = session?.user;
-      if (!user) throw new Error('Not authenticated');
-
-      const { error } = await supabase
-        .from('compliance_scripts')
-        .insert([{
-          user_id: user.id,
-          name: data.name,
-          description: data.description,
-          required_phrases: data.required_phrases,
-        }]);
-
-      if (error) throw error;
-
-      await fetchComplianceScripts();
+      await addItem('complianceScripts', {
+        name: data.name,
+        description: data.description,
+        required_phrases: data.required_phrases,
+        is_active: true
+      });
+      
       setOpen(false);
       form.reset();
       
@@ -157,23 +91,10 @@ const sorted = (data || [])
     } catch (error) {
       console.error('Error creating compliance script:', error);
       
-      // For demo mode, simulate success
-      const newScript = {
-        id: `demo-script-${Date.now()}`,
-        name: data.name,
-        description: data.description,
-        required_phrases: data.required_phrases,
-        is_active: true,
-        created_at: new Date().toISOString()
-      };
-      
-      setScripts(prev => [newScript, ...prev]);
-      setOpen(false);
-      form.reset();
-      
       toast({
-        title: 'Success',
-        description: 'Compliance script created successfully (Demo Mode)',
+        title: 'Error',
+        description: 'Failed to create compliance script',
+        variant: 'destructive',
       });
     } finally {
       setIsLoading(false);
@@ -182,14 +103,8 @@ const sorted = (data || [])
 
   const deleteScript = async (id: string) => {
     try {
-      const { error } = await supabase
-        .from('compliance_scripts')
-        .delete()
-        .eq('id', id);
-
-      if (error) throw error;
-
-      setScripts(prev => prev.filter(script => script.id !== id));
+      await deleteItem('complianceScripts', id);
+      
       toast({
         title: 'Success',
         description: 'Compliance script deleted successfully',
@@ -318,7 +233,7 @@ Do you consent to this recording?"
           </CardHeader>
           <CardContent>
             <div className="text-3xl font-bold">
-              {scripts.filter(s => s.is_active).length}
+              {complianceScripts.filter(s => s.is_active).length}
             </div>
             <p className="text-xs text-gray-400">Monitoring compliance</p>
           </CardContent>
@@ -332,7 +247,7 @@ Do you consent to this recording?"
         </CardHeader>
         <CardContent>
           <div className="grid gap-4 md:grid-cols-2">
-            {scripts.map((script) => (
+            {complianceScripts.map((script) => (
               <div key={script.id} className="border border-gray-800 rounded-lg p-4">
                 <div className="flex items-center justify-between mb-2">
                   <h3 className="font-medium">{script.name}</h3>
