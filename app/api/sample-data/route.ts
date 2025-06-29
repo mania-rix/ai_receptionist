@@ -644,7 +644,7 @@ function getMockComplianceScripts() {
     {
       id: '8',
       name: 'Mental Health Crisis Protocol',
-      content: 'If you\'re experiencing thoughts of harming yourself or others, please be aware that I'm required by law to take steps to ensure your safety, which may include contacting emergency services. Do you understand?',
+      content: "If you\'re experiencing thoughts of harming yourself or others, please be aware that I'm required by law to take steps to ensure your safety, which may include contacting emergency services. Do you understand?",
       category: 'mental-health',
       required_phrases: [
         'required by law',
