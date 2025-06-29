@@ -187,7 +187,7 @@ export default function KnowledgeBasePage() {
       
       // For demo mode, simulate success with mock data
       const mockKB = {
-        id: editingKB ? editingKB.id : demo-kb-${Date.now()},
+        id: editingKB ? editingKB.id : `demo-kb-${Date.now()}`,
         name: data.name,
         description: data.description,
         content: data.content || {},
