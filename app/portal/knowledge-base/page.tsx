@@ -42,6 +42,9 @@ export default function KnowledgeBasePage() {
     defaultValues: {
       languages: ['en'],
       content: { faqs: [] },
+    }
+  });
+
   const createOrUpdateKnowledgeBase = async (data: FormData) => {
     console.log('[KBUI] Creating/updating knowledge base:', data);
     setIsLoading(true);
@@ -302,17 +305,16 @@ export default function KnowledgeBasePage() {
             <CardContent className="space-y-3">
               <p className="text-sm text-gray-400">{kb.description}</p>
               <div className="flex flex-wrap gap-1">
-{(Array.isArray(kb.languages)
-  ? kb.languages
-  : typeof kb.languages === 'string'
-    ? kb.languages.split(',').map(l => l.trim())
-    : []
-).map((lang: string) => (
-  <Badge key={lang} variant="outline" className="text-xs">
-    {lang.toUpperCase()}
-  </Badge>
-))}
-
+                {(Array.isArray(kb.languages)
+                  ? kb.languages
+                  : typeof kb.languages === 'string'
+                    ? kb.languages.split(',').map(l => l.trim())
+                    : []
+                ).map((lang: string) => (
+                  <Badge key={lang} variant="outline" className="text-xs">
+                    {lang.toUpperCase()}
+                  </Badge>
+                ))}
               </div>
               <div className="flex items-center justify-between text-sm">
                 <span className="text-gray-400">FAQs:</span>
