@@ -1,6 +1,7 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
+import { useRef } from 'react';
 import { supabase } from '@/lib/supabase-browser';
 
 // Define types for our storage items
@@ -58,8 +59,9 @@ const StorageContext = createContext<StorageContextType | undefined>(undefined);
 export function StorageProvider({ children }: { children: ReactNode }) {
   const [isClient, setIsClient] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [currentUser, setCurrentUser] = useState<User | null>(null); 
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const initialDataLoaded = useRef(false);
   
   // Collections
   const [agents, setAgents] = useState<StorageItem[]>([]);
@@ -73,59 +75,80 @@ export function StorageProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     setIsClient(true);
     
-    console.log('[StorageContext] Initializing provider, setting up auth listener');
+    console.log('[StorageContext] Initializing provider, setting up auth listener', { isLoading });
     
     // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
-        console.log('[StorageContext] Auth state changed:', { event, user: session?.user?.email, authenticated: !!session?.user });
+        console.log('[StorageContext] Auth state changed:', { 
+          event, 
+          user: session?.user?.email, 
+          authenticated: !!session?.user,
+          initialDataLoaded: initialDataLoaded.current
+        });
         
         const user = session?.user || null;
         setCurrentUser(user as User | null);
         setIsAuthenticated(!!user);
         
         if (user) {
-          console.log('[StorageContext] User authenticated:', user.email);
-          loadInitialData(user.id);
+          console.log('[StorageContext] User authenticated:', user.email, { initialDataLoaded: initialDataLoaded.current });
+          if (!initialDataLoaded.current) {
+            initialDataLoaded.current = true;
+            loadInitialData(user.id);
+          }
         } else {
-          console.log('[StorageContext] No authenticated user, using demo mode');
-          loadInitialData('demo-user-id');
+          console.log('[StorageContext] No authenticated user, using demo mode', { initialDataLoaded: initialDataLoaded.current });
+          if (!initialDataLoaded.current) {
+            initialDataLoaded.current = true;
+            loadInitialData('demo-user-id');
+          }
         }
         
         setIsLoading(false);
       }
     );
     
-    // Initial auth check
-    checkAuthentication();
+    // Initial auth check - we'll let the onAuthStateChange handle the initial state
+    // This is just a fallback in case the listener doesn't fire quickly
+    setTimeout(() => {
+      if (isLoading && !initialDataLoaded.current) {
+        console.log('[StorageContext] Auth listener timeout - running manual check');
+        checkAuthentication();
+      }
+    }, 2000);
     
     return () => {
       subscription.unsubscribe();
     };
-  }, []);
+  }, [isLoading]);
 
   // Check if user is authenticated
   const checkAuthentication = async () => {
     try {
-      console.log('[StorageContext] Running initial auth check');
+      console.log('[StorageContext] Running manual auth check', { initialDataLoaded: initialDataLoaded.current });
       const { data: { session } } = await supabase.auth.getSession();
       const user = session?.user || null;
       
       console.log('[StorageContext] Initial auth check result:', { 
         user: user?.email, 
         authenticated: !!user,
-        sessionExists: !!session
+        sessionExists: !!session,
+        initialDataLoaded: initialDataLoaded.current
       });
       
       setCurrentUser(user as User | null);
       setIsAuthenticated(!!user);
       
-      if (user) {
-        console.log('[StorageContext] Initial auth check: User authenticated:', user.email);
-        loadInitialData(user.id);
-      } else {
-        console.log('[StorageContext] Initial auth check: No user, using demo mode');
-        loadInitialData('demo-user-id');
+      if (!initialDataLoaded.current) {
+        initialDataLoaded.current = true;
+        if (user) {
+          console.log('[StorageContext] Manual auth check: User authenticated:', user.email);
+          loadInitialData(user.id);
+        } else {
+          console.log('[StorageContext] Manual auth check: No user, using demo mode');
+          loadInitialData('demo-user-id');
+        }
       }
       
       setIsLoading(false);
@@ -141,7 +164,7 @@ export function StorageProvider({ children }: { children: ReactNode }) {
   // Load initial data from localStorage
   const loadInitialData = (userId: string) => {
     try {
-      console.log('[StorageContext] Loading initial data for user:', userId);
+      console.log('[StorageContext] Loading initial data for user:', userId, { isAuthenticated, isLoading });
       
       if (userId === 'demo-user-id') {
         // Load demo data from localStorage
@@ -696,8 +719,9 @@ export function StorageProvider({ children }: { children: ReactNode }) {
   console.log('[StorageContext] Provider state:', { 
     isAuthenticated, 
     isLoading, 
-    userEmail: currentUser?.email,
-    hasUser: !!currentUser
+    userEmail: currentUser?.email || 'none',
+    hasUser: !!currentUser,
+    initialDataLoaded: initialDataLoaded.current
   });
 
   return (
