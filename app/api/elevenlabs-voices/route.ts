@@ -6,8 +6,19 @@ import { getElevenLabsVoices } from '@/lib/elevenlabs';
 export async function GET() {
   console.log('[API:elevenlabs-voices] GET request'); 
   try {
-    const cookieStore = cookies();
-    const supabase = supabaseServer(cookieStore);
+    let supabase;
+    try {
+      const cookieStore = cookies();
+      supabase = supabaseServer(cookieStore);
+    } catch (error) {
+      console.warn('[API:elevenlabs-voices] Cookie access failed, using demo mode');
+      // For demo mode, create a mock supabase client
+      const { createClient } = await import('@supabase/supabase-js');
+      supabase = createClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+      );
+    }
 
     // Get ElevenLabs voices
     let elevenLabsVoices: any[] = [];

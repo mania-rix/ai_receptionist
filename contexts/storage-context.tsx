@@ -143,16 +143,24 @@ export function StorageProvider({ children }: { children: ReactNode }) {
         // Load real data from API
         fetchCollection('/api/agents', setAgents);
         // Other collections will be loaded as needed by their respective components
-      }
     } catch (error) {
-      console.error('Error loading initial data:', error);
+      console.error('[StorageContext] Error loading initial data:', error);
+      // Load demo data as fallback
+      loadCollection('agents', setAgents, 'demo-user-id');
+      loadCollection('calls', setCalls, 'demo-user-id');
+      loadCollection('complianceScripts', setComplianceScripts, 'demo-user-id');
+      loadCollection('conversationFlows', setConversationFlows, 'demo-user-id');
+      loadCollection('knowledgeBases', setKnowledgeBases, 'demo-user-id');
+      loadCollection('videoSummaries', setVideoSummaries, 'demo-user-id');
+      }
     }
   };
 
   // Helper to fetch a collection from API
   const fetchCollection = async (endpoint: string, setter: React.Dispatch<React.SetStateAction<StorageItem[]>>) => {
     try {
-      console.log(`[StorageContext] Fetching from API: ${endpoint}`);
+      const apiEndpoint = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
+      console.log(`[StorageContext] Fetching from API: ${apiEndpoint}`);
       const response = await fetch(endpoint);
       
       if (!response.ok) {
@@ -160,7 +168,8 @@ export function StorageProvider({ children }: { children: ReactNode }) {
       }
       
       const data = await response.json();
-      const items = data[endpoint.split('/').pop() || 'items'] || [];
+      const collectionName = endpoint.split('/').pop() || 'items';
+      const items = data[collectionName] || [];
       
       console.log(`[StorageContext] API data received:`, items.length);
       setter(items);
@@ -189,7 +198,6 @@ export function StorageProvider({ children }: { children: ReactNode }) {
     } catch (error) {
       console.error(`Error loading ${collection}:`, error);
       setter([]);
-    }
   };
 
   // Get demo data for a collection

@@ -67,7 +67,17 @@ export default function AgentsPage() {
   const fetchElevenLabsVoices = useCallback(async () => {
     console.log('[AgentUI] Fetching ElevenLabs voices...');
     try {
-      const response = await fetch('/api/elevenlabs-voices');
+      const response = await fetch('/api/elevenlabs-voices', {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+      
+      if (!response.ok) {
+        throw new Error(`Failed to fetch voices: ${response.status}`);
+      }
+      
       const data = await response.json();
       console.log('[AgentUI] Voices fetched:', data.voices || []);
       
@@ -107,7 +117,7 @@ export default function AgentsPage() {
   const createOrUpdateAgent = async (data: FormData) => {
     setIsLoading(true);
     console.log(
-      `[AgentUI] ${editingAgent ? 'Updating' : 'Creating'} agent. Data:`,
+      `[AgentUI] ${editingAgent ? 'Updating' : 'Creating'} agent with data:`,
       data
     ); 
     try {
@@ -118,8 +128,6 @@ export default function AgentsPage() {
       } else {
         await addItem('agents', {
           ...data,
-          retell_agent_id: 'agent_d45ccf76ef7145a584ccf7d4e9',
-          retell_llm_id: 'llm_08507d646ed9a0c79da91ef05d67',
         });
       }
 
