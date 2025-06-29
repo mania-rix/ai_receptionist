@@ -1,8 +1,5 @@
-///home/project/app/auth/sign-in/page.tsx
-
 'use client';
 
-import { useStorage } from '@/contexts/storage-context';
 import { useEffect } from "react";
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
@@ -13,10 +10,10 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Separator } from '@/components/ui/separator';
 import { Mail, Loader2 } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { supabase } from '@/lib/supabase-browser';
 
 export default function SignInPage() {
   const router = useRouter();
-  const { login, isAuthenticated } = useStorage();
   const [email, setEmail] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [activeTab, setActiveTab] = useState('sign-in');
@@ -25,10 +22,19 @@ export default function SignInPage() {
     console.log('window.location.origin =', window.location.origin);
     
     // Check if user is already logged in
-    if (isAuthenticated) {
-      router.push('/portal/overview');
-    }
-  }, []);
+    const checkAuth = async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session?.user) {
+          router.push('/portal/overview');
+        }
+      } catch (error) {
+        console.error('Error checking auth:', error);
+      }
+    };
+    
+    checkAuth();
+  }, [router]);
   
   const handleEmailSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -38,8 +44,13 @@ export default function SignInPage() {
     setIsLoading(true);
     
     try {
-      // In demo mode, just log in directly
-      await login(email, 'password');
+      // Use Supabase auth for sign in
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password: 'password' // Demo password
+      });
+      
+      if (error) throw error;
       
       // Show success message
       alert('Login successful!');
@@ -56,8 +67,14 @@ export default function SignInPage() {
   const handleGoogleSignIn = async () => {
     setIsLoading(true);
     try {
-      // In demo mode, just log in with a demo account
-      await login('demo@blvckwall.ai', 'password');
+      // Use Supabase auth for demo Google sign in
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: 'demo@blvckwall.ai',
+        password: 'password'
+      });
+      
+      if (error) throw error;
+      
       router.push('/portal/overview');
     } catch (error) {
       console.error('Error during Google sign in:', error);
@@ -206,5 +223,3 @@ export default function SignInPage() {
     </div>
   );
 }
-
-

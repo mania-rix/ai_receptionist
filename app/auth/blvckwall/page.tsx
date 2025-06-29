@@ -1,12 +1,12 @@
 'use client';
 
-import { useStorage } from '@/contexts/storage-context';
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence, useMotionValue, useTransform } from 'framer-motion';
 import { Mail, Lock, Eye, EyeOff, ArrowRight, User, Zap, Shield, Cpu, Sun, Moon } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/lib/supabase-browser';
 
 // GlitchText Component
 interface GlitchTextProps extends React.HTMLAttributes<HTMLDivElement> {
@@ -374,7 +374,6 @@ Input.displayName = "Input";
 const BlvckwallAuth = () => {
   const router = useRouter();
   const { toast } = useToast();
-  const { isAuthenticated, login, signup } = useStorage();
   
   const [isSignUp, setIsSignUp] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -397,10 +396,19 @@ const BlvckwallAuth = () => {
 
   // Check if user is already logged in
   useEffect(() => {
-    if (isAuthenticated) {
-      router.push('/portal/overview');
-    }
-  }, [isAuthenticated, router]);
+    const checkAuth = async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session?.user) {
+          router.push('/portal/overview');
+        }
+      } catch (error) {
+        console.error('Error checking auth:', error);
+      }
+    };
+    
+    checkAuth();
+  }, [router]);
 
   const handleMouseMove = (e: React.MouseEvent) => {
     const rect = e.currentTarget.getBoundingClientRect();
@@ -451,24 +459,38 @@ const BlvckwallAuth = () => {
       return;
     }
 
-    
-    if (!validateForm()) {
-      return;
-    }
-
     setIsLoading(true);
     setErrors({});
 
     try {
       if (isSignUp) {
-        await signup(email, password, firstName, lastName);
+        const { data, error } = await supabase.auth.signUp({
+          email,
+          password,
+          options: {
+            data: {
+              firstName,
+              lastName,
+              name: `${firstName} ${lastName}`
+            }
+          }
+        });
+
+        if (error) throw error;
+
         toast({
           title: "Account created successfully",
           description: "Welcome to BlvckWall AI!",
         });
         router.push('/portal/overview');
       } else {
-        await login(email, password);
+        const { data, error } = await supabase.auth.signInWithPassword({
+          email,
+          password
+        });
+
+        if (error) throw error;
+
         toast({
           title: "Welcome back",
           description: "Successfully signed in to BlvckWall AI.",
@@ -761,17 +783,6 @@ const BlvckwallAuth = () => {
                   </button>
                 </div>
 
-                {/* General error message */}
-                {errors.general && (
-                  <motion.div
-                    initial={{ opacity: 0, y: -10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="mb-4 p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 text-sm text-center"
-                  >
-                    {errors.general}
-                  </motion.div>
-                )}
-
                 {/* Form */}
                 <form onSubmit={handleSubmit} className="space-y-4">
                   <AnimatePresence mode="wait">
@@ -796,7 +807,6 @@ const BlvckwallAuth = () => {
                               onFocus={() => setFocusedInput("firstName")}
                               onBlur={() => setFocusedInput(null)}
                               error={errors.firstName}
-                              error={errors.firstName}
                             />
                           </div>
                           <div className="relative">
@@ -809,7 +819,6 @@ const BlvckwallAuth = () => {
                               className="pl-10"
                               onFocus={() => setFocusedInput("lastName")}
                               onBlur={() => setFocusedInput(null)}
-                              error={errors.lastName}
                               error={errors.lastName}
                             />
                           </div>
@@ -827,7 +836,6 @@ const BlvckwallAuth = () => {
                           onFocus={() => setFocusedInput("email")}
                           onBlur={() => setFocusedInput(null)}
                           error={errors.email}
-                          error={errors.email}
                         />
                       </div>
 
@@ -841,7 +849,6 @@ const BlvckwallAuth = () => {
                           className="pl-10 pr-10"
                           onFocus={() => setFocusedInput("password")}
                           onBlur={() => setFocusedInput(null)}
-                          error={errors.password}
                           error={errors.password}
                         />
                         <button
@@ -864,7 +871,6 @@ const BlvckwallAuth = () => {
                             className="pl-10 pr-10"
                             onFocus={() => setFocusedInput("confirmPassword")}
                             onBlur={() => setFocusedInput(null)}
-                            error={errors.confirmPassword}
                             error={errors.confirmPassword}
                           />
                           <button
