@@ -206,7 +206,7 @@ export default function KnowledgeBasePage() {
       
       toast({
         title: 'Success',
-        description: Knowledge base ${editingKB ? 'updated' : 'created'} successfully (Demo Mode),
+        description: `Knowledge base ${editingKB ? 'updated' : 'created'} successfully (Demo Mode)`,
       });
       
       setOpen(false);
