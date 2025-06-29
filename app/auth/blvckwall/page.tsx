@@ -7,6 +7,7 @@ import { cn } from '@/lib/utils';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
 import { useStorage } from '@/contexts/storage-context';
+import { validateEmail, validatePassword } from '@/lib/auth-utils';
 
 // GlitchText Component
 interface GlitchTextProps extends React.HTMLAttributes<HTMLDivElement> {
@@ -374,7 +375,7 @@ Input.displayName = "Input";
 const BlvckwallAuth = () => {
   const router = useRouter();
   const { toast } = useToast();
-  const { login, signup, isAuthenticated, currentUser } = useStorage();
+  const { login, signup, isAuthenticated, currentUser, authError, validateCredentials } = useStorage();
   
   const [isSignUp, setIsSignUp] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -386,7 +387,7 @@ const BlvckwallAuth = () => {
   const [lastName, setLastName] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [focusedInput, setFocusedInput] = useState<string | null>(null);
-  const [isDarkMode, setIsDarkMode] = useState(true); 
+  const [isDarkMode, setIsDarkMode] = useState(true);
   const [errors, setErrors] = useState<{[key: string]: string}>({});
 
   // 3D card effect
@@ -416,19 +417,21 @@ const BlvckwallAuth = () => {
   };
 
   const validateForm = () => {
-    const newErrors: {[key: string]: string} = {};
-
-    if (!email) {
-      newErrors.email = "Email is required";
-    } else if (!/\S+@\S+\.\S+/.test(email)) {
-      newErrors.email = "Email is invalid";
-    }
-
-    if (!password) {
-      newErrors.password = "Password is required";
-    } else if (password.length < 6) {
-      newErrors.password = "Password must be at least 6 characters";
-    }
+    const newErrors: { [key: string]: string } = {};
+    
+    // Validate email and password
+    const credentialValidation = validateCredentials(email, password);
+    if (!credentialValidation.valid) {
+      credentialValidation.errors.forEach(error => {
+        if (error.includes('Email')) {
+          newErrors.email = error;
+        } else if (error.includes('Password')) {
+          newErrors.password = error;
+        } else {
+          newErrors.general = error;
+        }
+      });
+    } 
 
     if (isSignUp) {
       if (!firstName) {
@@ -456,23 +459,31 @@ const BlvckwallAuth = () => {
     setIsLoading(true);
     setErrors({});
 
-    try { 
+    try {
       if (isSignUp) {
-        await signup(email, password, firstName, lastName);
-
-        toast({
-          title: "Account created successfully",
-          description: "Welcome to BlvckWall AI!",
-        });
-        router.push('/portal/overview');
+        const result = await signup(email, password, firstName, lastName);
+        
+        if (result.success) {
+          toast({
+            title: "Account created successfully",
+            description: "Welcome to BlvckWall AI!",
+          });
+          router.push('/portal/overview');
+        } else {
+          setErrors({ general: result.error || "An unexpected error occurred" });
+        }
       } else {
-        await login(email, password);
-
-        toast({
-          title: "Welcome back",
-          description: "Successfully signed in to BlvckWall AI.",
-        });
-        router.push('/portal/overview');
+        const result = await login(email, password);
+        
+        if (result.success) {
+          toast({
+            title: "Welcome back",
+            description: "Successfully signed in to BlvckWall AI.",
+          });
+          router.push('/portal/overview');
+        } else {
+          setErrors({ general: result.error || "An unexpected error occurred" });
+        }
       }
     } catch (error: any) {
       console.error('Auth error:', error);

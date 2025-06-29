@@ -1,8 +1,29 @@
 'use client';
 
-import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
-import { useRef } from 'react';
+import React, { createContext, useContext, useState, useEffect, useRef, ReactNode, useCallback } from 'react';
 import { supabase } from '@/lib/supabase-browser';
+import { 
+  loginUser, 
+  registerUser, 
+  logoutUser, 
+  refreshSessionIfNeeded,
+  validateEmail,
+  validatePassword
+} from '@/lib/auth-utils';
+import {
+  initializeSampleData,
+  createItem,
+  readItem,
+  updateItem as updateDataItem,
+  deleteItem as deleteDataItem,
+  listItems,
+  clearUserData,
+  DATA_CATEGORIES,
+  fetchFromAPI,
+  postToAPI,
+  updateAPI,
+  deleteFromAPI
+} from '@/lib/data-manager';
 
 // Define types for our storage items
 interface StorageItem {
@@ -27,10 +48,12 @@ interface StorageContextType {
   // Authentication
   isAuthenticated: boolean;
   isLoading: boolean;
+  authError: string | null;
   currentUser: User | null;
-  login: (email: string, password: string) => Promise<void>;
-  signup: (email: string, password: string, firstName: string, lastName: string) => Promise<void>;
+  login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
+  signup: (email: string, password: string, firstName: string, lastName: string) => Promise<{ success: boolean; error?: string }>;
   logout: () => Promise<void>;
+  validateCredentials: (email: string, password: string) => { valid: boolean; errors: string[] };
   
   // Storage operations
   getItem: (key: string) => string | null;
@@ -60,8 +83,10 @@ export function StorageProvider({ children }: { children: ReactNode }) {
   const [isClient, setIsClient] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const [authError, setAuthError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const initialDataLoaded = useRef(false);
+  const authCheckTimeout = useRef<NodeJS.Timeout | null>(null);
   
   // Collections
   const [agents, setAgents] = useState<StorageItem[]>([]);
@@ -74,6 +99,7 @@ export function StorageProvider({ children }: { children: ReactNode }) {
   // Initialize client-side storage
   useEffect(() => {
     setIsClient(true);
+    setAuthError(null);
     
     console.log('[StorageContext] Initializing provider, setting up auth listener', { isLoading });
     
@@ -111,7 +137,7 @@ export function StorageProvider({ children }: { children: ReactNode }) {
     
     // Initial auth check - we'll let the onAuthStateChange handle the initial state
     // This is just a fallback in case the listener doesn't fire quickly
-    setTimeout(() => {
+    authCheckTimeout.current = setTimeout(() => {
       if (isLoading && !initialDataLoaded.current) {
         console.log('[StorageContext] Auth listener timeout - running manual check');
         checkAuthentication();
@@ -120,6 +146,9 @@ export function StorageProvider({ children }: { children: ReactNode }) {
     
     return () => {
       subscription.unsubscribe();
+      if (authCheckTimeout.current) {
+        clearTimeout(authCheckTimeout.current);
+      }
     };
   }, [isLoading]);
 
@@ -414,53 +443,93 @@ export function StorageProvider({ children }: { children: ReactNode }) {
   };
 
   // Authentication methods
-  const login = useCallback(async (email: string, password: string): Promise<void> => {
+  const validateCredentials = useCallback((email: string, password: string): { valid: boolean; errors: string[] } => {
+    const errors: string[] = [];
+    
+    if (!email) {
+      errors.push('Email is required');
+    } else if (!validateEmail(email)) {
+      errors.push('Invalid email format');
+    }
+    
+    if (!password) {
+      errors.push('Password is required');
+    } else if (!validatePassword(password)) {
+      errors.push('Password must be at least 8 characters with 1 uppercase letter and 1 number');
+    }
+    
+    return { valid: errors.length === 0, errors };
+  }, []);
+
+  const login = useCallback(async (email: string, password: string): Promise<{ success: boolean; error?: string }> => {
     try {
-      console.log('[StorageContext] Attempting login with email:', email);
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email,
-        password
-      });
+      setAuthError(null);
       
-      if (error) throw error;
+      // Validate credentials
+      const validation = validateCredentials(email, password);
+      if (!validation.valid) {
+        setAuthError(validation.errors[0]);
+        return { success: false, error: validation.errors[0] };
+      }
       
-      console.log('[StorageContext] Login successful:', data.user?.email);
-      // Auth state change listener will update currentUser and isAuthenticated
+      // Attempt login
+      const { user, error } = await loginUser(email, password);
+      
+      if (error) {
+        setAuthError(error.message);
+        return { success: false, error: error.message };
+      }
+      
+      console.log('[StorageContext] Login successful:', user?.email);
+      return { success: true };
     } catch (error) {
       console.error('Login error:', error);
-      throw error;
+      const errorMessage = (error as Error).message || 'An unknown error occurred';
+      setAuthError(errorMessage);
+      return { success: false, error: errorMessage };
     }
   }, []);
 
-  const signup = useCallback(async (email: string, password: string, firstName: string, lastName: string): Promise<void> => {
+  const signup = useCallback(async (email: string, password: string, firstName: string, lastName: string): Promise<{ success: boolean; error?: string }> => {
     try {
-      console.log('[StorageContext] Attempting signup with email:', email);
-      const { data, error } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          data: {
-            firstName,
-            lastName,
-            name: `${firstName} ${lastName}`
-          }
-        }
-      });
+      setAuthError(null);
       
-      if (error) throw error;
+      // Validate credentials
+      const validation = validateCredentials(email, password);
+      if (!validation.valid) {
+        setAuthError(validation.errors[0]);
+        return { success: false, error: validation.errors[0] };
+      }
       
-      console.log('[StorageContext] Signup successful:', data.user?.email);
-      // Auth state change listener will update currentUser and isAuthenticated
+      if (!firstName || !lastName) {
+        const error = 'First name and last name are required';
+        setAuthError(error);
+        return { success: false, error };
+      }
+      
+      // Attempt registration
+      const { user, error } = await registerUser(email, password, firstName, lastName);
+      
+      if (error) {
+        setAuthError(error.message);
+        return { success: false, error: error.message };
+      }
+      
+      console.log('[StorageContext] Signup successful:', user?.email);
+      return { success: true };
     } catch (error) {
       console.error('Signup error:', error);
-      throw error;
+      const errorMessage = (error as Error).message || 'An unknown error occurred';
+      setAuthError(errorMessage);
+      return { success: false, error: errorMessage };
     }
   }, []);
 
   const logout = useCallback(async (): Promise<void> => {
     try {
       console.log('[StorageContext] Logging out user');
-      const { error } = await supabase.auth.signOut();
+      setAuthError(null);
+      const { error } = await logoutUser();
       
       if (error) throw error;
       
@@ -475,6 +544,7 @@ export function StorageProvider({ children }: { children: ReactNode }) {
   // CRUD operations for collections
   const addItem = useCallback(async (collection: string, item: any): Promise<StorageItem> => {
     try {
+      await refreshSessionIfNeeded();
       if (!isAuthenticated || !currentUser) {
         // Demo mode - use localStorage
         const userId = 'demo-user-id';
@@ -537,6 +607,7 @@ export function StorageProvider({ children }: { children: ReactNode }) {
 
   const updateItem = useCallback(async (collection: string, id: string, updates: any): Promise<StorageItem> => {
     try {
+      await refreshSessionIfNeeded();
       if (!isAuthenticated || !currentUser) {
         // Demo mode - use localStorage
         const userId = 'demo-user-id';
@@ -606,6 +677,7 @@ export function StorageProvider({ children }: { children: ReactNode }) {
 
   const deleteItem = useCallback(async (collection: string, id: string): Promise<void> => {
     try {
+      await refreshSessionIfNeeded();
       if (!isAuthenticated || !currentUser) {
         // Demo mode - use localStorage
         const userId = 'demo-user-id';
@@ -691,6 +763,7 @@ export function StorageProvider({ children }: { children: ReactNode }) {
     // Authentication
     isAuthenticated,
     isLoading,
+    authError,
     currentUser,
     login,
     signup,
@@ -699,6 +772,7 @@ export function StorageProvider({ children }: { children: ReactNode }) {
     // Storage operations
     getItem,
     setItem,
+    validateCredentials,
     removeItem,
     clear,
     
@@ -719,6 +793,7 @@ export function StorageProvider({ children }: { children: ReactNode }) {
   console.log('[StorageContext] Provider state:', { 
     isAuthenticated, 
     isLoading, 
+    authError: authError ? 'Error present' : 'No error',
     userEmail: currentUser?.email || 'none',
     hasUser: !!currentUser,
     initialDataLoaded: initialDataLoaded.current

@@ -11,13 +11,16 @@ import { Separator } from '@/components/ui/separator';
 import { Mail, Loader2 } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { useStorage } from '@/contexts/storage-context';
+import { validateEmail } from '@/lib/auth-utils';
 
 export default function SignInPage() {
   const router = useRouter();
   const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState('sign-in');
-  const { login, isAuthenticated, currentUser } = useStorage();
+  const { login, signup, isAuthenticated, currentUser, authError } = useStorage();
   
   useEffect(() => {
     console.log('window.location.origin =', window.location.origin);
@@ -35,22 +38,29 @@ export default function SignInPage() {
   
   const handleEmailSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError(null);
     
-    if (!email || isLoading) return;
+    if (!email || !password || isLoading) return;
+    
+    if (!validateEmail(email)) {
+      setError('Please enter a valid email address');
+      return;
+    }
     
     setIsLoading(true);
     
     try {
       // Use login from storage context
-      await login(email, 'password'); // Demo password
-
-      // Show success message
-      alert('Login successful!');
+      const result = await login(email, password);
       
-      router.push('/portal/overview');
+      if (result.success) {
+        router.push('/portal/overview');
+      } else {
+        setError(result.error || 'Authentication failed');
+      }
     } catch (error) {
       console.error('Error during sign in:', error);
-      alert('Error during sign in. Please try again.');
+      setError('Error during sign in. Please try again.');
     } finally {
       setIsLoading(false);
     }
@@ -58,14 +68,21 @@ export default function SignInPage() {
   
   const handleGoogleSignIn = async () => {
     setIsLoading(true);
+    setError(null);
+    
     try {
       // Use login from storage context for demo Google sign in
-      await login('demo@blvckwall.ai', 'password');
+      const result = await login('demo@blvckwall.ai', 'Password123');
       
-      router.push('/portal/overview');
+      if (result.success) {
+        router.push('/portal/overview');
+      } else {
+        setError(result.error || 'Authentication failed');
+      }
     } catch (error) {
       console.error('Error during Google sign in:', error);
-      alert('Error during Google sign in. Please try again.');
+      setError('Error during Google sign in. Please try again.');
+    } finally {
       setIsLoading(false);
     }
   };
@@ -99,14 +116,35 @@ export default function SignInPage() {
               <TabsContent value="sign-in">
                 <form onSubmit={handleEmailSubmit} className="space-y-4">
                   <div className="space-y-2">
+                    <label className="text-sm font-medium">Email</label>
                     <Input
                       type="email"
                       placeholder="name@example.com"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       className="border-gray-700 bg-gray-800/50 text-white placeholder:text-gray-500"
+                      required
                     />
                   </div>
+                  
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Password</label>
+                    <Input
+                      type="password"
+                      placeholder="••••••••"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      className="border-gray-700 bg-gray-800/50 text-white placeholder:text-gray-500"
+                      required
+                    />
+                  </div>
+                  
+                  {error && (
+                    <div className="text-red-400 text-sm">
+                      {error}
+                    </div>
+                  )}
+                  
                   <Button 
                     type="submit" 
                     className="w-full bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700"
@@ -125,14 +163,35 @@ export default function SignInPage() {
               <TabsContent value="sign-up">
                 <form onSubmit={handleEmailSubmit} className="space-y-4">
                   <div className="space-y-2">
+                    <label className="text-sm font-medium">Email</label>
                     <Input
                       type="email"
                       placeholder="name@example.com"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       className="border-gray-700 bg-gray-800/50 text-white placeholder:text-gray-500"
+                      required
                     />
                   </div>
+                  
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Password</label>
+                    <Input
+                      type="password"
+                      placeholder="••••••••"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      className="border-gray-700 bg-gray-800/50 text-white placeholder:text-gray-500"
+                      required
+                    />
+                  </div>
+                  
+                  {error && (
+                    <div className="text-red-400 text-sm">
+                      {error}
+                    </div>
+                  )}
+                  
                   <Button 
                     type="submit" 
                     className="w-full bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700"
