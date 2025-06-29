@@ -403,9 +403,6 @@ const BlvckwallAuth = () => {
       }
     }, [isAuthenticated, currentUser, router]);
 
-    
-    checkAuth();
-  }, [router]);
 
   const handleMouseMove = (e: React.MouseEvent) => {
     const rect = e.currentTarget.getBoundingClientRect();
