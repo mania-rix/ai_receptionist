@@ -143,6 +143,7 @@ export function StorageProvider({ children }: { children: ReactNode }) {
         // Load real data from API
         fetchCollection('/api/agents', setAgents);
         // Other collections will be loaded as needed by their respective components
+      }
     } catch (error) {
       console.error('[StorageContext] Error loading initial data:', error);
       // Load demo data as fallback
@@ -152,7 +153,6 @@ export function StorageProvider({ children }: { children: ReactNode }) {
       loadCollection('conversationFlows', setConversationFlows, 'demo-user-id');
       loadCollection('knowledgeBases', setKnowledgeBases, 'demo-user-id');
       loadCollection('videoSummaries', setVideoSummaries, 'demo-user-id');
-      }
     }
   };
 
@@ -198,6 +198,7 @@ export function StorageProvider({ children }: { children: ReactNode }) {
     } catch (error) {
       console.error(`Error loading ${collection}:`, error);
       setter([]);
+    }
   };
 
   // Get demo data for a collection
