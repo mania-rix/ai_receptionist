@@ -95,7 +95,7 @@ const navGroups = [
     ]
   },
   {
-    title: 'Hackathon Features',
+    title: 'Prototype Center',
     items: [
       {
         title: 'Live Relay',
