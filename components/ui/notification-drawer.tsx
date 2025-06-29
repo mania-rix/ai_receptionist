@@ -47,7 +47,7 @@ export function NotificationDrawer() {
     fetchNotifications();
     
     // Set up real-time subscription
-    const subscription = supabase
+    const channel = supabase
       .channel('notifications')
       .on('postgres_changes', 
         { event: 'INSERT', schema: 'public', table: 'activity_feed' },
@@ -56,11 +56,12 @@ export function NotificationDrawer() {
           setNotifications(prev => [newNotification, ...prev]);
           setUnreadCount(prev => prev + 1);
         }
-      )
-      .subscribe();
+      );
+    
+    channel.subscribe();
 
     return () => {
-      subscription.unsubscribe();
+      channel.unsubscribe();
       console.log('[NotificationDrawer] Component unmounted');
     };
   }, []);

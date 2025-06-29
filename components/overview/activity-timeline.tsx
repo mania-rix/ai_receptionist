@@ -55,7 +55,7 @@ export function ActivityTimeline() {
     fetchActivities();
     
     // Set up real-time subscription
-    const subscription = supabase
+    const channel = supabase
       .channel('activity_timeline')
       .on('postgres_changes', 
         { event: 'INSERT', schema: 'public', table: 'activity_feed' },
@@ -64,11 +64,12 @@ export function ActivityTimeline() {
           const newActivity = transformActivityData(payload.new);
           setActivities(prev => [newActivity, ...prev.slice(0, 9)]);
         }
-      )
-      .subscribe();
+      );
+    
+    channel.subscribe();
 
     return () => {
-      subscription.unsubscribe();
+      channel.unsubscribe();
       console.log('[ActivityTimeline] Component unmounted');
     };
   }, []);
