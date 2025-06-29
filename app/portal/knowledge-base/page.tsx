@@ -113,7 +113,6 @@ export default function KnowledgeBasePage() {
       ]);
     }
   };
-
    const createOrUpdateKnowledgeBase = async (data: FormData) => {
     console.log('[KBUI] Creating/updating knowledge base:', data);
     setIsLoading(true);
