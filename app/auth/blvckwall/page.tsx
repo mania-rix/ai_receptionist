@@ -1,10 +1,10 @@
 'use client';
 
+import { useStorage } from '@/contexts/storage-context';
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence, useMotionValue, useTransform } from 'framer-motion';
 import { Mail, Lock, Eye, EyeOff, ArrowRight, User, Zap, Shield, Cpu, Sun, Moon } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { supabase } from '@/lib/supabase-browser';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
 
@@ -374,6 +374,7 @@ Input.displayName = "Input";
 const BlvckwallAuth = () => {
   const router = useRouter();
   const { toast } = useToast();
+  const { isAuthenticated, login, signup } = useStorage();
   
   const [isSignUp, setIsSignUp] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -396,14 +397,10 @@ const BlvckwallAuth = () => {
 
   // Check if user is already logged in
   useEffect(() => {
-    const checkUser = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session) {
-        router.push('/portal/overview');
-      }
-    };
-    checkUser();
-  }, [router]);
+    if (isAuthenticated) {
+      router.push('/portal/overview');
+    }
+  }, [isAuthenticated, router]);
 
   const handleMouseMove = (e: React.MouseEvent) => {
     const rect = e.currentTarget.getBoundingClientRect();
@@ -464,40 +461,14 @@ const BlvckwallAuth = () => {
 
     try {
       if (isSignUp) {
-        const { data, error } = await supabase.auth.signUp({
-          email,
-          password,
-          options: {
-            data: {
-              firstName,
-              lastName,
-              name: `${firstName} ${lastName}`,
-            }
-          }
+        await signup(email, password, firstName, lastName);
+        toast({
+          title: "Account created successfully",
+          description: "Welcome to BlvckWall AI!",
         });
-
-        if (error) throw error;
-
-        if (data.user && !data.session) {
-          toast({
-            title: "Check your email",
-            description: "We've sent you a confirmation link to complete your registration.",
-          });
-        } else {
-          toast({
-            title: "Account created successfully",
-            description: "Welcome to BlvckWall AI!",
-          });
-          router.push('/portal/overview');
-        }
+        router.push('/portal/overview');
       } else {
-        const { data, error } = await supabase.auth.signInWithPassword({
-          email,
-          password,
-        });
-
-        if (error) throw error;
-
+        await login(email, password);
         toast({
           title: "Welcome back",
           description: "Successfully signed in to BlvckWall AI.",
@@ -506,90 +477,10 @@ const BlvckwallAuth = () => {
       }
     } catch (error: any) {
       console.error('Auth error:', error);
-      
-      let errorMessage = "An unexpected error occurred";
-      
-      if (error.message?.includes("Invalid login credentials")) {
-        errorMessage = "Invalid email or password";
-      } else if (error.message?.includes("User already registered")) {
-        errorMessage = "An account with this email already exists";
-      } else if (error.message?.includes("Password should be at least")) {
-        errorMessage = "Password must be at least 6 characters long";
-      } else if (error.message) {
-        errorMessage = error.message;
-      }
-
-      setErrors({ general: errorMessage });
+      setErrors({ general: error.message || "An unexpected error occurred" });
       toast({
         title: "Authentication failed",
-        description: errorMessage,
-        variant: "destructive",
-      });
-    } finally {
-      setIsLoading(false);
-    }
-
-    try {
-      if (isSignUp) {
-        const { data, error } = await supabase.auth.signUp({
-          email,
-          password,
-          options: {
-            data: {
-              firstName,
-              lastName,
-              name: `${firstName} ${lastName}`,
-            }
-          }
-        });
-
-        if (error) throw error;
-
-        if (data.user && !data.session) {
-          toast({
-            title: "Check your email",
-            description: "We've sent you a confirmation link to complete your registration.",
-          });
-        } else {
-          toast({
-            title: "Account created successfully",
-            description: "Welcome to BlvckWall AI!",
-          });
-          router.push('/portal/overview');
-        }
-      } else {
-        const { data, error } = await supabase.auth.signInWithPassword({
-          email,
-          password,
-        });
-
-        if (error) throw error;
-
-        toast({
-          title: "Welcome back",
-          description: "Successfully signed in to BlvckWall AI.",
-        });
-        router.push('/portal/overview');
-      }
-    } catch (error: any) {
-      console.error('Auth error:', error);
-      
-      let errorMessage = "An unexpected error occurred";
-      
-      if (error.message?.includes("Invalid login credentials")) {
-        errorMessage = "Invalid email or password";
-      } else if (error.message?.includes("User already registered")) {
-        errorMessage = "An account with this email already exists";
-      } else if (error.message?.includes("Password should be at least")) {
-        errorMessage = "Password must be at least 6 characters long";
-      } else if (error.message) {
-        errorMessage = error.message;
-      }
-
-      setErrors({ general: errorMessage });
-      toast({
-        title: "Authentication failed",
-        description: errorMessage,
+        description: error.message || "An unexpected error occurred",
         variant: "destructive",
       });
     } finally {

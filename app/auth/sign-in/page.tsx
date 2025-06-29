@@ -2,6 +2,7 @@
 
 'use client';
 
+import { useStorage } from '@/contexts/storage-context';
 import { useEffect } from "react";
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
@@ -11,17 +12,22 @@ import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Separator } from '@/components/ui/separator';
 import { Mail, Loader2 } from 'lucide-react';
-import { supabase } from '@/lib/supabase-browser';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 
 export default function SignInPage() {
   const router = useRouter();
+  const { login, isAuthenticated } = useStorage();
   const [email, setEmail] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [activeTab, setActiveTab] = useState('sign-in');
   
   useEffect(() => {
     console.log('window.location.origin =', window.location.origin);
+    
+    // Check if user is already logged in
+    if (isAuthenticated) {
+      router.push('/portal/overview');
+    }
   }, []);
   
   const handleEmailSubmit = async (e: React.FormEvent) => {
@@ -32,19 +38,13 @@ export default function SignInPage() {
     setIsLoading(true);
     
     try {
-      const { error } = await supabase.auth.signInWithOtp({
-        email,
-        options: {
-          emailRedirectTo: `${window.location.origin}/auth/callback`,
-        },
-      });
-      
-      if (error) {
-        throw error;
-      }
+      // In demo mode, just log in directly
+      await login(email, 'password');
       
       // Show success message
-      alert('Check your email for the login link!');
+      alert('Login successful!');
+      
+      router.push('/portal/overview');
     } catch (error) {
       console.error('Error during sign in:', error);
       alert('Error during sign in. Please try again.');
@@ -55,18 +55,10 @@ export default function SignInPage() {
   
   const handleGoogleSignIn = async () => {
     setIsLoading(true);
-    
     try {
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider: 'google',
-        options: {
-          redirectTo: `${window.location.origin}/auth/callback`,
-        },
-      });
-      
-      if (error) {
-        throw error;
-      }
+      // In demo mode, just log in with a demo account
+      await login('demo@blvckwall.ai', 'password');
+      router.push('/portal/overview');
     } catch (error) {
       console.error('Error during Google sign in:', error);
       alert('Error during Google sign in. Please try again.');
