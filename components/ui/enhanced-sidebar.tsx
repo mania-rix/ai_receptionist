@@ -94,7 +94,7 @@ const navGroups = [
       },
     ]
   },
-    <div className="flex h-full w-[72px] flex-col items-center border-r border-gray-800 bg-[#121212] py-4 overflow-hidden">
+  {
     title: 'Hackathon Features',
     items: [
       {
