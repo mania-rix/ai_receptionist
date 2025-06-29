@@ -39,6 +39,7 @@ interface StorageContextType {
 
 // Base interface for all items
 interface BaseItem {
+  }
   id: string;
   created_at: string;
   [key: string]: any;
@@ -937,6 +938,7 @@ export function StorageProvider({ children }: { children: ReactNode }) {
 
 // Hook to use the storage context
 export function useStorage() {
+    }
   const context = useContext(StorageContext);
   if (context === undefined) {
     throw new Error('useStorage must be used within a StorageProvider');
