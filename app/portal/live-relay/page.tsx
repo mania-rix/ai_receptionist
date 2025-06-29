@@ -1,5 +1,6 @@
 'use client';
 
+import { useStorage } from '@/contexts/storage-context';
 import { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { Play, Square, Mic, MicOff, Send, Phone, Globe, Loader2, RefreshCw, User, Clock } from 'lucide-react';
@@ -62,7 +63,7 @@ export default function LiveRelayPage() {
   const [isRecording, setIsRecording] = useState(false);
   const [isTranslating, setIsTranslating] = useState(false);
   const [languages, setLanguages] = useState<Language[]>([]);
-  const [isLoadingLanguages, setIsLoadingLanguages] = useState(true);
+  const [isLoadingLanguages, setIsLoadingLanguages] = useState(false);
   const [callerInfoOpen, setCallerInfoOpen] = useState(false);
   const [callerInfo, setCallerInfo] = useState<CallerInfo>({
     name: 'Maria Rodriguez',
@@ -72,11 +73,24 @@ export default function LiveRelayPage() {
   const [callDuration, setCallDuration] = useState(0);
   const [callTimer, setCallTimer] = useState<NodeJS.Timeout | null>(null);
   const { toast } = useToast();
+  const { isAuthenticated } = useStorage();
   const audioRef = useRef<HTMLAudioElement>(null);
 
   useEffect(() => {
     console.log('[LiveRelay] Component mounted');
-    fetchSupportedLanguages();
+    // Initialize with default languages
+    setLanguages([
+      { code: 'en', name: 'English', native_name: 'English' },
+      { code: 'es', name: 'Spanish', native_name: 'Español' },
+      { code: 'fr', name: 'French', native_name: 'Français' },
+      { code: 'de', name: 'German', native_name: 'Deutsch' },
+      { code: 'it', name: 'Italian', native_name: 'Italiano' },
+      { code: 'pt', name: 'Portuguese', native_name: 'Português' },
+      { code: 'zh', name: 'Chinese', native_name: '中文' },
+      { code: 'ja', name: 'Japanese', native_name: '日本語' },
+      { code: 'ko', name: 'Korean', native_name: '한국어' },
+      { code: 'ar', name: 'Arabic', native_name: 'العربية' },
+    ]);
     
     return () => {
       console.log('[LiveRelay] Component unmounted');
@@ -86,39 +100,6 @@ export default function LiveRelayPage() {
     };
   }, []);
   
-  const fetchSupportedLanguages = async () => {
-    console.log('[LiveRelay] Fetching supported languages...');
-    setIsLoadingLanguages(true); 
-    try {
-      const response = await fetch('/api/lingo-translate');
-      if (!response.ok) {
-        throw new Error('Failed to fetch languages');
-      }
-      
-      const data = await response.json();
-      setLanguages(data.languages || []);
-      console.log('[LiveRelay] Languages fetched:', data.languages?.length || 0);
-    } catch (error) {
-      console.error('[LiveRelay] Error fetching languages:', error);
-      // Provide fallback languages for demo mode
-      setLanguages([
-        { code: 'en', name: 'English', native_name: 'English' },
-        { code: 'es', name: 'Spanish', native_name: 'Español' },
-        { code: 'fr', name: 'French', native_name: 'Français' },
-        { code: 'de', name: 'German', native_name: 'Deutsch' },
-        { code: 'it', name: 'Italian', native_name: 'Italiano' },
-        { code: 'pt', name: 'Portuguese', native_name: 'Português' },
-        { code: 'zh', name: 'Chinese', native_name: '中文' },
-        { code: 'ja', name: 'Japanese', native_name: '日本語' },
-        { code: 'ko', name: 'Korean', native_name: '한국어' },
-        { code: 'ar', name: 'Arabic', native_name: 'العربية' },
-      ]);
-      console.log('[LiveRelay] Using fallback languages for demo');
-    } finally {
-      setIsLoadingLanguages(false);
-    }
-  };
-
   const startSession = async () => {
     console.log('[LiveRelay] Starting session for call:', currentCallId);
     try {
@@ -383,8 +364,8 @@ export default function LiveRelayPage() {
           <p className="text-gray-400 mt-1">Real-time translation for multilingual calls</p>
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" onClick={fetchSupportedLanguages} disabled={isLoadingLanguages}>
-            <RefreshCw className={`h-4 w-4 ${isLoadingLanguages ? 'animate-spin' : ''}`} />
+          <Button variant="outline" size="sm" disabled={isLoadingLanguages}>
+            <RefreshCw className="h-4 w-4" />
           </Button>
           <Button variant="outline" size="sm" onClick={() => setCallerInfoOpen(true)} disabled={isSessionActive}>
             <User className="h-4 w-4" />

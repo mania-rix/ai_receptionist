@@ -5,220 +5,224 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
-import {
-  LayoutDashboard,
-  Users,
-  Phone,
-  PhoneCall,
-  PhoneIncoming,
-  FileText,
-  BarChart2,
-  Calendar,
-  Shield,
-  MessageSquare,
-  GitBranch,
-  Mic,
-  CreditCard,
-  Video,
-  Hash,
-  Bug,
-  Settings,
-  LogOut,
+import { 
+  LayoutDashboard, Users, Phone, PhoneOutgoing, PhoneIncoming, 
+  FileText, BarChart2, Calendar, UserCheck, ShieldCheck, 
+  MessageSquare, GitBranch, Mic, CreditCard, Video, 
+  Database, Bug, Settings, LogOut
 } from 'lucide-react';
-import { supabase } from '@/lib/supabase-browser';
-import { useRouter } from 'next/navigation';
 
-interface SidebarItem {
-  title: string;
+interface SidebarItemProps {
   href: string;
-  icon: any;
-  active?: boolean;
-  disabled?: boolean;
+  icon: React.ReactNode;
+  label: string;
+  isActive: boolean;
 }
 
-interface SidebarCategory {
+const SidebarItem = ({ href, icon, label, isActive }: SidebarItemProps) => {
+  return (
+    <Link
+      href={href}
+      className={cn(
+        "flex items-center gap-3 px-3 py-2 rounded-md transition-colors relative group",
+        isActive 
+          ? "text-white bg-blue-600/20" 
+          : "text-gray-400 hover:text-white hover:bg-gray-800"
+      )}
+    >
+      {isActive && (
+        <motion.div
+          layoutId="sidebar-highlight"
+          className="absolute left-0 top-0 bottom-0 w-1 bg-blue-600 rounded-full"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.2 }}
+        />
+      )}
+      <div className="w-5 h-5 flex items-center justify-center">
+        {icon}
+      </div>
+      <span className="text-sm font-medium">{label}</span>
+    </Link>
+  );
+};
+
+interface SidebarCategoryProps {
   title: string;
-  items: SidebarItem[];
+  children: React.ReactNode;
 }
+
+const SidebarCategory = ({ title, children }: SidebarCategoryProps) => {
+  return (
+    <div className="mb-6">
+      <div className="px-3 mb-2">
+        <h3 className="text-xs font-semibold text-blue-400">{title}</h3>
+      </div>
+      <div className="space-y-1">
+        {children}
+      </div>
+    </div>
+  );
+};
 
 export function EnhancedSidebar() {
   const pathname = usePathname();
-  const router = useRouter();
-  const [isCollapsed, setIsCollapsed] = useState(false);
-  const [categories, setCategories] = useState<SidebarCategory[]>([
-    {
-      title: 'CORE',
-      items: [
-        {
-          title: 'Overview',
-          href: '/portal/overview',
-          icon: LayoutDashboard,
-        },
-        {
-          title: 'Agents',
-          href: '/portal/agents',
-          icon: Users,
-        },
-        {
-          title: 'Outbound Calls',
-          href: '/portal/calls-out',
-          icon: PhoneCall,
-        },
-        {
-          title: 'Inbound Calls',
-          href: '/portal/calls-in',
-          icon: PhoneIncoming,
-        },
-        {
-          title: 'Phone Numbers',
-          href: '/portal/phone-numbers',
-          icon: Phone,
-        },
-      ],
-    },
-    {
-      title: 'MANAGEMENT',
-      items: [
-        {
-          title: 'Knowledge Base',
-          href: '/portal/knowledge-base',
-          icon: FileText,
-        },
-        {
-          title: 'Analytics',
-          href: '/portal/analytics',
-          icon: BarChart2,
-        },
-        {
-          title: 'Events',
-          href: '/portal/events',
-          icon: Calendar,
-        },
-        {
-          title: 'HR Center',
-          href: '/portal/hr-center',
-          icon: Users,
-        },
-        {
-          title: 'Compliance',
-          href: '/portal/compliance',
-          icon: Shield,
-        },
-      ],
-    },
-    {
-      title: 'PROTOTYPE CENTER',
-      items: [
-        {
-          title: 'Live Relay',
-          href: '/portal/live-relay',
-          icon: MessageSquare,
-        },
-        {
-          title: 'Conversation Flows',
-          href: '/portal/conversation-flows',
-          icon: GitBranch,
-        },
-        {
-          title: 'Voice Analytics',
-          href: '/portal/voice-analytics',
-          icon: Mic,
-        },
-        {
-          title: 'Digital Cards',
-          href: '/portal/digital-cards',
-          icon: CreditCard,
-        },
-        {
-          title: 'Video Summaries',
-          href: '/portal/video-summaries',
-          icon: Video,
-        },
-        {
-          title: 'Compliance Ledger',
-          href: '/portal/compliance-ledger',
-          icon: Hash,
-        },
-        {
-          title: 'Debug Console',
-          href: '/portal/debug-console',
-          icon: Bug,
-        },
-      ],
-    },
-    {
-      title: 'SYSTEM',
-      items: [
-        {
-          title: 'Settings',
-          href: '/portal/settings',
-          icon: Settings,
-        },
-      ],
-    },
-  ]);
+  const [mounted, setMounted] = useState(false);
 
-  const handleSignOut = async () => {
-    await supabase.auth.signOut();
-    router.push('/');
-  };
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!mounted) {
+    return (
+      <div className="w-60 bg-[#0A0A0A] border-r border-gray-800 h-screen flex-shrink-0" />
+    );
+  }
 
   return (
-    <div className="h-screen flex flex-col bg-[#0A0A0A] border-r border-gray-800 w-56 overflow-hidden">
+    <div className="w-60 bg-[#0A0A0A] border-r border-gray-800 h-screen flex-shrink-0 flex flex-col">
       {/* Logo */}
-      <div className="flex items-center gap-2 px-4 py-3 border-b border-gray-800">
-        <div className="h-8 w-8 rounded-full bg-gradient-to-br from-purple-600 to-blue-600" />
-        <span className="font-semibold text-white">BlvckWall AI</span>
+      <div className="h-16 flex items-center px-4 border-b border-gray-800">
+        <Link href="/portal/overview" className="flex items-center gap-3">
+          <div className="h-9 w-9 rounded-full bg-blue-600 flex items-center justify-center">
+            <span className="text-white font-bold">BW</span>
+          </div>
+          <span className="font-semibold text-white">BlvckWall AI</span>
+        </Link>
       </div>
-
+      
       {/* Navigation */}
-      <div className="flex-1 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-600 scrollbar-track-transparent">
-        <nav className="px-2 py-4 space-y-6">
-          {categories.map((category) => (
-            <div key={category.title} className="space-y-1">
-              <h3 className="px-4 text-xs font-semibold text-gray-400 tracking-wider">
-                {category.title}
-              </h3>
-              {category.items.map((item) => {
-                const isActive = pathname === item.href;
-                return (
-                  <Link
-                    key={item.href}
-                    href={item.disabled ? '#' : item.href}
-                    className={cn(
-                      'flex items-center gap-3 px-4 py-2 text-sm rounded-md relative group',
-                      isActive
-                        ? 'text-white bg-gradient-to-r from-purple-600/20 to-blue-600/20 font-medium'
-                        : 'text-gray-400 hover:text-white',
-                      item.disabled && 'opacity-50 cursor-not-allowed'
-                    )}
-                  >
-                    {isActive && (
-                      <motion.div
-                        layoutId="sidebar-highlight"
-                        className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-purple-600 to-blue-600 rounded-full"
-                        transition={{ type: 'spring', duration: 0.5 }}
-                      />
-                    )}
-                    <item.icon className="h-5 w-5" />
-                    <span>{item.title}</span>
-                  </Link>
-                );
-              })}
-            </div>
-          ))}
-        </nav>
+      <div className="flex-1 overflow-y-auto sidebar-nav py-4 px-2">
+        <SidebarCategory title="CORE">
+          <SidebarItem
+            href="/portal/overview"
+            icon={<LayoutDashboard className="w-4 h-4" />}
+            label="Overview"
+            isActive={pathname === '/portal/overview'}
+          />
+          <SidebarItem
+            href="/portal/agents"
+            icon={<Users className="w-4 h-4" />}
+            label="Agents"
+            isActive={pathname === '/portal/agents'}
+          />
+          <SidebarItem
+            href="/portal/calls-out"
+            icon={<PhoneOutgoing className="w-4 h-4" />}
+            label="Outbound Calls"
+            isActive={pathname === '/portal/calls-out'}
+          />
+          <SidebarItem
+            href="/portal/calls-in"
+            icon={<PhoneIncoming className="w-4 h-4" />}
+            label="Inbound Calls"
+            isActive={pathname === '/portal/calls-in'}
+          />
+          <SidebarItem
+            href="/portal/phone-numbers"
+            icon={<Phone className="w-4 h-4" />}
+            label="Phone Numbers"
+            isActive={pathname === '/portal/phone-numbers'}
+          />
+        </SidebarCategory>
+        
+        <SidebarCategory title="MANAGEMENT">
+          <SidebarItem
+            href="/portal/knowledge-base"
+            icon={<FileText className="w-4 h-4" />}
+            label="Knowledge Base"
+            isActive={pathname === '/portal/knowledge-base'}
+          />
+          <SidebarItem
+            href="/portal/analytics"
+            icon={<BarChart2 className="w-4 h-4" />}
+            label="Analytics"
+            isActive={pathname === '/portal/analytics'}
+          />
+          <SidebarItem
+            href="/portal/events"
+            icon={<Calendar className="w-4 h-4" />}
+            label="Events"
+            isActive={pathname === '/portal/events'}
+          />
+          <SidebarItem
+            href="/portal/hr-center"
+            icon={<UserCheck className="w-4 h-4" />}
+            label="HR Center"
+            isActive={pathname === '/portal/hr-center'}
+          />
+          <SidebarItem
+            href="/portal/compliance"
+            icon={<ShieldCheck className="w-4 h-4" />}
+            label="Compliance"
+            isActive={pathname === '/portal/compliance'}
+          />
+        </SidebarCategory>
+        
+        <SidebarCategory title="PROTOTYPE CENTER">
+          <SidebarItem
+            href="/portal/live-relay"
+            icon={<MessageSquare className="w-4 h-4" />}
+            label="Live Relay"
+            isActive={pathname === '/portal/live-relay'}
+          />
+          <SidebarItem
+            href="/portal/conversation-flows"
+            icon={<GitBranch className="w-4 h-4" />}
+            label="Conversation Flows"
+            isActive={pathname === '/portal/conversation-flows'}
+          />
+          <SidebarItem
+            href="/portal/voice-analytics"
+            icon={<Mic className="w-4 h-4" />}
+            label="Voice Analytics"
+            isActive={pathname === '/portal/voice-analytics'}
+          />
+          <SidebarItem
+            href="/portal/digital-cards"
+            icon={<CreditCard className="w-4 h-4" />}
+            label="Digital Cards"
+            isActive={pathname === '/portal/digital-cards'}
+          />
+          <SidebarItem
+            href="/portal/video-summaries"
+            icon={<Video className="w-4 h-4" />}
+            label="Video Summaries"
+            isActive={pathname === '/portal/video-summaries'}
+          />
+          <SidebarItem
+            href="/portal/compliance-ledger"
+            icon={<Database className="w-4 h-4" />}
+            label="Compliance Ledger"
+            isActive={pathname === '/portal/compliance-ledger'}
+          />
+          <SidebarItem
+            href="/portal/debug-console"
+            icon={<Bug className="w-4 h-4" />}
+            label="Debug Console"
+            isActive={pathname === '/portal/debug-console'}
+          />
+        </SidebarCategory>
+        
+        <SidebarCategory title="SYSTEM">
+          <SidebarItem
+            href="/portal/settings"
+            icon={<Settings className="w-4 h-4" />}
+            label="Settings"
+            isActive={pathname === '/portal/settings'}
+          />
+        </SidebarCategory>
       </div>
-
-      {/* Sign Out Button */}
+      
+      {/* Sign Out */}
       <div className="p-4 border-t border-gray-800">
-        <button
-          onClick={handleSignOut}
-          className="flex items-center gap-3 px-4 py-2 text-sm text-gray-400 hover:text-white rounded-md w-full"
+        <Link
+          href="/"
+          className="flex items-center gap-3 px-3 py-2 rounded-md text-gray-400 hover:text-white hover:bg-gray-800 transition-colors"
         >
-          <LogOut className="h-5 w-5" />
-          <span>Sign Out</span>
-        </button>
+          <LogOut className="w-4 h-4" />
+          <span className="text-sm font-medium">Sign Out</span>
+        </Link>
       </div>
     </div>
   );

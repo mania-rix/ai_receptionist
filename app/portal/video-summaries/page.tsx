@@ -1,5 +1,6 @@
 'use client';
 
+import { useStorage } from '@/contexts/storage-context';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Video, Play, Download, Calendar, User, Clock } from 'lucide-react';
@@ -23,88 +24,18 @@ interface VideoSummary {
 
 export default function VideoSummariesPage() {
   const router = useRouter();
+  const { videoSummaries, addItem, isAuthenticated } = useStorage();
   const { toast } = useToast();
-  const [videos, setVideos] = useState<VideoSummary[]>([]);
   const [isGenerating, setIsGenerating] = useState(false);
-  const [user, setUser] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     console.log('[VideoSummaries] Component mounted');
-    checkAuthentication();
-    fetchVideoSummaries();
+    setIsLoading(false);
   }, []);
 
-  const checkAuthentication = async () => {
-    try {
-      const { data: { session }, error } = await supabase.auth.getSession();
-      if (error) {
-        console.error('[VideoSummaries] Auth error:', error);
-        // Don't redirect on auth errors in demo mode
-        return;
-      }
-      
-      if (!session?.user) {
-        console.log('[VideoSummaries] No user found, redirecting to auth');
-        // For demo mode, create a mock user instead of redirecting
-        setUser({ id: 'demo-user-id', email: 'demo@blvckwall.ai' });
-        return;
-      }
-      
-      setUser(session.user);
-      console.log('[VideoSummaries] User authenticated:', session.user.id);
-    } catch (error) {
-      console.error('[VideoSummaries] Error checking authentication:', error);
-      // For demo mode, create a mock user instead of redirecting
-      setUser({ id: 'demo-user-id', email: 'demo@blvckwall.ai' });
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const fetchVideoSummaries = () => {
-    console.log('[VideoSummaries] Fetching video summaries...');
-    // Mock data for demo
-    const mockVideos: VideoSummary[] = [
-      {
-        id: '1',
-        title: 'Patient Consultation Summary',
-        description: 'Dr. Smith consultation with John Doe regarding treatment options',
-        duration: '2:34',
-        created_at: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
-        status: 'completed',
-        thumbnail_url: 'https://images.pexels.com/photos/5327585/pexels-photo-5327585.jpeg?auto=compress&cs=tinysrgb&w=300',
-        video_url: 'https://sample-videos.com/zip/10/mp4/SampleVideo_1280x720_1mb.mp4',
-        call_id: 'call_123',
-      },
-      {
-        id: '2',
-        title: 'Follow-up Appointment Summary',
-        description: 'Follow-up discussion about treatment progress',
-        duration: '1:45',
-        created_at: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(),
-        status: 'completed',
-        thumbnail_url: 'https://images.pexels.com/photos/4173251/pexels-photo-4173251.jpeg?auto=compress&cs=tinysrgb&w=300',
-        video_url: 'https://sample-videos.com/zip/10/mp4/SampleVideo_1280x720_1mb.mp4',
-        call_id: 'call_124',
-      },
-      {
-        id: '3',
-        title: 'Emergency Consultation',
-        description: 'Urgent care consultation summary',
-        duration: '3:12',
-        created_at: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),
-        status: 'generating',
-        call_id: 'call_125',
-      },
-    ];
-    
-    setVideos(mockVideos);
-    console.log('[VideoSummaries] Mock videos loaded:', mockVideos.length);
-  };
-
   const generateVideo = async () => {
-    if (!user) {
+    if (!isAuthenticated) {
       console.log('[VideoSummaries] User not authenticated, redirecting');
       toast({
         title: 'Authentication Required',
@@ -115,7 +46,7 @@ export default function VideoSummariesPage() {
       return;
     }
 
-    console.log('[VideoSummaries] Generating video for user:', user.id);
+    console.log('[VideoSummaries] Generating video');
     setIsGenerating(true);
     
     try {
@@ -123,7 +54,7 @@ export default function VideoSummariesPage() {
       await new Promise(resolve => setTimeout(resolve, 2000));
       
       const newVideo: VideoSummary = {
-        id: Date.now().toString(),
+        id: `video_${Date.now()}`,
         title: 'New Patient Consultation',
         description: 'AI-generated summary of recent patient call',
         duration: '2:15',
@@ -132,11 +63,9 @@ export default function VideoSummariesPage() {
         call_id: `call_${Date.now()}`,
       };
       
-      setVideos(prev => [newVideo, ...prev]);
+      await addItem('videoSummaries', newVideo);
       
       // Simulate completion after 5 seconds
-      setTimeout(() => {
-        setVideos(prev => prev.map(video => 
           video.id === newVideo.id 
             ? { 
                 ...video, 
@@ -144,7 +73,11 @@ export default function VideoSummariesPage() {
                 thumbnail_url: 'https://images.pexels.com/photos/5327585/pexels-photo-5327585.jpeg?auto=compress&cs=tinysrgb&w=300',
                 video_url: 'https://sample-videos.com/zip/10/mp4/SampleVideo_1280x720_1mb.mp4'
               }
-            : video
+      setTimeout(async () => {
+        await updateItem('videoSummaries', newVideo.id, {
+          status: 'completed',
+          thumbnail_url: 'https://images.pexels.com/photos/5327585/pexels-photo-5327585.jpeg?auto=compress&cs=tinysrgb&w=300',
+          video_url: 'https://sample-videos.com/zip/10/mp4/SampleVideo_1280x720_1mb.mp4'
         ));
       }, 5000);
       
@@ -187,13 +120,13 @@ export default function VideoSummariesPage() {
     return (
       <div className="flex-1 space-y-6 p-8">
         <div className="flex items-center justify-center py-12">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-500" />
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-500" />
         </div>
       </div>
     );
   }
 
-  if (!user) {
+  if (!isAuthenticated) {
     return (
       <div className="flex-1 space-y-6 p-8">
         <Card className="border-gray-800 bg-[#121212]">
@@ -225,7 +158,7 @@ export default function VideoSummariesPage() {
       </div>
 
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-        {videos.map((video) => (
+        {videoSummaries.map((video) => (
           <Card key={video.id} className="border-gray-800 bg-[#121212] overflow-hidden">
             <div className="relative">
               {video.thumbnail_url ? (
@@ -296,7 +229,7 @@ export default function VideoSummariesPage() {
         ))}
       </div>
 
-      {videos.length === 0 && (
+      {videoSummaries.length === 0 && (
         <Card className="border-gray-800 bg-[#121212]">
           <CardContent className="flex flex-col items-center justify-center py-12">
             <Video className="h-12 w-12 text-gray-400 mb-4" />
