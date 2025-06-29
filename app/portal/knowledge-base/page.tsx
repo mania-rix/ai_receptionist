@@ -438,15 +438,15 @@ export default function KnowledgeBasePage() {
               <p className="text-sm text-gray-400">{kb.description}</p>
               <div className="flex flex-wrap gap-1">
                 {(Array.isArray(kb.languages)
-  ? kb.languages
-  : typeof kb.languages === 'string'
-    ? kb.languages.split(',').map(l => l.trim())
-    : []
-).map((lang: string) => (
-  <Badge key={lang} variant="outline" className="text-xs">
-    {lang.toUpperCase()}
-  </Badge>
-))}
+                    ? kb.languages
+                    : typeof kb.languages === 'string'
+                      ? kb.languages.split(',').map(l => l.trim())
+                      : []
+                  ).map((lang: string) => (
+                    <Badge key={lang} variant="outline" className="text-xs">
+                      {lang.toUpperCase()}
+                    </Badge>
+                  ))}
 
               </div>
               <div className="flex items-center justify-between text-sm">
