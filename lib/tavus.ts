@@ -16,20 +16,26 @@ export interface TavusReplica {
 
 class TavusAPI {
   private apiKey: string;
+  private demoMode: boolean;
 
   constructor() {
     this.apiKey = process.env.TAVUS_API_KEY || '';
-    if (!this.apiKey) {
-      console.error('[TavusLib] TAVUS_API_KEY not found');
-      throw new Error('TAVUS_API_KEY environment variable is required');
+    this.demoMode = !this.apiKey;
+    if (this.demoMode) {
+      console.warn('[TavusLib] TAVUS_API_KEY not found - using demo mode');
     }
     console.log('[TavusLib] Tavus API initialized');
   }
 
   private async request(endpoint: string, options: RequestInit = {}) {
     console.log('[TavusLib] Making request to:', endpoint);
+    
+    // Demo mode - return mock data if no API key
+    if (this.demoMode) {
+      return this.getMockResponse(endpoint, options);
+    }
+
     const url = `${TAVUS_API_BASE}${endpoint}`;
-    // TODO: Review error handling for Tavus API calls
     const response = await fetch(url, {
       ...options,
       headers: {
@@ -50,18 +56,51 @@ class TavusAPI {
     return result;
   }
 
-  // Replica Management
-  async getReplicas(): Promise<TavusReplica[]> {
-    console.log('[TavusLib] Getting replicas...');
-    const data = await this.request('/v2/replicas');
-    console.log('[TavusLib] Replicas retrieved:', data.data?.length || 0);
-    return data.data || [];
-  }
+  private getMockResponse(endpoint: string, options: RequestInit) {
+    console.log('[TavusLib] Using mock response for demo');
+    
+    if (endpoint === '/v2/videos' && options.method === 'POST') {
+      const videoId = `video_${Date.now()}`;
+      return {
+        data: {
+          video_id: videoId,
+          video_url: 'https://demo.tavus.io/sample-video',
+          status: 'queued',
+          created_at: new Date().toISOString()
+        }
+      };
+    }
 
-  async getReplica(replicaId: string): Promise<TavusReplica> {
-    console.log('[TavusLib] Getting replica:', replicaId);
-    const data = await this.request(`/v2/replicas/${replicaId}`);
-    return data.data;
+    if (endpoint.startsWith('/v2/videos/')) {
+      const videoId = endpoint.split('/')[3];
+      return {
+        data: {
+          video_id: videoId,
+          video_url: 'https://demo.tavus.io/sample-video',
+          status: 'completed',
+          created_at: new Date(Date.now() - 60 * 60 * 1000).toISOString()
+        }
+      };
+    }
+
+    if (endpoint === '/v2/replicas') {
+      return {
+        data: [
+          {
+            replica_id: 'replica_1',
+            name: 'Dr. Smith',
+            status: 'active'
+          },
+          {
+            replica_id: 'replica_2',
+            name: 'Dr. Johnson',
+            status: 'active'
+          }
+        ]
+      };
+    }
+
+    return {};
   }
 
   // Video Generation

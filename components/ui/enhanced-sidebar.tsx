@@ -4,144 +4,120 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { motion } from 'framer-motion';
-import { 
-  LayoutDashboard, User, PhoneOutgoing, PhoneIncoming, FileText, 
-  Video, Settings, LogOut, Phone, Book, BarChart3, Calendar, 
-  Users, Shield, GitBranch, MessageSquare, Mic, CreditCard, 
-  Hash, Bug, Rocket, Zap
-} from 'lucide-react';
+import { LayoutDashboard, User, PhoneOutgoing, PhoneIncoming, FileText, Video, Settings, LogOut, Phone, Book, BarChart3, Calendar, Users, Shield, GitBranch, MessageSquare, Mic, CreditCard, Hash, Bug } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { supabase } from '@/lib/supabase-browser'
 import { useRouter } from 'next/navigation';
-import { ActivityFeed } from '@/components/activity-feed';
-import { FeedbackWidget } from '@/components/feedback-widget';
 
 const navItems = [
   {
-    section: 'OVERVIEW',
-    items: [
-      {
-        title: 'Overview',
-        href: '/portal/overview',
-        icon: LayoutDashboard,
-      }
-    ]
+    title: 'Overview',
+    href: '/portal/overview',
+    icon: LayoutDashboard,
+    section: 'DASHBOARD'
   },
   {
-    section: 'OPERATIONS',
-    items: [
-      {
-        title: 'Agents',
-        href: '/portal/agents',
-        icon: User,
-      },
-      {
-        title: 'Outbound Calls',
-        href: '/portal/calls-out',
-        icon: PhoneOutgoing,
-      },
-      {
-        title: 'Inbound Calls',
-        href: '/portal/calls-in',
-        icon: PhoneIncoming,
-      },
-      {
-        title: 'Phone Numbers',
-        href: '/portal/phone-numbers',
-        icon: Phone,
-      },
-    ]
+    title: 'Agents',
+    href: '/portal/agents',
+    icon: User,
+    section: 'OPERATIONS'
   },
   {
-    section: 'HACKATHON FEATURES',
-    items: [
-      {
-        title: 'Live Relay',
-        href: '/portal/live-relay',
-        icon: MessageSquare,
-      },
-      {
-        title: 'Video Summaries',
-        href: '/portal/video-summaries',
-        icon: Video,
-      },
-      {
-        title: 'Digital Cards',
-        href: '/portal/digital-cards',
-        icon: CreditCard,
-      },
-      {
-        title: 'Compliance Ledger',
-        href: '/portal/compliance-ledger',
-        icon: Hash,
-      },
-      {
-        title: 'Debug Console',
-        href: '/portal/debug-console',
-        icon: Bug,
-      },
-      {
-        title: 'Deployment',
-        href: '/portal/deploy',
-        icon: Rocket,
-      },
-    ]
+    title: 'Outbound Calls',
+    href: '/portal/calls-out',
+    icon: PhoneOutgoing,
+    section: 'OPERATIONS'
   },
   {
-    section: 'KNOWLEDGE & INSIGHTS',
-    items: [
-      {
-        title: 'Knowledge Base',
-        href: '/portal/knowledge-base',
-        icon: Book,
-      },
-      {
-        title: 'Analytics',
-        href: '/portal/analytics',
-        icon: BarChart3,
-      },
-      {
-        title: 'Voice Analytics',
-        href: '/portal/voice-analytics',
-        icon: Mic,
-      },
-      {
-        title: 'Conversation Flows',
-        href: '/portal/conversation-flows',
-        icon: GitBranch,
-      },
-    ]
+    title: 'Inbound Calls',
+    href: '/portal/calls-in',
+    icon: PhoneIncoming,
+    section: 'OPERATIONS'
   },
   {
-    section: 'ORGANIZATION',
-    items: [
-      {
-        title: 'Events',
-        href: '/portal/events',
-        icon: Calendar,
-      },
-      {
-        title: 'HR Center',
-        href: '/portal/hr-center',
-        icon: Users,
-      },
-      {
-        title: 'Compliance',
-        href: '/portal/compliance',
-        icon: Shield,
-      },
-    ]
+    title: 'Phone Numbers',
+    href: '/portal/phone-numbers',
+    icon: Phone,
+    section: 'OPERATIONS'
   },
   {
-    section: 'SETTINGS & ACCOUNT',
-    items: [
-      {
-        title: 'Settings',
-        href: '/portal/settings',
-        icon: Settings,
-      },
-    ]
-  }
+    title: 'Knowledge Base',
+    href: '/portal/knowledge-base',
+    icon: Book,
+    section: 'KNOWLEDGE & INSIGHTS'
+  },
+  {
+    title: 'Analytics',
+    href: '/portal/analytics',
+    icon: BarChart3,
+    section: 'KNOWLEDGE & INSIGHTS'
+  },
+  {
+    title: 'Voice Analytics',
+    href: '/portal/voice-analytics',
+    icon: Mic,
+    section: 'KNOWLEDGE & INSIGHTS'
+  },
+  {
+    title: 'Events',
+    href: '/portal/events',
+    icon: Calendar,
+    section: 'MANAGEMENT'
+  },
+  {
+    title: 'HR Center',
+    href: '/portal/hr-center',
+    icon: Users,
+    section: 'MANAGEMENT'
+  },
+  {
+    title: 'Compliance',
+    href: '/portal/compliance',
+    icon: Shield,
+    section: 'MANAGEMENT'
+  },
+  {
+    title: 'Live Relay',
+    href: '/portal/live-relay',
+    icon: MessageSquare,
+    section: 'HACKATHON FEATURES'
+  },
+  {
+    title: 'Video Summaries',
+    href: '/portal/video-summaries',
+    icon: Video,
+    section: 'HACKATHON FEATURES'
+  },
+  {
+    title: 'Digital Cards',
+    href: '/portal/digital-cards',
+    icon: CreditCard,
+    section: 'HACKATHON FEATURES'
+  },
+  {
+    title: 'Compliance Ledger',
+    href: '/portal/compliance-ledger',
+    icon: Hash,
+    section: 'HACKATHON FEATURES'
+  },
+  {
+    title: 'Debug Console',
+    href: '/portal/debug-console',
+    icon: Bug,
+    section: 'HACKATHON FEATURES'
+  },
+  {
+    title: 'Conversation Flows',
+    href: '/portal/conversation-flows',
+    icon: GitBranch,
+    section: 'ADVANCED'
+  },
+  {
+    title: 'Settings',
+    href: '/portal/settings',
+    icon: Settings,
+    section: 'SETTINGS & ACCOUNT'
+  },
 ];
 
 export function EnhancedSidebar() {
@@ -153,22 +129,28 @@ export function EnhancedSidebar() {
     router.push('/');
   };
 
-  return (
-    <div className="flex h-full w-[72px] flex-col items-center border-r border-gray-800 bg-[#121212] py-4 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-600 scrollbar-track-transparent">
-      <div className="mb-6 h-10 w-10 rounded-full bg-gradient-to-br from-purple-600 to-blue-600 flex items-center justify-center">
-        <Zap className="h-5 w-5 text-white" />
-      </div>
-      
-      {/* Activity Feed */}
-      <div className="mb-4">
-        <ActivityFeed />
-      </div>
+  // Group nav items by section
+  const groupedNavItems: { [key: string]: typeof navItems } = {};
+  navItems.forEach(item => {
+    if (!groupedNavItems[item.section]) {
+      groupedNavItems[item.section] = [];
+    }
+    groupedNavItems[item.section].push(item);
+  });
 
+  return (
+    <div className="flex h-full w-[72px] flex-col items-center border-r border-gray-800 bg-[#121212] py-4">
+      <div className="mb-6 h-10 w-10 rounded-full bg-gradient-to-br from-purple-600 to-blue-600" />
+      
       <div className="flex flex-1 flex-col items-center gap-4 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-600 scrollbar-track-transparent">
         <TooltipProvider>
-          {navItems.map((section) => (
-            <div key={section.section} className="w-full flex flex-col items-center">
-              {section.items.map((item) => {
+          {Object.entries(groupedNavItems).map(([section, items]) => (
+            <div key={section} className="w-full">
+              <div className="px-2 mb-2">
+                <div className="text-[10px] text-gray-500 font-medium tracking-wider text-center">{section}</div>
+              </div>
+              
+              {items.map((item) => {
                 const isActive = pathname === item.href;
                 
                 return (
@@ -204,7 +186,8 @@ export function EnhancedSidebar() {
                   </Tooltip>
                 );
               })}
-              <div className="w-8 border-t border-gray-800 my-2"></div>
+              
+              <div className="h-4"></div>
             </div>
           ))}
         </TooltipProvider>
@@ -229,9 +212,6 @@ export function EnhancedSidebar() {
           </TooltipContent>
         </Tooltip>
       </TooltipProvider>
-      
-      {/* Feedback Widget */}
-      <FeedbackWidget />
     </div>
   );
 }
