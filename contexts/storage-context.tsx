@@ -73,9 +73,13 @@ export function StorageProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     setIsClient(true);
     
+    console.log('[StorageContext] Initializing provider, setting up auth listener');
+    
     // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
+        console.log('[StorageContext] Auth state changed:', { event, user: session?.user?.email, authenticated: !!session?.user });
+        
         const user = session?.user || null;
         setCurrentUser(user as User | null);
         setIsAuthenticated(!!user);
@@ -103,8 +107,15 @@ export function StorageProvider({ children }: { children: ReactNode }) {
   // Check if user is authenticated
   const checkAuthentication = async () => {
     try {
+      console.log('[StorageContext] Running initial auth check');
       const { data: { session } } = await supabase.auth.getSession();
       const user = session?.user || null;
+      
+      console.log('[StorageContext] Initial auth check result:', { 
+        user: user?.email, 
+        authenticated: !!user,
+        sessionExists: !!session
+      });
       
       setCurrentUser(user as User | null);
       setIsAuthenticated(!!user);
@@ -681,6 +692,13 @@ export function StorageProvider({ children }: { children: ReactNode }) {
     updateItem,
     deleteItem,
   };
+
+  console.log('[StorageContext] Provider state:', { 
+    isAuthenticated, 
+    isLoading, 
+    userEmail: currentUser?.email,
+    hasUser: !!currentUser
+  });
 
   return (
     <StorageContext.Provider value={value}>

@@ -22,8 +22,18 @@ interface VideoSummary {
 }
 
 export default function VideoSummariesPage() {
+  console.log('[VideoSummaries] Component rendering');
   const router = useRouter();
   const { videoSummaries, addItem, isAuthenticated, currentUser, isLoading } = useStorage();
+  
+  console.log('[VideoSummaries] Auth state:', { 
+    isAuthenticated, 
+    isLoading, 
+    userEmail: currentUser?.email,
+    hasUser: !!currentUser,
+    videoSummariesCount: videoSummaries.length
+  });
+  
   const { toast } = useToast();
   const [isGenerating, setIsGenerating] = useState(false);
 
@@ -32,6 +42,7 @@ export default function VideoSummariesPage() {
   }, []);
 
   const generateVideo = async () => {
+    console.log('[VideoSummaries] Generate video clicked, auth state:', { isAuthenticated, userEmail: currentUser?.email });
     if (!isAuthenticated) {
       console.log('[VideoSummaries] User not authenticated, redirecting');
       toast({
@@ -107,6 +118,7 @@ export default function VideoSummariesPage() {
   };
 
   if (isLoading) {
+    console.log('[VideoSummaries] Rendering loading state');
     return (
       <div className="flex-1 space-y-6 p-8">
         <div className="flex items-center justify-center py-12" aria-label="Loading">
@@ -117,6 +129,7 @@ export default function VideoSummariesPage() {
   }
 
   if (!isAuthenticated) {
+    console.log('[VideoSummaries] Rendering unauthenticated state');
     return (
       <div className="flex-1 space-y-6 p-8">
         <Card className="border-gray-800 bg-[#121212]">
@@ -136,6 +149,7 @@ export default function VideoSummariesPage() {
   }
 
   return (
+    // Main content when authenticated
     <div className="flex-1 space-y-6 p-8">
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-bold tracking-tight">Video Summaries</h1>
