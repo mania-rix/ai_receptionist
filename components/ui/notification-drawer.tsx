@@ -1,5 +1,6 @@
 'use client';
 
+import { useStorage } from '@/contexts/storage-context';
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Bell, X, Check, AlertTriangle, User, Phone, Calendar, Settings } from 'lucide-react';
@@ -7,7 +8,6 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { supabase } from '@/lib/supabase-browser';
 
 interface Notification {
   id: string;
@@ -40,31 +40,19 @@ export function NotificationDrawer() {
   const [isOpen, setIsOpen] = useState(false);
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [activeTab, setActiveTab] = useState('all');
+  const { isAuthenticated } = useStorage();
   const [unreadCount, setUnreadCount] = useState(0);
 
   useEffect(() => {
     console.log('[NotificationDrawer] Component mounted');
-    fetchNotifications();
-    
-    // Set up real-time subscription
-    const channel = supabase
-      .channel('notifications')
-      .on('postgres_changes', 
-        { event: 'INSERT', schema: 'public', table: 'activity_feed' },
-        (payload) => {
-          const newNotification = transformActivityToNotification(payload.new);
-          setNotifications(prev => [newNotification, ...prev]);
-          setUnreadCount(prev => prev + 1);
-        }
-      );
-    
-    channel.subscribe();
+    if (isAuthenticated) {
+      fetchNotifications();
+    }
 
     return () => {
-      //channel.unsubscribe();
       console.log('[NotificationDrawer] Component unmounted');
     };
-  }, []);
+  }, [isAuthenticated]);
 
   const fetchNotifications = async () => {
     console.log('[NotificationDrawer] Fetching notifications...');

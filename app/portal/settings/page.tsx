@@ -1,5 +1,6 @@
 'use client';
 
+import { useStorage } from '@/contexts/storage-context';
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { User, Bell, Shield, Download, LogOut, Save, Upload } from 'lucide-react';
@@ -12,7 +13,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { useToast } from '@/hooks/use-toast';
-import { supabase } from '@/lib/supabase-browser';
 import { useRouter } from 'next/navigation';
 
 interface UserProfile {
@@ -40,6 +40,7 @@ interface LoginActivity {
 export default function SettingsPage() {
   const router = useRouter();
   const { toast } = useToast();
+  const { currentUser, logout } = useStorage();
   const [isLoading, setIsLoading] = useState(false);
   const [profile, setProfile] = useState<UserProfile>({
     email: '',
@@ -58,25 +59,16 @@ export default function SettingsPage() {
     console.log('[SettingsUI] Component mounted');
     fetchUserProfile();
     fetchLoginActivity();
-    
-    return () => {
-      console.log('[SettingsUI] Component unmounted');
-    };
-  }, []);
+  }, [currentUser]);
 
   const fetchUserProfile = async () => {
     console.log('[SettingsUI] Fetching user profile...');
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
-        setProfile({
-          email: user.email || '',
-          name: user.user_metadata?.name || user.email?.split('@')[0] || '',
-        });
-        console.log('[SettingsUI] User profile fetched:', user.email);
-      }
-    } catch (error) {
-      console.error('[SettingsUI] Error fetching user profile:', error);
+    if (currentUser) {
+      setProfile({
+        email: currentUser.email || '',
+        name: currentUser.user_metadata?.name || currentUser.email?.split('@')[0] || '',
+      });
+      console.log('[SettingsUI] User profile fetched:', currentUser.email);
     }
   };
 
@@ -113,28 +105,16 @@ export default function SettingsPage() {
   const handleProfileSave = async () => {
     console.log('[SettingsUI] Saving profile:', profile);
     setIsLoading(true);
-    try {
-      const { error } = await supabase.auth.updateUser({
-        data: { name: profile.name }
-      });
-
-      if (error) throw error;
-
+    
+    // In demo mode, just show success message
+    setTimeout(() => {
       console.log('[SettingsUI] Profile saved successfully');
       toast({
         title: 'Profile Updated',
         description: 'Your profile has been saved successfully',
       });
-    } catch (error) {
-      console.error('[SettingsUI] Error saving profile:', error);
-      toast({
-        title: 'Error',
-        description: 'Failed to save profile',
-        variant: 'destructive',
-      });
-    } finally {
       setIsLoading(false);
-    }
+    }, 1000);
   };
 
   const handleNotificationSave = () => {
@@ -188,7 +168,7 @@ export default function SettingsPage() {
 
   const handleSignOut = async () => {
     console.log('[SettingsUI] Signing out...');
-    await supabase.auth.signOut();
+    await logout();
     router.push('/');
   };
 
