@@ -24,7 +24,7 @@ interface VideoSummary {
 export default function VideoSummariesPage() {
   console.log('[VideoSummaries] Component rendering', { isLoading: useStorage().isLoading });
   const router = useRouter();
-  const { videoSummaries, addItem, isAuthenticated, currentUser, isLoading } = useStorage();
+  const { videoSummaries, addItem, updateItem, isAuthenticated, currentUser, isLoading } = useStorage();
   
   console.log('[VideoSummaries] Auth state:', { 
     isAuthenticated, 
