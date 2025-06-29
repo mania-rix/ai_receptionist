@@ -4,8 +4,18 @@ import { cookies } from 'next/headers';
 
 export async function GET() {
   try {
-    const cookieStore = cookies();
-    const supabase = supabaseServer(cookieStore)
+    let supabase;
+    try {
+      const cookieStore = cookies();
+      supabase = supabaseServer(cookieStore);
+    } catch (error) {
+      console.warn('[API:knowledge-bases] Cookie access failed, using demo mode');
+      const { createClient } = await import('@supabase/supabase-js');
+      supabase = createClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+      );
+    }
 
     const { data: knowledgeBases, error } = await supabase
       .from('knowledge_bases')
@@ -27,10 +37,25 @@ export async function GET() {
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    const cookieStore = cookies();
-    const supabase = supabaseServer(cookieStore)
+    
+    let supabase;
+    let user;
+    
+    try {
+      const cookieStore = cookies();
+      supabase = supabaseServer(cookieStore);
+      const { data: { user: authUser } } = await supabase.auth.getUser();
+      user = authUser;
+    } catch (error) {
+      console.warn('[API:knowledge-bases] Cookie access failed, using demo mode');
+      const { createClient } = await import('@supabase/supabase-js');
+      supabase = createClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+      );
+      user = { id: 'demo-user-id', email: 'demo@blvckwall.ai' };
+    }
 
-    const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }

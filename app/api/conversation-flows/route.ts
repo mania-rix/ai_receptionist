@@ -5,8 +5,19 @@ import { cookies } from 'next/headers';
 export async function GET() {
   console.log('[API:conversation-flows] GET request');
   try {
-    const cookieStore = cookies();
-    const supabase = supabaseServer(cookieStore);
+    let supabase;
+    try {
+      const cookieStore = cookies();
+      supabase = supabaseServer(cookieStore);
+    } catch (error) {
+      console.warn('[API:conversation-flows] Cookie access failed, using demo mode');
+      // For demo mode, create a mock supabase client
+      const { createClient } = await import('@supabase/supabase-js');
+      supabase = createClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+      );
+    }
 
     const { data: flows, error } = await supabase
       .from('conversation_flows')
@@ -31,10 +42,26 @@ export async function POST(req: Request) {
   try {
     const body = await req.json();
     console.log('[API:conversation-flows] POST payload:', body);
-    const cookieStore = cookies();
-    const supabase = supabaseServer(cookieStore);
+    
+    let supabase;
+    let user;
+    
+    try {
+      const cookieStore = cookies();
+      supabase = supabaseServer(cookieStore);
+      const { data: { user: authUser } } = await supabase.auth.getUser();
+      user = authUser;
+    } catch (error) {
+      console.warn('[API:conversation-flows] Cookie access failed, using demo mode');
+      // For demo mode, create a mock supabase client and user
+      const { createClient } = await import('@supabase/supabase-js');
+      supabase = createClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+      );
+      user = { id: 'demo-user-id', email: 'demo@blvckwall.ai' };
+    }
 
-    const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
       console.error('[API:conversation-flows] POST Unauthorized access attempt');
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });

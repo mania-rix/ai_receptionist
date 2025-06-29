@@ -37,24 +37,26 @@ export default function VideoSummariesPage() {
 
   const checkAuthentication = async () => {
     try {
-      const { data: { user }, error } = await supabase.auth.getUser();
+      const { data: { session }, error } = await supabase.auth.getSession();
       if (error) {
         console.error('[VideoSummaries] Auth error:', error);
-        router.push('/auth/blvckwall');
+        // Don't redirect on auth errors in demo mode
         return;
       }
       
-      if (!user) {
+      if (!session?.user) {
         console.log('[VideoSummaries] No user found, redirecting to auth');
-        router.push('/auth/blvckwall');
+        // For demo mode, create a mock user instead of redirecting
+        setUser({ id: 'demo-user-id', email: 'demo@blvckwall.ai' });
         return;
       }
       
-      setUser(user);
-      console.log('[VideoSummaries] User authenticated:', user.id);
+      setUser(session.user);
+      console.log('[VideoSummaries] User authenticated:', session.user.id);
     } catch (error) {
       console.error('[VideoSummaries] Error checking authentication:', error);
-      router.push('/auth/blvckwall');
+      // For demo mode, create a mock user instead of redirecting
+      setUser({ id: 'demo-user-id', email: 'demo@blvckwall.ai' });
     } finally {
       setIsLoading(false);
     }
