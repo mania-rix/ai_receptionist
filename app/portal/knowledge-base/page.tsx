@@ -1,4 +1,5 @@
 'use client';
+import { supabase } from '@/lib/supabase-browser';
 
 import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
