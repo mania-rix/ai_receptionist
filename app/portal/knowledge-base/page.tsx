@@ -45,9 +45,6 @@ export default function KnowledgeBasePage() {
     },
   });
 
-  useEffect(() => {
-    fetchKnowledgeBases();
-  }, []);
    const createOrUpdateKnowledgeBase = async (data: FormData) => {
     console.log('[KBUI] Creating/updating knowledge base:', data);
     setIsLoading(true);
