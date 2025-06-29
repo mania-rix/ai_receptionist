@@ -339,5 +339,28 @@ export const supabase = {
         };
       }
     };
+  },
+  channel: (channelName: string) => {
+    // Mock channel implementation for real-time subscriptions
+    return {
+      on: (event: string, filter: any, callback: Function) => {
+        // Mock subscription - doesn't actually listen to real-time events
+        console.log(`Mock subscription to ${channelName} for event ${event}`);
+        return {
+          subscribe: () => {
+            console.log(`Mock subscribed to ${channelName}`);
+            return Promise.resolve();
+          }
+        };
+      },
+      subscribe: () => {
+        console.log(`Mock subscribed to ${channelName}`);
+        return Promise.resolve();
+      },
+      unsubscribe: () => {
+        console.log(`Mock unsubscribed from ${channelName}`);
+        return Promise.resolve();
+      }
+    };
   }
 };
