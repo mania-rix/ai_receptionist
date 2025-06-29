@@ -25,6 +25,7 @@ interface User {
 interface StorageContextType {
   // Authentication
   isAuthenticated: boolean;
+  isLoading: boolean;
   currentUser: User | null;
   login: (email: string, password: string) => Promise<void>;
   signup: (email: string, password: string, firstName: string, lastName: string) => Promise<void>;
@@ -655,6 +656,7 @@ export function StorageProvider({ children }: { children: ReactNode }) {
   const value: StorageContextType = {
     // Authentication
     isAuthenticated,
+    isLoading,
     currentUser,
     login,
     signup,

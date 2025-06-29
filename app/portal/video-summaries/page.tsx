@@ -23,23 +23,13 @@ interface VideoSummary {
 
 export default function VideoSummariesPage() {
   const router = useRouter();
-  const { videoSummaries, addItem, isAuthenticated, currentUser } = useStorage();
+  const { videoSummaries, addItem, isAuthenticated, currentUser, isLoading } = useStorage();
   const { toast } = useToast();
   const [isGenerating, setIsGenerating] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     console.log('[VideoSummaries] Component mounted');
-    setIsLoading(false);
   }, []);
-
-  useEffect(() => {
-    // Check authentication status
-    if (isAuthenticated && currentUser) {
-      console.log('[VideoSummaries] User authenticated:', currentUser.email);
-      setIsLoading(false);
-    }
-  }, [isAuthenticated, currentUser]);
 
   const generateVideo = async () => {
     if (!isAuthenticated) {
@@ -119,7 +109,7 @@ export default function VideoSummariesPage() {
   if (isLoading) {
     return (
       <div className="flex-1 space-y-6 p-8">
-        <div className="flex items-center justify-center py-12">
+        <div className="flex items-center justify-center py-12" aria-label="Loading">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-500" />
         </div>
       </div>
