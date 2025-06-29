@@ -30,26 +30,20 @@ export interface ElevenLabsConversation {
 
 class ElevenLabsAPI {
   private apiKey: string;
-  private demoMode: boolean;
 
   constructor() {
     this.apiKey = process.env.ELEVENLABS_API_KEY || '';
-    this.demoMode = !this.apiKey;
-    if (this.demoMode) {
-      console.warn('[ElevenLabsLib] ELEVENLABS_API_KEY not found - using demo mode');
+    if (!this.apiKey) {
+      console.error('[ElevenLabsLib] ELEVENLABS_API_KEY not found');
+      throw new Error('ELEVENLABS_API_KEY environment variable is required');
     }
     console.log('[ElevenLabsLib] ElevenLabs API initialized');
   }
 
   private async request(endpoint: string, options: RequestInit = {}) {
     console.log('[ElevenLabsLib] Making request to:', endpoint);
-    
-    // Demo mode - return mock data if no API key
-    if (this.demoMode) {
-      return this.getMockResponse(endpoint, options);
-    }
-
     const url = `${ELEVENLABS_API_BASE}${endpoint}`;
+    // TODO: Review error handling for ElevenLabs API calls
     const response = await fetch(url, {
       ...options,
       headers: {
@@ -68,67 +62,6 @@ class ElevenLabsAPI {
     const result = await response.json();
     console.log('[ElevenLabsLib] Request successful');
     return result;
-  }
-
-  private getMockResponse(endpoint: string, options: RequestInit) {
-    console.log('[ElevenLabsLib] Using mock response for demo');
-    
-    if (endpoint === '/voices') {
-      return {
-        voices: [
-          { voice_id: 'voice_1', name: 'Rachel', category: 'professional', preview_url: 'https://example.com/preview1.mp3' },
-          { voice_id: 'voice_2', name: 'Thomas', category: 'professional', preview_url: 'https://example.com/preview2.mp3' },
-          { voice_id: 'voice_3', name: 'Emily', category: 'professional', preview_url: 'https://example.com/preview3.mp3' },
-          { voice_id: 'voice_4', name: 'James', category: 'professional', preview_url: 'https://example.com/preview4.mp3' },
-          { voice_id: 'voice_5', name: 'Sarah', category: 'professional', preview_url: 'https://example.com/preview5.mp3' },
-          { voice_id: 'voice_6', name: 'Michael', category: 'professional', preview_url: 'https://example.com/preview6.mp3' },
-        ]
-      };
-    }
-
-    if (endpoint.startsWith('/text-to-speech')) {
-      // Return a mock audio buffer
-      return new ArrayBuffer(1024);
-    }
-
-    if (endpoint.startsWith('/convai/agents')) {
-      if (options.method === 'POST') {
-        const body = JSON.parse(options.body as string);
-        return {
-          agent_id: `agent_${Date.now()}`,
-          name: body.name,
-          voice: {
-            voice_id: body.voice.voice_id
-          },
-          conversation_config: body.conversation_config
-        };
-      }
-      
-      return {
-        agent_id: 'agent_demo',
-        name: 'Demo Agent',
-        voice: {
-          voice_id: 'voice_1'
-        },
-        conversation_config: {
-          agent: {
-            prompt: {
-              prompt: 'You are a helpful assistant.'
-            }
-          }
-        }
-      };
-    }
-
-    if (endpoint.startsWith('/convai/conversations')) {
-      return {
-        conversation_id: `conv_${Date.now()}`,
-        agent_id: 'agent_demo',
-        status: 'active'
-      };
-    }
-
-    return {};
   }
 
   // Voice Management
@@ -211,6 +144,23 @@ class ElevenLabsAPI {
     });
   }
 
+  // Phone Number Management
+  async getPhoneNumbers(): Promise<any[]> {
+    console.log('[ElevenLabsLib] Getting phone numbers...');
+    return this.request('/convai/phone-numbers');
+  }
+
+  async purchasePhoneNumber(data: {
+    area_code?: string;
+    country_code?: string;
+  }): Promise<any> {
+    console.log('[ElevenLabsLib] Purchasing phone number:', data);
+    return this.request('/convai/phone-numbers', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
   // Conversation Management
   async startConversation(data: {
     agent_id: string;
@@ -242,13 +192,7 @@ class ElevenLabsAPI {
     model_id?: string;
   }): Promise<ArrayBuffer> {
     console.log('[ElevenLabsLib] Generating speech for voice:', data.voice_id);
-    
-    if (this.demoMode) {
-      console.log('[ElevenLabsLib] Using mock TTS response for demo');
-      // Return a mock audio buffer
-      return new ArrayBuffer(1024);
-    }
-    
+    // TODO: Review error handling for TTS API calls
     const response = await fetch(`${ELEVENLABS_API_BASE}/text-to-speech/${data.voice_id}`, {
       method: 'POST',
       headers: {
