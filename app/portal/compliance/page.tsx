@@ -352,11 +352,17 @@ Do you consent to this recording?"
                 <p className="text-sm text-gray-400 mb-3">{script.description}</p>
                 <div className="space-y-1">
                   <p className="text-xs text-gray-500">Required phrases:</p>
-                  {script.required_phrases?.slice(0, 2).map((phrase: string, index: number) => (
-                    <div key={index} className="text-xs bg-gray-900 rounded px-2 py-1">
-                      &quot;{phrase}&quot;
-                    </div>
-                  ))}
+{(Array.isArray(script.required_phrases)
+  ? script.required_phrases
+  : typeof script.required_phrases === 'string'
+    ? script.required_phrases.split(',').map(p => p.trim())
+    : []
+).slice(0, 2).map((phrase: string, index: number) => (
+  <div key={index} className="text-xs bg-gray-900 rounded px-2 py-1">
+    &quot;{phrase}&quot;
+  </div>
+))}
+
                   {script.required_phrases?.length > 2 && (
                     <div className="text-xs text-gray-400">
                       +{script.required_phrases.length - 2} more phrases
