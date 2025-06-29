@@ -18,6 +18,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/lib/supabase-browser';
+import { useStorage } from '@/contexts/storage-context';
 
 type FormData = {
   name: string;
@@ -27,7 +28,7 @@ type FormData = {
 
 export default function CompliancePage() {
   const [isLoading, setIsLoading] = useState(false);
-  const { complianceScripts, addItem, updateItem, deleteItem } = useStorage();
+  const { complianceScripts, addItem, updateItem, deleteItem, isAuthenticated } = useStorage();
   const [violations, setViolations] = useState<any[]>([]);
   const [open, setOpen] = useState(false);
   const [editingScript, setEditingScript] = useState<any>(null);

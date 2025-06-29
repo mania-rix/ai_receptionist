@@ -3,7 +3,7 @@
 import { useStorage } from '@/contexts/storage-context';
 
 import { useState, useEffect } from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm } from 'react-hook-form'; 
 import { Plus, Loader2, Book, Upload, Trash2, Edit } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -34,7 +34,7 @@ type FormData = {
 
 export default function KnowledgeBasePage() {
   const [isLoading, setIsLoading] = useState(false);
-  const { knowledgeBases, addItem, updateItem, deleteItem } = useStorage();
+  const { knowledgeBases, addItem, updateItem, deleteItem, isAuthenticated } = useStorage();
   const [open, setOpen] = useState(false);
   const [editingKB, setEditingKB] = useState<any>(null);
   const { toast } = useToast();
@@ -42,10 +42,7 @@ export default function KnowledgeBasePage() {
     defaultValues: {
       languages: ['en'],
       content: { faqs: [] },
-    },
-  });
-
-   const createOrUpdateKnowledgeBase = async (data: FormData) => {
+  const createOrUpdateKnowledgeBase = async (data: FormData) => {
     console.log('[KBUI] Creating/updating knowledge base:', data);
     setIsLoading(true);
     try {

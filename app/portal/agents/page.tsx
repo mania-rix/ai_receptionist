@@ -2,7 +2,7 @@
 
 import { useStorage } from '@/contexts/storage-context';
 import { User } from "lucide-react";
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useForm } from 'react-hook-form';
 import { format } from 'date-fns';
 import { Plus, Loader2, Play, Edit, Trash2 } from 'lucide-react';
@@ -41,7 +41,7 @@ type FormData = {
 
 export default function AgentsPage() {
   const [isLoading, setIsLoading] = useState(false);
-  const { agents, knowledgeBases, addItem, updateItem, deleteItem } = useStorage();
+  const { agents, knowledgeBases, addItem, updateItem, deleteItem, isAuthenticated } = useStorage();
   const [voices, setVoices] = useState<any[]>([]);
   const [open, setOpen] = useState(false);
   const [editingAgent, setEditingAgent] = useState<any>(null);
@@ -64,7 +64,7 @@ export default function AgentsPage() {
 
   const watchVoiceEngine = form.watch('voice_engine');
 
-  const fetchElevenLabsVoices = async () => {
+  const fetchElevenLabsVoices = useCallback(async () => {
     console.log('[AgentUI] Fetching ElevenLabs voices...');
     try {
       const response = await fetch('/api/elevenlabs-voices');
@@ -100,7 +100,7 @@ export default function AgentsPage() {
       
       setVoices(defaultVoices);
     }
-  };
+  }, []);
 
   const filteredVoices = voices.filter(voice => voice.provider === watchVoiceEngine);
 
@@ -109,7 +109,7 @@ export default function AgentsPage() {
     console.log(
       `[AgentUI] ${editingAgent ? 'Updating' : 'Creating'} agent. Data:`,
       data
-    );
+    ); 
     try {
       if (editingAgent) {
         await updateItem('agents', editingAgent.id, {

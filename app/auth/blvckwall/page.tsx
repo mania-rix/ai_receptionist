@@ -6,7 +6,7 @@ import { Mail, Lock, Eye, EyeOff, ArrowRight, User, Zap, Shield, Cpu, Sun, Moon 
 import { cn } from '@/lib/utils';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
-import { supabase } from '@/lib/supabase-browser';
+import { useStorage } from '@/contexts/storage-context';
 
 // GlitchText Component
 interface GlitchTextProps extends React.HTMLAttributes<HTMLDivElement> {
@@ -374,6 +374,7 @@ Input.displayName = "Input";
 const BlvckwallAuth = () => {
   const router = useRouter();
   const { toast } = useToast();
+  const { login, signup, isAuthenticated, currentUser } = useStorage();
   
   const [isSignUp, setIsSignUp] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -397,13 +398,9 @@ const BlvckwallAuth = () => {
   // Check if user is already logged in
   useEffect(() => {
     const checkAuth = async () => {
-      try {
-        const { data: { session } } = await supabase.auth.getSession();
-        if (session?.user) {
+      if (isAuthenticated && currentUser) {
+        console.log('[AuthUI] User already logged in, redirecting to portal');
           router.push('/portal/overview');
-        }
-      } catch (error) {
-        console.error('Error checking auth:', error);
       }
     };
     
@@ -462,21 +459,9 @@ const BlvckwallAuth = () => {
     setIsLoading(true);
     setErrors({});
 
-    try {
+    try { 
       if (isSignUp) {
-        const { data, error } = await supabase.auth.signUp({
-          email,
-          password,
-          options: {
-            data: {
-              firstName,
-              lastName,
-              name: `${firstName} ${lastName}`
-            }
-          }
-        });
-
-        if (error) throw error;
+        await signup(email, password, firstName, lastName);
 
         toast({
           title: "Account created successfully",
@@ -484,12 +469,7 @@ const BlvckwallAuth = () => {
         });
         router.push('/portal/overview');
       } else {
-        const { data, error } = await supabase.auth.signInWithPassword({
-          email,
-          password
-        });
-
-        if (error) throw error;
+        await login(email, password);
 
         toast({
           title: "Welcome back",

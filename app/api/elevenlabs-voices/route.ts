@@ -4,21 +4,16 @@ import { supabaseServer } from '@/lib/supabase';
 import { getElevenLabsVoices } from '@/lib/elevenlabs';
 
 export async function GET() {
-  console.log('[API:elevenlabs-voices] GET request');
+  console.log('[API:elevenlabs-voices] GET request'); 
   try {
     const cookieStore = cookies();
     const supabase = supabaseServer(cookieStore);
-
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
-      console.error('[API:elevenlabs-voices] Unauthorized access attempt');
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
 
     // Get ElevenLabs voices
     let elevenLabsVoices: any[] = [];
     try {
       const voices = await getElevenLabsVoices();
+      console.log('[API:elevenlabs-voices] Successfully fetched voices:', voices.length);
       elevenLabsVoices = voices.map(voice => ({
         id: voice.voice_id,
         name: voice.name,
@@ -27,7 +22,7 @@ export async function GET() {
         preview_url: voice.preview_url,
       }));
     } catch (error) {
-      console.warn('[API:elevenlabs-voices] Failed to fetch ElevenLabs voices:', error);
+      console.warn('[API:elevenlabs-voices] Failed to fetch ElevenLabs voices, using mock data:', error);
       
       // Provide mock voices for demo
       elevenLabsVoices = [

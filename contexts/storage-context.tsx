@@ -1,6 +1,7 @@
 'use client';
 
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
+import { supabase } from '@/lib/supabase-browser';
 
 // Define types for our storage items
 interface StorageItem {
@@ -56,7 +57,8 @@ const StorageContext = createContext<StorageContextType | undefined>(undefined);
 export function StorageProvider({ children }: { children: ReactNode }) {
   const [isClient, setIsClient] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const [currentUser, setCurrentUser] = useState<User | null>(null); 
+  const [isLoading, setIsLoading] = useState(true);
   
   // Collections
   const [agents, setAgents] = useState<StorageItem[]>([]);
@@ -69,50 +71,110 @@ export function StorageProvider({ children }: { children: ReactNode }) {
   // Initialize client-side storage
   useEffect(() => {
     setIsClient(true);
+    
+    // Set up auth state listener
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (event, session) => {
+        const user = session?.user || null;
+        setCurrentUser(user as User | null);
+        setIsAuthenticated(!!user);
+        
+        if (user) {
+          console.log('[StorageContext] User authenticated:', user.email);
+          loadInitialData(user.id);
+        } else {
+          console.log('[StorageContext] No authenticated user, using demo mode');
+          loadInitialData('demo-user-id');
+        }
+        
+        setIsLoading(false);
+      }
+    );
+    
+    // Initial auth check
     checkAuthentication();
-    loadInitialData();
+    
+    return () => {
+      subscription.unsubscribe();
+    };
   }, []);
 
   // Check if user is authenticated
-  const checkAuthentication = () => {
+  const checkAuthentication = async () => {
     try {
-      const storedUser = localStorage.getItem('blvckwall_user');
-      if (storedUser) {
-        const userData = JSON.parse(storedUser);
-        setCurrentUser(userData);
-        setIsAuthenticated(true);
+      const { data: { session } } = await supabase.auth.getSession();
+      const user = session?.user || null;
+      
+      setCurrentUser(user as User | null);
+      setIsAuthenticated(!!user);
+      
+      if (user) {
+        console.log('[StorageContext] Initial auth check: User authenticated:', user.email);
+        loadInitialData(user.id);
       } else {
-        setCurrentUser(null);
-        setIsAuthenticated(false);
+        console.log('[StorageContext] Initial auth check: No user, using demo mode');
+        loadInitialData('demo-user-id');
       }
+      
+      setIsLoading(false);
     } catch (error) {
       console.error('Error checking authentication:', error);
       setCurrentUser(null);
       setIsAuthenticated(false);
+      loadInitialData('demo-user-id');
+      setIsLoading(false);
     }
   };
 
   // Load initial data from localStorage
-  const loadInitialData = () => {
+  const loadInitialData = (userId: string) => {
     try {
-      // Load demo data if no user data exists
-      loadCollection('agents', setAgents);
-      loadCollection('calls', setCalls);
-      loadCollection('complianceScripts', setComplianceScripts);
-      loadCollection('conversationFlows', setConversationFlows);
-      loadCollection('knowledgeBases', setKnowledgeBases);
-      loadCollection('videoSummaries', setVideoSummaries);
+      console.log('[StorageContext] Loading initial data for user:', userId);
+      
+      if (userId === 'demo-user-id') {
+        // Load demo data from localStorage
+        loadCollection('agents', setAgents, userId);
+        loadCollection('calls', setCalls, userId);
+        loadCollection('complianceScripts', setComplianceScripts, userId);
+        loadCollection('conversationFlows', setConversationFlows, userId);
+        loadCollection('knowledgeBases', setKnowledgeBases, userId);
+        loadCollection('videoSummaries', setVideoSummaries, userId);
+      } else {
+        // Load real data from API
+        fetchCollection('/api/agents', setAgents);
+        // Other collections will be loaded as needed by their respective components
+      }
     } catch (error) {
       console.error('Error loading initial data:', error);
     }
   };
 
-  // Helper to load a collection
-  const loadCollection = (collection: string, setter: React.Dispatch<React.SetStateAction<StorageItem[]>>) => {
+  // Helper to fetch a collection from API
+  const fetchCollection = async (endpoint: string, setter: React.Dispatch<React.SetStateAction<StorageItem[]>>) => {
     try {
-      const storedUser = localStorage.getItem('blvckwall_user');
-      const userId = storedUser ? JSON.parse(storedUser).id : 'demo-user-id';
+      console.log(`[StorageContext] Fetching from API: ${endpoint}`);
+      const response = await fetch(endpoint);
       
+      if (!response.ok) {
+        throw new Error(`API error: ${response.status}`);
+      }
+      
+      const data = await response.json();
+      const items = data[endpoint.split('/').pop() || 'items'] || [];
+      
+      console.log(`[StorageContext] API data received:`, items.length);
+      setter(items);
+    } catch (error) {
+      console.error(`[StorageContext] Error fetching from ${endpoint}:`, error);
+      // Load demo data as fallback
+      const collection = endpoint.split('/').pop() || '';
+      loadCollection(collection, setter, 'demo-user-id');
+    }
+  };
+
+  // Helper to load a collection
+  const loadCollection = (collection: string, setter: React.Dispatch<React.SetStateAction<StorageItem[]>>, userId: string) => {
+    try {
       const key = `blvckwall_${userId}_${collection}`;
       const storedData = localStorage.getItem(key);
       
@@ -308,178 +370,273 @@ export function StorageProvider({ children }: { children: ReactNode }) {
   };
 
   // Authentication methods
-  const login = async (email: string, password: string): Promise<void> => {
+  const login = useCallback(async (email: string, password: string): Promise<void> => {
     try {
-      // Create a demo user
-      const user: User = {
-        id: `user_${Date.now()}`,
+      console.log('[StorageContext] Attempting login with email:', email);
+      const { data, error } = await supabase.auth.signInWithPassword({
         email,
-        user_metadata: {
-          name: email.split('@')[0]
-        }
-      };
+        password
+      });
       
-      // Save to localStorage
-      localStorage.setItem('blvckwall_user', JSON.stringify(user));
+      if (error) throw error;
       
-      setCurrentUser(user);
-      setIsAuthenticated(true);
+      console.log('[StorageContext] Login successful:', data.user?.email);
+      // Auth state change listener will update currentUser and isAuthenticated
     } catch (error) {
       console.error('Login error:', error);
       throw error;
     }
-  };
+  }, []);
 
-  const signup = async (email: string, password: string, firstName: string, lastName: string): Promise<void> => {
+  const signup = useCallback(async (email: string, password: string, firstName: string, lastName: string): Promise<void> => {
     try {
-      // Create a demo user
-      const user: User = {
-        id: `user_${Date.now()}`,
+      console.log('[StorageContext] Attempting signup with email:', email);
+      const { data, error } = await supabase.auth.signUp({
         email,
-        user_metadata: {
-          name: `${firstName} ${lastName}`,
-          firstName,
-          lastName
+        password,
+        options: {
+          data: {
+            firstName,
+            lastName,
+            name: `${firstName} ${lastName}`
+          }
         }
-      };
+      });
       
-      // Save to localStorage
-      localStorage.setItem('blvckwall_user', JSON.stringify(user));
+      if (error) throw error;
       
-      setCurrentUser(user);
-      setIsAuthenticated(true);
+      console.log('[StorageContext] Signup successful:', data.user?.email);
+      // Auth state change listener will update currentUser and isAuthenticated
     } catch (error) {
       console.error('Signup error:', error);
       throw error;
     }
-  };
+  }, []);
 
-  const logout = async (): Promise<void> => {
+  const logout = useCallback(async (): Promise<void> => {
     try {
-      // Remove from localStorage
-      localStorage.removeItem('blvckwall_user');
+      console.log('[StorageContext] Logging out user');
+      const { error } = await supabase.auth.signOut();
       
-      setCurrentUser(null);
-      setIsAuthenticated(false);
+      if (error) throw error;
+      
+      console.log('[StorageContext] Logout successful');
+      // Auth state change listener will update currentUser and isAuthenticated
     } catch (error) {
       console.error('Logout error:', error);
       throw error;
     }
-  };
+  }, []);
 
   // CRUD operations for collections
-  const addItem = async (collection: string, item: any): Promise<StorageItem> => {
+  const addItem = useCallback(async (collection: string, item: any): Promise<StorageItem> => {
     try {
-      const userId = currentUser?.id || 'demo-user-id';
-      const key = `blvckwall_${userId}_${collection}`;
-      
-      // Get existing data
-      const storedData = localStorage.getItem(key);
-      const existingData = storedData ? JSON.parse(storedData) : [];
-      
-      // Add new item
-      const newItem = {
-        ...item,
-        id: item.id || `${collection.slice(0, -1)}_${Date.now()}`,
-        created_at: item.created_at || new Date().toISOString(),
-        user_id: userId
-      };
-      
-      // Save updated data
-      const updatedData = [newItem, ...existingData];
-      localStorage.setItem(key, JSON.stringify(updatedData));
-      
-      // Update state
-      updateCollectionState(collection, updatedData);
-      
-      return newItem;
+      if (!isAuthenticated || !currentUser) {
+        // Demo mode - use localStorage
+        const userId = 'demo-user-id';
+        const key = `blvckwall_${userId}_${collection}`;
+        
+        // Get existing data
+        const storedData = localStorage.getItem(key);
+        const existingData = storedData ? JSON.parse(storedData) : [];
+        
+        // Add new item
+        const newItem = {
+          ...item,
+          id: item.id || `${collection.slice(0, -1)}_${Date.now()}`,
+          created_at: item.created_at || new Date().toISOString(),
+          user_id: userId
+        };
+        
+        // Save updated data
+        const updatedData = [newItem, ...existingData];
+        localStorage.setItem(key, JSON.stringify(updatedData));
+        
+        // Update state
+        updateCollectionState(collection, updatedData);
+        
+        return newItem;
+      } else {
+        // Real mode - use API
+        console.log(`[StorageContext] Adding item to ${collection} via API`);
+        const endpoint = `/api/${collection.toLowerCase()}`;
+        
+        const response = await fetch(endpoint, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(item),
+        });
+        
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.error || `Failed to add item to ${collection}`);
+        }
+        
+        const result = await response.json();
+        const newItem = result[collection.slice(0, -1).toLowerCase()] || result;
+        
+        // Update state
+        const collectionKey = collection.toLowerCase();
+        const stateKey = collectionKey === 'knowledgebases' ? 'knowledgeBases' : collectionKey;
+        
+        updateCollectionState(stateKey, (prev: StorageItem[]) => [newItem, ...prev]);
+        
+        return newItem;
+      }
     } catch (error) {
       console.error(`Error adding item to ${collection}:`, error);
       throw error;
     }
-  };
+  }, [isAuthenticated, currentUser]);
 
-  const updateItem = async (collection: string, id: string, updates: any): Promise<StorageItem> => {
+  const updateItem = useCallback(async (collection: string, id: string, updates: any): Promise<StorageItem> => {
     try {
-      const userId = currentUser?.id || 'demo-user-id';
-      const key = `blvckwall_${userId}_${collection}`;
-      
-      // Get existing data
-      const storedData = localStorage.getItem(key);
-      if (!storedData) throw new Error(`Collection ${collection} not found`);
-      
-      const existingData = JSON.parse(storedData);
-      
-      // Find and update item
-      const updatedData = existingData.map((item: any) => {
-        if (item.id === id) {
-          return { ...item, ...updates, updated_at: new Date().toISOString() };
+      if (!isAuthenticated || !currentUser) {
+        // Demo mode - use localStorage
+        const userId = 'demo-user-id';
+        const key = `blvckwall_${userId}_${collection}`;
+        
+        // Get existing data
+        const storedData = localStorage.getItem(key);
+        if (!storedData) throw new Error(`Collection ${collection} not found`);
+        
+        const existingData = JSON.parse(storedData);
+        
+        // Find and update item
+        const updatedData = existingData.map((item: any) => {
+          if (item.id === id) {
+            return { ...item, ...updates, updated_at: new Date().toISOString() };
+          }
+          return item;
+        });
+        
+        // Save updated data
+        localStorage.setItem(key, JSON.stringify(updatedData));
+        
+        // Update state
+        updateCollectionState(collection, updatedData);
+        
+        // Return updated item
+        const updatedItem = updatedData.find((item: any) => item.id === id);
+        if (!updatedItem) throw new Error(`Item with id ${id} not found in ${collection}`);
+        
+        return updatedItem;
+      } else {
+        // Real mode - use API
+        console.log(`[StorageContext] Updating item in ${collection} via API:`, id);
+        const endpoint = `/api/${collection.toLowerCase()}/${id}`;
+        
+        const response = await fetch(endpoint, {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(updates),
+        });
+        
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.error || `Failed to update item in ${collection}`);
         }
-        return item;
-      });
-      
-      // Save updated data
-      localStorage.setItem(key, JSON.stringify(updatedData));
-      
-      // Update state
-      updateCollectionState(collection, updatedData);
-      
-      // Return updated item
-      const updatedItem = updatedData.find((item: any) => item.id === id);
-      if (!updatedItem) throw new Error(`Item with id ${id} not found in ${collection}`);
-      
-      return updatedItem;
+        
+        const result = await response.json();
+        const updatedItem = result[collection.slice(0, -1).toLowerCase()] || result;
+        
+        // Update state
+        const collectionKey = collection.toLowerCase();
+        const stateKey = collectionKey === 'knowledgebases' ? 'knowledgeBases' : collectionKey;
+        
+        updateCollectionState(stateKey, (prev: StorageItem[]) => 
+          prev.map((item: any) => item.id === id ? updatedItem : item)
+        );
+        
+        return updatedItem;
+      }
     } catch (error) {
       console.error(`Error updating item in ${collection}:`, error);
       throw error;
     }
-  };
+  }, [isAuthenticated, currentUser]);
 
-  const deleteItem = async (collection: string, id: string): Promise<void> => {
+  const deleteItem = useCallback(async (collection: string, id: string): Promise<void> => {
     try {
-      const userId = currentUser?.id || 'demo-user-id';
-      const key = `blvckwall_${userId}_${collection}`;
-      
-      // Get existing data
-      const storedData = localStorage.getItem(key);
-      if (!storedData) throw new Error(`Collection ${collection} not found`);
-      
-      const existingData = JSON.parse(storedData);
-      
-      // Filter out item
-      const updatedData = existingData.filter((item: any) => item.id !== id);
-      
-      // Save updated data
-      localStorage.setItem(key, JSON.stringify(updatedData));
-      
-      // Update state
-      updateCollectionState(collection, updatedData);
+      if (!isAuthenticated || !currentUser) {
+        // Demo mode - use localStorage
+        const userId = 'demo-user-id';
+        const key = `blvckwall_${userId}_${collection}`;
+        
+        // Get existing data
+        const storedData = localStorage.getItem(key);
+        if (!storedData) throw new Error(`Collection ${collection} not found`);
+        
+        const existingData = JSON.parse(storedData);
+        
+        // Filter out item
+        const updatedData = existingData.filter((item: any) => item.id !== id);
+        
+        // Save updated data
+        localStorage.setItem(key, JSON.stringify(updatedData));
+        
+        // Update state
+        updateCollectionState(collection, updatedData);
+      } else {
+        // Real mode - use API
+        console.log(`[StorageContext] Deleting item from ${collection} via API:`, id);
+        const endpoint = `/api/${collection.toLowerCase()}/${id}`;
+        
+        const response = await fetch(endpoint, {
+          method: 'DELETE',
+        });
+        
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.error || `Failed to delete item from ${collection}`);
+        }
+        
+        // Update state
+        const collectionKey = collection.toLowerCase();
+        const stateKey = collectionKey === 'knowledgebases' ? 'knowledgeBases' : collectionKey;
+        
+        updateCollectionState(stateKey, (prev: StorageItem[]) => 
+          prev.filter((item: any) => item.id !== id)
+        );
+      }
     } catch (error) {
       console.error(`Error deleting item from ${collection}:`, error);
       throw error;
     }
-  };
+  }, [isAuthenticated, currentUser]);
 
   // Helper to update the correct state based on collection name
-  const updateCollectionState = (collection: string, data: StorageItem[]) => {
+  const updateCollectionState = (collection: string, dataOrUpdater: StorageItem[] | ((prev: StorageItem[]) => StorageItem[])) => {
+    const updateState = (setter: React.Dispatch<React.SetStateAction<StorageItem[]>>) => {
+      if (typeof dataOrUpdater === 'function') {
+        setter(dataOrUpdater);
+      } else {
+        setter(dataOrUpdater);
+      }
+    };
+    
     switch (collection) {
       case 'agents':
-        setAgents(data);
+        updateState(setAgents);
         break;
       case 'calls':
-        setCalls(data);
+        updateState(setCalls);
         break;
       case 'complianceScripts':
-        setComplianceScripts(data);
+        updateState(setComplianceScripts);
         break;
       case 'conversationFlows':
-        setConversationFlows(data);
+        updateState(setConversationFlows);
         break;
       case 'knowledgeBases':
-        setKnowledgeBases(data);
+        updateState(setKnowledgeBases);
         break;
       case 'videoSummaries':
-        setVideoSummaries(data);
+        updateState(setVideoSummaries);
         break;
       default:
         console.warn(`Unknown collection: ${collection}`);

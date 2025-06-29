@@ -24,6 +24,7 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/lib/supabase-browser';
+import { useStorage } from '@/contexts/storage-context';
 
 type FormData = {
   phone_number: string;
@@ -44,7 +45,7 @@ type FormData = {
 export default function PhoneNumbersPage() {
   const [isLoading, setIsLoading] = useState(false);
   const { phoneNumbers, addPhoneNumber, removePhoneNumber, updatePhoneNumber } = useDemoMode();
-  const [agents, setAgents] = useState<any[]>([]);
+  const { agents, isAuthenticated } = useStorage();
   const [open, setOpen] = useState(false);
   const { toast } = useToast();
   const form = useForm<FormData>();
@@ -54,24 +55,7 @@ export default function PhoneNumbersPage() {
 
   useEffect(() => {
     console.log('[PhoneNumbersUI] Component mounted');
-    fetchAgents();
   }, []);
-
-  const fetchAgents = async () => {
-    console.log('[PhoneNumbersUI] Fetching agents...');
-    try {
-      const { data, error } = await supabase
-        .from('agents')
-        .select('id, name')
-        .order('name');
-
-      if (error) throw error;
-      setAgents(data || []);
-      console.log('[PhoneNumbersUI] Agents fetched:', data?.length || 0);
-    } catch (error) {
-      console.error('[PhoneNumbersUI] Error fetching agents:', error);
-    }
-  };
 
   const createPhoneNumber = async (data: FormData) => {
     console.log('[PhoneNumbersUI] Creating phone number:', data);

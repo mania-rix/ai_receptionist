@@ -10,26 +10,23 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Separator } from '@/components/ui/separator';
 import { Mail, Loader2 } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { supabase } from '@/lib/supabase-browser';
+import { useStorage } from '@/contexts/storage-context';
 
 export default function SignInPage() {
   const router = useRouter();
   const [email, setEmail] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [activeTab, setActiveTab] = useState('sign-in');
+  const { login, isAuthenticated, currentUser } = useStorage();
   
   useEffect(() => {
     console.log('window.location.origin =', window.location.origin);
     
     // Check if user is already logged in
     const checkAuth = async () => {
-      try {
-        const { data: { session } } = await supabase.auth.getSession();
-        if (session?.user) {
-          router.push('/portal/overview');
-        }
-      } catch (error) {
-        console.error('Error checking auth:', error);
+      if (isAuthenticated && currentUser) {
+        console.log('[SignInUI] User already logged in, redirecting to portal');
+        router.push('/portal/overview');
       }
     };
     
@@ -44,14 +41,9 @@ export default function SignInPage() {
     setIsLoading(true);
     
     try {
-      // Use Supabase auth for sign in
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email,
-        password: 'password' // Demo password
-      });
-      
-      if (error) throw error;
-      
+      // Use login from storage context
+      await login(email, 'password'); // Demo password
+
       // Show success message
       alert('Login successful!');
       
@@ -67,13 +59,8 @@ export default function SignInPage() {
   const handleGoogleSignIn = async () => {
     setIsLoading(true);
     try {
-      // Use Supabase auth for demo Google sign in
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email: 'demo@blvckwall.ai',
-        password: 'password'
-      });
-      
-      if (error) throw error;
+      // Use login from storage context for demo Google sign in
+      await login('demo@blvckwall.ai', 'password');
       
       router.push('/portal/overview');
     } catch (error) {

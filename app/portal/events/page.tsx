@@ -18,6 +18,7 @@ import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/lib/supabase-browser';
+import { useStorage } from '@/contexts/storage-context';
 
 type FormData = {
   title: string;
@@ -29,7 +30,8 @@ type FormData = {
 
 export default function EventsPage() {
   const [isLoading, setIsLoading] = useState(false);
-  const [events, setEvents] = useState<any[]>([]);
+  const { currentUser, isAuthenticated } = useStorage();
+  const [events, setEvents] = useState<any[]>([]); 
   const [open, setOpen] = useState(false);
   const [editingEvent, setEditingEvent] = useState<any>(null);
   const { toast } = useToast();
@@ -63,7 +65,7 @@ export default function EventsPage() {
     console.log('[EventsUI] Creating/updating event:', data);
     setIsLoading(true);
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const user = currentUser;
       if (!user) throw new Error('Not authenticated');
 
       if (editingEvent) {

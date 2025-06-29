@@ -19,6 +19,9 @@ import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 
+// Ensure we're using the storage context
+import { useStorage } from '@/contexts/storage-context';
+
 type FormData = {
   name: string;
   description: string;
@@ -34,7 +37,7 @@ interface FlowNode {
 
 export default function ConversationFlowsPage() {
   const [isLoading, setIsLoading] = useState(false);
-  const { conversationFlows, addItem, updateItem, deleteItem } = useStorage();
+  const { conversationFlows, addItem, updateItem, deleteItem, isAuthenticated } = useStorage();
   const [open, setOpen] = useState(false);
   const [editingFlow, setEditingFlow] = useState<any>(null);
   const [designerOpen, setDesignerOpen] = useState(false);
@@ -45,7 +48,7 @@ export default function ConversationFlowsPage() {
 
   useEffect(() => {
     console.log('[FlowDesigner] Component mounted');
-  }, []);
+  }, [isAuthenticated]);
 
   const createOrUpdateFlow = async (data: FormData) => {
     console.log('[FlowDesigner] Creating/updating flow:', data);

@@ -34,7 +34,7 @@ class ElevenLabsAPI {
 
   constructor() {
     this.apiKey = process.env.ELEVENLABS_API_KEY || '';
-    this.demoMode = !this.apiKey;
+    this.demoMode = !this.apiKey || this.apiKey.trim() === '';
     if (this.demoMode) {
       console.warn('[ElevenLabsLib] ELEVENLABS_API_KEY not found - using demo mode');
     }
@@ -44,8 +44,8 @@ class ElevenLabsAPI {
   private async request(endpoint: string, options: RequestInit = {}) {
     console.log('[ElevenLabsLib] Making request to:', endpoint);
     
-    // Demo mode - return mock data if no API key
-    if (this.demoMode) {
+    // Demo mode - return mock data if no API key or if it's empty
+    if (this.demoMode || !this.apiKey || this.apiKey.trim() === '') {
       return this.getMockResponse(endpoint, options);
     }
 
@@ -239,7 +239,7 @@ class ElevenLabsAPI {
   async generateSpeech(data: {
     text: string;
     voice_id: string;
-    model_id?: string;
+    model_id?: string; 
   }): Promise<ArrayBuffer> {
     console.log('[ElevenLabsLib] Generating speech for voice:', data.voice_id);
     
@@ -249,7 +249,7 @@ class ElevenLabsAPI {
       return new ArrayBuffer(1024);
     }
     
-    const response = await fetch(`${ELEVENLABS_API_BASE}/text-to-speech/${data.voice_id}`, {
+    const response = await fetch(`${ELEVENLABS_API_BASE}/text-to-speech/${data.voice_id}?optimize_streaming_latency=0`, {
       method: 'POST',
       headers: {
         'xi-api-key': this.apiKey,

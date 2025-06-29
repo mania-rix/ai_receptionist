@@ -8,7 +8,6 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
-import { supabase } from '@/lib/supabase-browser';
 
 interface VideoSummary {
   id: string;
@@ -24,7 +23,7 @@ interface VideoSummary {
 
 export default function VideoSummariesPage() {
   const router = useRouter();
-  const { videoSummaries, addItem, isAuthenticated } = useStorage();
+  const { videoSummaries, addItem, isAuthenticated, currentUser } = useStorage();
   const { toast } = useToast();
   const [isGenerating, setIsGenerating] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
@@ -33,6 +32,14 @@ export default function VideoSummariesPage() {
     console.log('[VideoSummaries] Component mounted');
     setIsLoading(false);
   }, []);
+
+  useEffect(() => {
+    // Check authentication status
+    if (isAuthenticated && currentUser) {
+      console.log('[VideoSummaries] User authenticated:', currentUser.email);
+      setIsLoading(false);
+    }
+  }, [isAuthenticated, currentUser]);
 
   const generateVideo = async () => {
     if (!isAuthenticated) {
