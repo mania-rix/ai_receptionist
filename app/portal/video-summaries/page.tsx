@@ -66,19 +66,12 @@ export default function VideoSummariesPage() {
       await addItem('videoSummaries', newVideo);
       
       // Simulate completion after 5 seconds
-          video.id === newVideo.id 
-            ? { 
-                ...video, 
-                status: 'completed' as const,
-                thumbnail_url: 'https://images.pexels.com/photos/5327585/pexels-photo-5327585.jpeg?auto=compress&cs=tinysrgb&w=300',
-                video_url: 'https://sample-videos.com/zip/10/mp4/SampleVideo_1280x720_1mb.mp4'
-              }
       setTimeout(async () => {
         await updateItem('videoSummaries', newVideo.id, {
           status: 'completed',
           thumbnail_url: 'https://images.pexels.com/photos/5327585/pexels-photo-5327585.jpeg?auto=compress&cs=tinysrgb&w=300',
           video_url: 'https://sample-videos.com/zip/10/mp4/SampleVideo_1280x720_1mb.mp4'
-        ));
+        });
       }, 5000);
       
       console.log('[VideoSummaries] Video generation started successfully');
