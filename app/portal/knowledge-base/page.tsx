@@ -179,7 +179,7 @@ export default function KnowledgeBasePage() {
       console.log('[KBUI] Knowledge base saved successfully:', result.knowledgeBase);
       toast({
         title: 'Success',
-        description: Knowledge base ${editingKB ? 'updated' : 'created'} successfully',
+        description: 'Knowledge base ${editingKB ? 'updated' : 'created'} successfully',
       });
     } catch (error) {
       console.error('[KBUI] Error saving knowledge base:', error);
