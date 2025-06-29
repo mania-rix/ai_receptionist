@@ -652,7 +652,7 @@ function getMockComplianceScripts() {
     'contacting emergency services'
   ],
   created_at: new Date().toISOString()
-}
+},
     {
       id: '9',
       name: 'Billing Authorization',
