@@ -1,6 +1,6 @@
 'use client';
 
-
+import { useStorage } from '@/contexts/storage-context';
 import { User } from "lucide-react";
 import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
@@ -27,7 +27,6 @@ import { Slider } from '@/components/ui/slider';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
-import { supabase } from '@/lib/supabase-browser';
 
 type FormData = {
   name: string;
@@ -42,9 +41,8 @@ type FormData = {
 
 export default function AgentsPage() {
   const [isLoading, setIsLoading] = useState(false);
-  const [agents, setAgents] = useState<any[]>([]);
+  const { agents, knowledgeBases, addItem, updateItem, deleteItem } = useStorage();
   const [voices, setVoices] = useState<any[]>([]);
-  const [knowledgeBases, setKnowledgeBases] = useState<any[]>([]);
   const [open, setOpen] = useState(false);
   const [editingAgent, setEditingAgent] = useState<any>(null);
   const { toast } = useToast();
@@ -57,19 +55,14 @@ export default function AgentsPage() {
   });
 
   useEffect(() => {
-  console.log('[AgentUI] AgentsPage mounted');
-  return () => {
-    console.log('[AgentUI] AgentsPage unmounted');
-  };
-}, []);
+    console.log('[AgentUI] AgentsPage mounted');
+    fetchElevenLabsVoices();
+    return () => {
+      console.log('[AgentUI] AgentsPage unmounted');
+    };
+  }, []);
 
   const watchVoiceEngine = form.watch('voice_engine');
-
-  useEffect(() => {
-    fetchAgents(); 
-    fetchElevenLabsVoices();
-    fetchKnowledgeBases();
-  }, []);
 
   const fetchElevenLabsVoices = async () => {
     console.log('[AgentUI] Fetching ElevenLabs voices...');
@@ -109,95 +102,52 @@ export default function AgentsPage() {
     }
   };
 
-  const fetchKnowledgeBases = async () => {
-    console.log('[AgentUI] Fetching knowledge bases...');
-    try {
-      const response = await fetch('/api/knowledge-bases');
-      const data = await response.json();
-      console.log('[AgentUI] Knowledge bases fetched:', data.knowledgeBases || []);
-      setKnowledgeBases(data.knowledgeBases || []);
-    } catch (error) {
-      console.error('Error fetching knowledge bases:', error);
-    }
-  };
-
   const filteredVoices = voices.filter(voice => voice.provider === watchVoiceEngine);
 
-const createOrUpdateAgent = async (data: FormData) => {
-  setIsLoading(true);
+  const createOrUpdateAgent = async (data: FormData) => {
+    setIsLoading(true);
     console.log(
-    `[AgentUI] ${editingAgent ? 'Updating' : 'Creating'} agent. Data:`,
-    data
-  );
-  try {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) throw new Error('Not authenticated');
-
-    if (editingAgent) {
-      const { data: savedAgent, error } = await supabase
-        .from('agents')
-        .update({
+      `[AgentUI] ${editingAgent ? 'Updating' : 'Creating'} agent. Data:`,
+      data
+    );
+    try {
+      if (editingAgent) {
+        await updateItem('agents', editingAgent.id, {
+          ...data
+        });
+      } else {
+        await addItem('agents', {
           ...data,
-          user_id: user.id,
-        })
-        .eq('id', editingAgent.id)
-        .select()
-        .single();
+          retell_agent_id: 'agent_d45ccf76ef7145a584ccf7d4e9',
+          retell_llm_id: 'llm_08507d646ed9a0c79da91ef05d67',
+        });
+      }
 
-      if (error) throw error;
-      console.log('[AgentUI] Agent updated:', savedAgent);
-      setAgents(prev => prev.map(agent => agent.id === editingAgent.id ? savedAgent : agent));
-    } else {
-      const { data: savedAgent, error } = await supabase
-        .from('agents')
-        .insert([
-          {
-            ...data,
-            user_id: user.id,
-            retell_agent_id: 'agent_d45ccf76ef7145a584ccf7d4e9',
-            retell_llm_id: 'llm_08507d646ed9a0c79da91ef05d67',
-          },
-        ])
-        .select()
-        .single();
-
-      if (error) throw error;
-      console.log('[AgentUI] Agent created:', savedAgent);
-      setAgents((prev) => [savedAgent, ...prev]);
+      setOpen(false);
+      setEditingAgent(null);
+      form.reset();
+      toast({
+        title: 'Success',
+        description: `Agent ${editingAgent ? 'updated' : 'created'} successfully`,
+      });
+    } catch (error) {
+      console.error('Error saving agent:', error);
+      toast({
+        title: 'Error',
+        description: (error as Error).message || 'Failed to save agent',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsLoading(false);
     }
-
-
-    setOpen(false);
-    setEditingAgent(null);
-    form.reset();
-    toast({
-      title: 'Success',
-      description: `Agent ${editingAgent ? 'updated' : 'created'} successfully`,
-    });
-  } catch (error) {
-    console.error('Error saving agent:', error);
-    toast({
-      title: 'Error',
-      description: (error as Error).message || 'Failed to save agent',
-      variant: 'destructive',
-    });
-  } finally {
-    setIsLoading(false);
-  }
-};
+  };
 
   const deleteAgent = async (id: string) => {
     console.log('[AgentUI] Deleting agent:', id);
     try {
-      const { error } = await supabase
-        .from('agents')
-        .delete()
-        .eq('id', id);
-
-      if (error) throw error;
+      await deleteItem('agents', id);
       
       console.log('[AgentUI] Agent deleted:', id);
-      setAgents(prev => prev.filter(agent => agent.id !== id));
       toast({
         title: 'Success',
         description: 'Agent deleted successfully',
@@ -236,25 +186,6 @@ const createOrUpdateAgent = async (data: FormData) => {
         description: 'Voice preview would play here',
       });
     }
-  };
-
-
-  const fetchAgents = async () => {
-    console.log('[AgentUI] Fetching agents...');
-      const { data, error } = await supabase
-        .from('agents')
-        .select(`
-          *,
-          knowledge_base:knowledge_bases(name)
-        `)
-        .order('created_at', { ascending: false });
-
-      if (error) {
-        console.error('Error fetching agents:', error);
-        return;
-      }
-      console.log('[AgentUI] Agents fetched:', data);
-      setAgents(data || []);
   };
 
   return (

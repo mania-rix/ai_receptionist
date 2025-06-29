@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useStorage } from '@/contexts/storage-context';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Clock, Phone, User, AlertTriangle, Settings, FileText, Calendar, Shield } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -46,40 +47,35 @@ const activityColors = {
 };
 
 export function ActivityTimeline() {
+  const { currentUser } = useStorage();
   const [activities, setActivities] = useState<ActivityItem[]>([]);
   const [selectedActivity, setSelectedActivity] = useState<ActivityItem | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    console.log('[ActivityTimeline] Component mounted');
-    fetchActivities();
+    if (currentUser?.id) {
+      console.log('[ActivityTimeline] Component mounted for user:', currentUser.id);
+      fetchActivities();
+    } else {
+      // Load mock data if no user
+      setActivities(getMockActivities());
+      setIsLoading(false);
+    }
     
-    // Set up real-time subscription
-    const channel = supabase
-      .channel('activity_timeline')
-      .on('postgres_changes', 
-        { event: 'INSERT', schema: 'public', table: 'activity_feed' },
-        (payload) => {
-          console.log('[ActivityTimeline] New activity received:', payload.new);
-          const newActivity = transformActivityData(payload.new);
-          setActivities(prev => [newActivity, ...prev.slice(0, 9)]);
-        }
-      );
-    
-    channel.subscribe();
-
     return () => {
-     // channel.unsubscribe();
       console.log('[ActivityTimeline] Component unmounted');
     };
-  }, []);
+  }, [currentUser]);
 
   const fetchActivities = async () => {
+    if (!currentUser?.id) return;
+    
     console.log('[ActivityTimeline] Fetching activities...');
     try {
       const { data, error } = await supabase
         .from('activity_feed')
         .select('*')
+        .eq('user_id', currentUser.id)
         .order('created_at', { ascending: false })
         .limit(10);
 

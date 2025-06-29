@@ -1,5 +1,6 @@
 'use client';
 
+import { useStorage } from '@/contexts/storage-context';
 import { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { CreditCard, Upload, QrCode, Share2, Verified as Verify, User, Mail, Phone, Building, Loader2, Download, Eye } from 'lucide-react';
@@ -34,6 +35,7 @@ interface DigitalCard {
 }
 
 export default function DigitalCardsPage() {
+  const { currentUser } = useStorage();
   const [cards, setCards] = useState<DigitalCard[]>([]);
   const [isCreating, setIsCreating] = useState(false);
   const [isVerifying, setIsVerifying] = useState(false);
@@ -59,7 +61,7 @@ export default function DigitalCardsPage() {
   useEffect(() => {
     console.log('[DigitalCards] Component mounted');
     loadDemoCards();
-  }, []);
+  }, [currentUser]);
 
   const loadDemoCards = () => {
     console.log('[DigitalCards] Loading demo cards...');
@@ -117,9 +119,6 @@ export default function DigitalCardsPage() {
     setIsCreating(true);
 
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error('Not authenticated');
-
       // Create digital business card using Picaos API
       const card = await createDigitalBusinessCard({
         name: formData.name,
@@ -133,11 +132,13 @@ export default function DigitalCardsPage() {
       setCards(prev => [card, ...prev]);
 
       // Record audit log on blockchain
-      await recordCardAudit(card.id, user.id, {
-        name: formData.name,
-        company: formData.company,
-        ipfs_hash: card.ipfs_hash
-      });
+      if (currentUser?.id) {
+        await recordCardAudit(card.id, currentUser.id, {
+          name: formData.name,
+          company: formData.company,
+          ipfs_hash: card.ipfs_hash
+        });
+      }
 
       setOpen(false);
       setFormData({

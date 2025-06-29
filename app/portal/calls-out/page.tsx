@@ -1,10 +1,10 @@
 'use client';
 
+import { useStorage } from '@/contexts/storage-context';
 import { v4 as uuidv4 } from "uuid";
 import { useState, useEffect, useRef } from 'react';
 import { useForm } from 'react-hook-form';
-import { useDemoMode } from '@/contexts/demo-mode-context';
-import { Phone, Loader2, X, Mic, MicOff, Volume2 } from 'lucide-react';
+import { Phone, Loader2, X, Mic, MicOff, Volume2, Send } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -15,9 +15,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
-import { supabase } from '@/lib/supabase-browser';
 import { motion, AnimatePresence } from 'framer-motion';
-import { elevenLabsAPI } from '@/lib/elevenlabs';
 
 type FormData = {
   agentId: string;
@@ -32,8 +30,8 @@ interface Message {
 }
 
 export default function OutboundCallsPage() {
+  const { currentUser, agents } = useStorage();
   const [isLoading, setIsLoading] = useState(false);
-  const [agents, setAgents] = useState<any[]>([]);
   const [isCallActive, setIsCallActive] = useState(false);
   const [callDuration, setCallDuration] = useState(0);
   const [callTimer, setCallTimer] = useState<NodeJS.Timeout | null>(null);
@@ -42,7 +40,6 @@ export default function OutboundCallsPage() {
   const [isRinging, setIsRinging] = useState(false);
   const [audioPlaying, setAudioPlaying] = useState(false);
   const [currentAudio, setCurrentAudio] = useState<HTMLAudioElement | null>(null);
-  const { isDemoMode } = useDemoMode();
   const { toast } = useToast();
   const form = useForm<FormData>();
   const audioRef = useRef<HTMLAudioElement>(null);
@@ -50,7 +47,6 @@ export default function OutboundCallsPage() {
 
   useEffect(() => {
     console.log('[CallsOut] Component mounted');
-    fetchAgents();
     
     return () => {
       console.log('[CallsOut] Component unmounted');
@@ -68,31 +64,6 @@ export default function OutboundCallsPage() {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
-  const fetchAgents = async () => {
-    console.log('[CallsOut] Fetching agents...');
-    try {
-      const { data, error } = await supabase
-        .from('agents')
-        .select('*')
-        .order('name');
-
-      if (error) {
-        console.error('[CallsOut] Error fetching agents:', error);
-        toast({
-          title: 'Error',
-          description: 'Failed to load agents',
-          variant: 'destructive',
-        });
-        return;
-      }
-
-      setAgents(data || []);
-      console.log('[CallsOut] Agents fetched:', data?.length || 0);
-    } catch (error) {
-      console.error('[CallsOut] Error fetching agents:', error);
-    }
-  };
-
   const startCall = async (data: FormData) => {
     console.log('[CallsOut] Starting call with data:', data);
     setIsLoading(true);
@@ -101,10 +72,6 @@ export default function OutboundCallsPage() {
       const agent = agents.find((a) => a.id === data.agentId);
       if (!agent) throw new Error('Agent not found');
       setSelectedAgent(agent);
-
-      const { data: { session } } = await supabase.auth.getSession();
-      const user = session?.user || { id: 'demo-user-id', email: 'demo@blvckwall.ai' };
-      if (!user) throw new Error('Not authenticated');
 
       // Simulate ringing
       setIsRinging(true);
@@ -151,25 +118,6 @@ export default function OutboundCallsPage() {
 
       // Play greeting audio
       playAgentMessage(initialMessage.text);
-
-      // Add a demo call to the activity feed
-      try {
-        await supabase.from('activity_feed').insert([{
-          user_id: user.id,
-          activity_type: 'call_started',
-          title: 'Outbound call initiated',
-          description: `Call to ${data.phoneNumber} started successfully`,
-          metadata: {
-            agent_id: data.agentId,
-            agent_name: agent.name,
-            phone_number: data.phoneNumber,
-            demo: true
-          },
-          is_read: false
-        }]);
-      } catch (feedError) {
-        console.error('[CallsOut] Error adding to activity feed:', feedError);
-      }
       
       console.log('[CallsOut] Call started successfully');
       toast({
@@ -352,46 +300,6 @@ export default function OutboundCallsPage() {
       title: 'Call Ended',
       description: 'The call has been disconnected',
     });
-    
-    // Update call status in Supabase
-    updateCallStatus('completed');
-  };
-
-  const updateCallStatus = async (status: string) => {
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-      
-      // Get the most recent call for this user
-      const { data, error } = await supabase
-        .from('calls')
-        .select('*')
-        .eq('user_id', user.id)
-        .eq('direction', 'outbound')
-        .order('created_at', { ascending: false })
-        .limit(1);
-        
-      if (error || !data || data.length === 0) {
-        console.error('[CallsOut] Error fetching call to update:', error);
-        return;
-      }
-      
-      // Update the call status
-      const { error: updateError } = await supabase
-        .from('calls')
-        .update({
-          status,
-          ended_at: new Date().toISOString(),
-          duration_seconds: callDuration
-        })
-        .eq('id', data[0].id);
-        
-      if (updateError) {
-        console.error('[CallsOut] Error updating call status:', updateError);
-      }
-    } catch (error) {
-      console.error('[CallsOut] Error updating call status:', error);
-    }
   };
 
   const formatTime = (seconds: number) => {

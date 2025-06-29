@@ -71,31 +71,29 @@ export function DemoBanner({ className }: DemoBannerProps) {
   if (!isVisible) return null;
 
   return (
-    <div className="fixed top-0 left-0 right-0 z-[100]">
-      <AnimatePresence>
-        <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -20 }}
-          className={`w-full ${getBannerColor()} border-b px-4 py-2 flex items-center justify-center ${className}`}
-        >
-          <div className="flex items-center gap-2 text-sm">
-            {getBannerIcon()}
-            <span>{bannerData.message}</span>
-          </div>
-          
-          {bannerData.dismissible && (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={dismissBanner}
-              className="ml-4 h-6 w-6 p-0 rounded-full"
-            >
-              <X className="h-3 w-3" />
-            </Button>
-          )}
-        </motion.div>
-      </AnimatePresence>
-    </div>
+    <AnimatePresence>
+      <motion.div
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, y: -20 }}
+        className={`w-full ${getBannerColor()} border-b px-4 py-2 flex items-center justify-center ${className}`}
+      >
+        <div className="flex items-center gap-2 text-sm">
+          {getBannerIcon()}
+          <span>{bannerData.message}</span>
+        </div>
+        
+        {bannerData.dismissible && (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={dismissBanner}
+            className="ml-4 h-6 w-6 p-0 rounded-full"
+          >
+            <X className="h-3 w-3" />
+          </Button>
+        )}
+      </motion.div>
+    </AnimatePresence>
   );
 }
