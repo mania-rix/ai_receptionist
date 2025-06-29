@@ -69,7 +69,7 @@ export function ActivityTimeline() {
     channel.subscribe();
 
     return () => {
-      channel.unsubscribe();
+     // channel.unsubscribe();
       console.log('[ActivityTimeline] Component unmounted');
     };
   }, []);
