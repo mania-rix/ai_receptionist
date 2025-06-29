@@ -77,6 +77,7 @@ export default function LiveRelayPage() {
   useEffect(() => {
     console.log('[LiveRelay] Component mounted');
     fetchSupportedLanguages();
+    
     return () => {
       console.log('[LiveRelay] Component unmounted');
       if (callTimer) {
@@ -87,17 +88,19 @@ export default function LiveRelayPage() {
   
   const fetchSupportedLanguages = async () => {
     console.log('[LiveRelay] Fetching supported languages...');
-    setIsLoadingLanguages(true);
+    setIsLoadingLanguages(true); 
     try {
       const response = await fetch('/api/lingo-translate');
-      if (!response.ok) throw new Error('Failed to fetch languages');
+      if (!response.ok) {
+        throw new Error('Failed to fetch languages');
+      }
       
       const data = await response.json();
       setLanguages(data.languages || []);
       console.log('[LiveRelay] Languages fetched:', data.languages?.length || 0);
     } catch (error) {
       console.error('[LiveRelay] Error fetching languages:', error);
-      // Fallback to default languages
+      // Provide fallback languages for demo mode
       setLanguages([
         { code: 'en', name: 'English', native_name: 'English' },
         { code: 'es', name: 'Spanish', native_name: 'Español' },
@@ -110,6 +113,7 @@ export default function LiveRelayPage() {
         { code: 'ko', name: 'Korean', native_name: '한국어' },
         { code: 'ar', name: 'Arabic', native_name: 'العربية' },
       ]);
+      console.log('[LiveRelay] Using fallback languages for demo');
     } finally {
       setIsLoadingLanguages(false);
     }

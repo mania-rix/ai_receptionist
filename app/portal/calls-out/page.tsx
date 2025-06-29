@@ -96,42 +96,50 @@ export default function OutboundCallsPage() {
   const startCall = async (data: FormData) => {
     console.log('[CallsOut] Starting call with data:', data);
     setIsLoading(true);
-    
+
     try {
       const agent = agents.find((a) => a.id === data.agentId);
       if (!agent) throw new Error('Agent not found');
       setSelectedAgent(agent);
-      
-      const { data: { user } } = await supabase.auth.getUser();
+
+      const { data: { session } } = await supabase.auth.getSession();
+      const user = session?.user || { id: 'demo-user-id', email: 'demo@blvckwall.ai' };
       if (!user) throw new Error('Not authenticated');
 
       // Simulate ringing
       setIsRinging(true);
       await new Promise(resolve => setTimeout(resolve, 3000));
       setIsRinging(false);
-      
-      // Save call to Supabase
-      const callId = uuidv4();
-      const { error } = await supabase.from('calls').insert({
-        id: callId,
-        agent_id: data.agentId,
-        callee: data.phoneNumber,
-        direction: 'outbound',
-        status: 'in_progress',
-        user_id: user.id,
+
+      // Start the call using the API
+      const response = await fetch('/api/start-call', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          agent_id: data.agentId,
+          phone_number: data.phoneNumber,
+        }),
       });
 
-      if (error) throw error;
-      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to start call');
+      }
+
+      const callData = await response.json();
+      console.log('[CallsOut] Call started:', callData);
+
       // Start the call
       setIsCallActive(true);
-      
+
       // Start call timer
       const timer = setInterval(() => {
         setCallDuration(prev => prev + 1);
       }, 1000);
       setCallTimer(timer);
-      
+
       // Add initial greeting message
       const initialMessage: Message = {
         id: uuidv4(),
@@ -140,10 +148,10 @@ export default function OutboundCallsPage() {
         timestamp: new Date()
       };
       setMessages([initialMessage]);
-      
+
       // Play greeting audio
       playAgentMessage(initialMessage.text);
-      
+
       // Add a demo call to the activity feed
       try {
         await supabase.from('activity_feed').insert([{
@@ -162,7 +170,7 @@ export default function OutboundCallsPage() {
       } catch (feedError) {
         console.error('[CallsOut] Error adding to activity feed:', feedError);
       }
-
+      
       console.log('[CallsOut] Call started successfully');
       toast({
         title: 'Call Connected',

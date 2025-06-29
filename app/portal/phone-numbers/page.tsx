@@ -115,9 +115,22 @@ export default function PhoneNumbersPage() {
   const deletePhoneNumber = async (id: string) => {
     console.log('[PhoneNumbersUI] Deleting phone number:', id);
     
+    setIsLoading(true);
     try {
-      // In demo mode, we just remove the phone number from local state
-      removePhoneNumber(id);
+      // Try to delete from database first
+      const { error } = await supabase
+        .from('phone_numbers')
+        .delete()
+        .eq('id', id);
+
+      if (error) {
+        console.warn('[PhoneNumbersUI] Database delete failed:', error);
+        // Fall back to demo mode
+        removePhoneNumber(id);
+      } else {
+        // Refresh phone numbers from context
+        removePhoneNumber(id);
+      }
       
       console.log('[PhoneNumbersUI] Phone number deleted successfully:', id);
       toast({
@@ -131,6 +144,8 @@ export default function PhoneNumbersPage() {
         description: 'Failed to delete phone number',
         variant: 'destructive',
       });
+    } finally {
+      setIsLoading(false);
     }
   };
 

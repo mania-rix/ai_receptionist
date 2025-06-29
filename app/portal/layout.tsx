@@ -1,6 +1,7 @@
 import { EnhancedSidebar } from '@/components/ui/enhanced-sidebar';
 import { NotificationDrawer } from '@/components/ui/notification-drawer';
 import { DemoBanner } from '@/components/demo-banner';
+import { FeedbackWidget } from '@/components/feedback-widget';
 import type { ReactNode } from 'react'
 
 export default function PortalLayout({
@@ -26,7 +27,10 @@ export default function PortalLayout({
         </div>
         
         {/* Main Content */}
-        <main className="flex-1 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-600 scrollbar-track-transparent">{children}</main>
+        <main className="flex-1 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-600 scrollbar-track-transparent">
+          {children}
+          <FeedbackWidget />
+        </main>
       </div>
     </div>
   )

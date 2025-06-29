@@ -94,7 +94,7 @@ const navGroups = [
       },
     ]
   },
-  {
+    <div className="flex h-full w-[72px] flex-col items-center border-r border-gray-800 bg-[#121212] py-4 overflow-hidden">
     title: 'Hackathon Features',
     items: [
       {
@@ -184,7 +184,7 @@ export function EnhancedSidebar() {
         <ActivityFeed />
       </div>
       
-      <div className="flex-1 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-600 scrollbar-track-transparent py-4">
+      <div className="flex flex-1 flex-col items-center gap-4 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-600 scrollbar-track-transparent w-full">
         <TooltipProvider>
           {navGroups.map((group, groupIndex) => (
             <div key={groupIndex} className="mb-6">
