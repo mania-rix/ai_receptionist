@@ -90,7 +90,7 @@ export default function VideoSummariesPage() {
         await updateItem('videoSummaries', newVideo.id, {
           status: 'completed',
           thumbnail_url: 'https://images.pexels.com/photos/5327585/pexels-photo-5327585.jpeg?auto=compress&cs=tinysrgb&w=300',
-          video_url: 'https://sample-videos.com/zip/10/mp4/SampleVideo_1280x720_1mb.mp4'
+          video_url: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4'
         });
       }, 5000);
       
