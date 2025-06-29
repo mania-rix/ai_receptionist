@@ -23,7 +23,6 @@ export default function RootLayout({
       <body className={`${inter.className} bg-background text-foreground`}>
         <DemoModeProvider>
           <TooltipProvider>
-            {/* 👇 Add StorageProvider here (order doesn't matter unless your contexts depend on each other) */}
             <StorageProvider>
               {children}
               <Toaster />
