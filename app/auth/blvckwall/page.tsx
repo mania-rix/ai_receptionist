@@ -396,13 +396,13 @@ const BlvckwallAuth = () => {
   const rotateY = useTransform(mouseX, [-300, 300], [-8, 8]);
 
   // Check if user is already logged in
-  useEffect(() => {
-    const checkAuth = async () => {
+    useEffect(() => {
       if (isAuthenticated && currentUser) {
         console.log('[AuthUI] User already logged in, redirecting to portal');
-          router.push('/portal/overview');
+        router.push('/portal/overview');
       }
-    };
+    }, [isAuthenticated, currentUser, router]);
+
     
     checkAuth();
   }, [router]);
