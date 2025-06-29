@@ -4,6 +4,7 @@ import { Inter as NextInter } from 'next/font/google';
 import { Toaster } from '@/components/ui/toaster';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { DemoModeProvider } from '@/contexts/demo-mode-context';
+import { StorageProvider } from '@/contexts/storage-context';
 
 const inter = NextInter({ subsets: ['latin'] });
 
@@ -22,8 +23,11 @@ export default function RootLayout({
       <body className={`${inter.className} bg-background text-foreground`}>
         <DemoModeProvider>
           <TooltipProvider>
-            {children}
-            <Toaster />
+            {/* 👇 Add StorageProvider here (order doesn't matter unless your contexts depend on each other) */}
+            <StorageProvider>
+              {children}
+              <Toaster />
+            </StorageProvider>
           </TooltipProvider>
         </DemoModeProvider>
       </body>
