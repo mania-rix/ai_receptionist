@@ -39,7 +39,6 @@ interface StorageContextType {
 
 // Base interface for all items
 interface BaseItem {
-  }
   id: string;
   created_at: string;
   [key: string]: any;
