@@ -18,7 +18,6 @@ import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/lib/supabase-browser';
-import { useStorage } from '@/contexts/storage-context';
 
 type FormData = {
   name: string;
