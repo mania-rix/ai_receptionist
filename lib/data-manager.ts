@@ -659,7 +659,7 @@ async function fetchComplianceScripts() {
       {
         id: uuidv4(),
         name: 'Prescription Refill Verification',
-        content: 'For your safety and to comply with regulations, I need to verify your identity before processing this prescription refill. Can you confirm your full name, date of birth, and the medication you're requesting?',
+        content: 'For your safety and to comply with regulations, I need to verify your identity before processing this prescription refill. Can you confirm your full name, date of birth, and the medication you\'re requesting?',
         category: 'pharmacy',
         required_phrases: [
           'for your safety',
@@ -695,7 +695,7 @@ async function fetchComplianceScripts() {
       {
         id: uuidv4(),
         name: 'Mental Health Crisis Protocol',
-        content: 'If you're experiencing thoughts of harming yourself or others, please be aware that I'm required by law to take steps to ensure your safety, which may include contacting emergency services. Do you understand?',
+        content: 'If you\'re experiencing thoughts of harming yourself or others, please be aware that I'm required by law to take steps to ensure your safety, which may include contacting emergency services. Do you understand?',
         category: 'mental-health',
         required_phrases: [
           'required by law',
@@ -707,7 +707,7 @@ async function fetchComplianceScripts() {
       {
         id: uuidv4(),
         name: 'Billing Authorization',
-        content: 'I'm going to ask for your payment information. By providing this information, you authorize us to charge your account for the services discussed. Do you consent to this authorization?',
+        content: 'I\'m going to ask for your payment information. By providing this information, you authorize us to charge your account for the services discussed. Do you consent to this authorization?',
         category: 'billing',
         required_phrases: [
           'payment information',

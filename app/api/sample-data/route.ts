@@ -452,7 +452,7 @@ function getMockVideoSummaries() {
         { time: '01:45', label: 'Side Effects Discussion' },
         { time: '03:20', label: 'Prescription Updates' }
       ],
-      summary: 'Comprehensive review of patient's medication regimen...',
+      summary: 'Comprehensive review of patient\'s medication regimen...',
       created_at: new Date().toISOString()
     },
     {
@@ -608,7 +608,7 @@ function getMockComplianceScripts() {
     {
       id: '5',
       name: 'Prescription Refill Verification',
-      content: 'For your safety and to comply with regulations, I need to verify your identity before processing this prescription refill. Can you confirm your full name, date of birth, and the medication you're requesting?',
+      content: 'For your safety and to comply with regulations, I need to verify your identity before processing this prescription refill. Can you confirm your full name, date of birth, and the medication you\'re requesting?',
       category: 'pharmacy',
       required_phrases: [
         'for your safety',
@@ -644,7 +644,7 @@ function getMockComplianceScripts() {
     {
       id: '8',
       name: 'Mental Health Crisis Protocol',
-      content: 'If you're experiencing thoughts of harming yourself or others, please be aware that I'm required by law to take steps to ensure your safety, which may include contacting emergency services. Do you understand?',
+      content: 'If you\'re experiencing thoughts of harming yourself or others, please be aware that I'm required by law to take steps to ensure your safety, which may include contacting emergency services. Do you understand?',
       category: 'mental-health',
       required_phrases: [
         'required by law',
@@ -656,7 +656,7 @@ function getMockComplianceScripts() {
     {
       id: '9',
       name: 'Billing Authorization',
-      content: 'I'm going to ask for your payment information. By providing this information, you authorize us to charge your account for the services discussed. Do you consent to this authorization?',
+      content: 'I\'m going to ask for your payment information. By providing this information, you authorize us to charge your account for the services discussed. Do you consent to this authorization?',
       category: 'billing',
       required_phrases: [
         'payment information',
