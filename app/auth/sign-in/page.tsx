@@ -89,6 +89,11 @@ export default function SignInPage() {
   
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-gradient-to-b from-[#0E0E0E] to-[#1A1A1A] p-4">
+      {/* Demo Mode Banner */}
+      <div className="absolute top-0 left-0 right-0 bg-yellow-900/50 text-yellow-200 py-2 px-4 text-center text-sm z-50">
+        ⚠️ DEMO MODE: All data is stored in session storage and will be lost on refresh or sign out
+      </div>
+      
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}

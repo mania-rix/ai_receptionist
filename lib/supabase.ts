@@ -1,148 +1,73 @@
-// /lib/supabase.ts
+// This file is kept for backward compatibility but its functionality is disabled
 
-import { createBrowserClient, createServerClient } from '@supabase/ssr'
-import type { Database } from '../database.types'
+// Mock Supabase client for demo mode
+const mockClient = {
+  auth: {
+    getUser: async () => ({ data: { user: null }, error: null }),
+    getSession: async () => ({ data: { session: null }, error: null }),
+    onAuthStateChange: () => ({ data: { subscription: { unsubscribe: () => {} } } }),
+    signInWithPassword: async () => ({ data: { user: null }, error: null }),
+    signUp: async () => ({ data: { user: null }, error: null }),
+    signOut: async () => ({ error: null }),
+    refreshSession: async () => ({ data: { session: null }, error: null }),
+    exchangeCodeForSession: async () => ({ data: { session: null }, error: null })
+  },
+  from: (table: string) => ({
+    select: () => ({
+      eq: () => ({
+        order: () => ({
+          limit: () => ({ data: [], error: null })
+        }),
+        single: () => ({ data: null, error: null }),
+        data: [], 
+        error: null
+      }),
+      order: () => ({
+        data: [],
+        error: null
+      }),
+      data: [],
+      error: null
+    }),
+    insert: () => ({
+      select: () => ({
+        single: () => ({ data: null, error: null })
+      }),
+      data: null,
+      error: null
+    }),
+    update: () => ({
+      eq: () => ({
+        select: () => ({
+          single: () => ({ data: null, error: null })
+        }),
+        data: null,
+        error: null
+      }),
+      data: null,
+      error: null
+    }),
+    delete: () => ({
+      eq: () => ({ data: null, error: null }),
+      data: null,
+      error: null
+    })
+  })
+};
 
 /**
- * Singleton browser Supabase client (for use in components, hooks, etc)
- * Safe to use in 'use client' code.
+ * DEMO MODE: Supabase server client is disabled.
+ * All data is stored in sessionStorage and will be lost on refresh or sign out.
  */
-export const supabaseBrowser = createBrowserClient<Database>(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-)
-
-/**
- * Factory for a server Supabase client (for use in API routes, server components, etc)
- * Call supabaseServer(cookies) in server code and pass cookies as needed.
- * 
- * Example for Next.js API route:
- *   const supabase = supabaseServer(req.cookies)
- */
-export function supabaseServer(cookies: any) {
-  return createServerClient<Database>(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    { cookies }
-  )
+export function supabaseServer() {
+  return mockClient;
 }
 
-export type Json =
-  | string
-  | number
-  | boolean
-  | null
-  | { [key: string]: Json | undefined }
-  | Json[]
+/**
+ * DEMO MODE: Supabase browser client is disabled.
+ * All data is stored in sessionStorage and will be lost on refresh or sign out.
+ */
+export const supabaseBrowser = mockClient;
 
-
-type DefaultSchema = Database[Extract<keyof Database, "public">]
-
-export type Tables<
-  DefaultSchemaTableNameOrOptions extends
-    | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
-    | { schema: keyof Database },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
-    schema: keyof Database
-  }
-    ? keyof (Database[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
-        Database[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
-    : never = never,
-> = DefaultSchemaTableNameOrOptions extends { schema: keyof Database }
-  ? (Database[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
-      Database[DefaultSchemaTableNameOrOptions["schema"]]["Views"])[TableName] extends {
-      Row: infer R
-    }
-    ? R
-    : never
-  : DefaultSchemaTableNameOrOptions extends keyof (DefaultSchema["Tables"] &
-        DefaultSchema["Views"])
-    ? (DefaultSchema["Tables"] &
-        DefaultSchema["Views"])[DefaultSchemaTableNameOrOptions] extends {
-        Row: infer R
-      }
-      ? R
-      : never
-    : never
-
-export type TablesInsert<
-  DefaultSchemaTableNameOrOptions extends
-    | keyof DefaultSchema["Tables"]
-    | { schema: keyof Database },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
-    schema: keyof Database
-  }
-    ? keyof Database[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
-    : never = never,
-> = DefaultSchemaTableNameOrOptions extends { schema: keyof Database }
-  ? Database[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
-      Insert: infer I
-    }
-    ? I
-    : never
-  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
-    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
-        Insert: infer I
-      }
-      ? I
-      : never
-    : never
-
-export type TablesUpdate<
-  DefaultSchemaTableNameOrOptions extends
-    | keyof DefaultSchema["Tables"]
-    | { schema: keyof Database },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
-    schema: keyof Database
-  }
-    ? keyof Database[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
-    : never = never,
-> = DefaultSchemaTableNameOrOptions extends { schema: keyof Database }
-  ? Database[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
-      Update: infer U
-    }
-    ? U
-    : never
-  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
-    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
-        Update: infer U
-      }
-      ? U
-      : never
-    : never
-
-export type Enums<
-  DefaultSchemaEnumNameOrOptions extends
-    | keyof DefaultSchema["Enums"]
-    | { schema: keyof Database },
-  EnumName extends DefaultSchemaEnumNameOrOptions extends {
-    schema: keyof Database
-  }
-    ? keyof Database[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
-    : never = never,
-> = DefaultSchemaEnumNameOrOptions extends { schema: keyof Database }
-  ? Database[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"][EnumName]
-  : DefaultSchemaEnumNameOrOptions extends keyof DefaultSchema["Enums"]
-    ? DefaultSchema["Enums"][DefaultSchemaEnumNameOrOptions]
-    : never
-
-export type CompositeTypes<
-  PublicCompositeTypeNameOrOptions extends
-    | keyof DefaultSchema["CompositeTypes"]
-    | { schema: keyof Database },
-  CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
-    schema: keyof Database
-  }
-    ? keyof Database[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
-    : never = never,
-> = PublicCompositeTypeNameOrOptions extends { schema: keyof Database }
-  ? Database[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"][CompositeTypeName]
-  : PublicCompositeTypeNameOrOptions extends keyof DefaultSchema["CompositeTypes"]
-    ? DefaultSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
-    : never
-
-export const Constants = {
-  public: {
-    Enums: {},
-  },
-} as const
+// Keep these type definitions for backward compatibility
+export type Json = string | number | boolean | null | { [key: string]: Json | undefined } | Json[];

@@ -34,7 +34,7 @@ type FormData = {
 
 export default function KnowledgeBasePage() {
   const [isLoading, setIsLoading] = useState(false);
-  const { knowledgeBases, addItem, updateItem, deleteItem, isAuthenticated } = useStorage();
+  const { knowledgeBases, addItem, updateItem, deleteItem } = useStorage();
   const [open, setOpen] = useState(false);
   const [editingKB, setEditingKB] = useState<any>(null);
   const { toast } = useToast();
@@ -44,6 +44,10 @@ export default function KnowledgeBasePage() {
       content: { faqs: [] },
     }
   });
+
+  useEffect(() => {
+    console.log('[KBUI] Component mounted');
+  }, []);
 
   const createOrUpdateKnowledgeBase = async (data: FormData) => {
     console.log('[KBUI] Creating/updating knowledge base:', data);
@@ -134,6 +138,13 @@ export default function KnowledgeBasePage() {
 
   return (
     <div className="flex-1 space-y-6 p-8">
+      {/* Demo Mode Banner */}
+      <div className="bg-yellow-900/20 border border-yellow-500/30 rounded-lg p-4 mb-6">
+        <p className="text-yellow-200 text-sm">
+          <span className="font-bold">⚠️ DEMO MODE:</span> All data is stored in session storage and will be lost on refresh or sign out.
+        </p>
+      </div>
+      
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-bold tracking-tight">Knowledge Base</h1>
         <div className="flex gap-2">

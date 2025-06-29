@@ -1,29 +1,8 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect, useRef, ReactNode, useCallback } from 'react';
-import { supabase } from '@/lib/supabase-browser';
-import { 
-  loginUser, 
-  registerUser, 
-  logoutUser, 
-  refreshSessionIfNeeded,
-  validateEmail,
-  validatePassword
-} from '@/lib/auth-utils';
-import {
-  initializeSampleData,
-  createItem,
-  readItem,
-  updateItem as updateDataItem,
-  deleteItem as deleteDataItem,
-  listItems,
-  clearUserData,
-  DATA_CATEGORIES,
-  fetchFromAPI,
-  postToAPI,
-  updateAPI,
-  deleteFromAPI
-} from '@/lib/data-manager';
+import { v4 as uuidv4 } from 'uuid';
+import { validateEmail, validatePassword } from '@/lib/auth-utils';
 
 // Define types for our storage items
 interface StorageItem {
@@ -45,7 +24,6 @@ interface User {
 
 // Define the storage context type
 interface StorageContextType {
-  // Authentication
   isAuthenticated: boolean;
   isLoading: boolean;
   authError: string | null;
@@ -55,7 +33,6 @@ interface StorageContextType {
   logout: () => Promise<void>;
   validateCredentials: (email: string, password: string) => { valid: boolean; errors: string[] };
   
-  // Storage operations
   getItem: (key: string) => string | null;
   setItem: (key: string, value: string) => void;
   removeItem: (key: string) => void;
@@ -86,7 +63,6 @@ export function StorageProvider({ children }: { children: ReactNode }) {
   const [authError, setAuthError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const initialDataLoaded = useRef(false);
-  const authCheckTimeout = useRef<NodeJS.Timeout | null>(null);
   
   // Collections
   const [agents, setAgents] = useState<StorageItem[]>([]);
@@ -99,115 +75,46 @@ export function StorageProvider({ children }: { children: ReactNode }) {
   // Initialize client-side storage
   useEffect(() => {
     setIsClient(true);
-    setAuthError(null);
+    console.log('[StorageContext] Initializing provider with local storage');
     
-    console.log('[StorageContext] Initializing provider, setting up auth listener', { isLoading });
-    
-    // Set up auth state listener
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
-        console.log('[StorageContext] Auth state changed:', { 
-          event, 
-          user: session?.user?.email, 
-          authenticated: !!session?.user,
-          initialDataLoaded: initialDataLoaded.current
-        });
-        
-        const user = session?.user || null;
-        setCurrentUser(user as User | null);
-        setIsAuthenticated(!!user);
-        
-        if (user) {
-          console.log('[StorageContext] User authenticated:', user.email, { initialDataLoaded: initialDataLoaded.current });
-          if (!initialDataLoaded.current) {
-            initialDataLoaded.current = true;
-            loadInitialData(user.id);
-          }
-        } else {
-          console.log('[StorageContext] No authenticated user, using demo mode', { initialDataLoaded: initialDataLoaded.current });
-          if (!initialDataLoaded.current) {
-            initialDataLoaded.current = true;
-            loadInitialData('demo-user-id');
-          }
-        }
-        
-        setIsLoading(false);
+    // Check if user is already logged in from sessionStorage
+    const sessionUser = sessionStorage.getItem('currentUser');
+    if (sessionUser) {
+      try {
+        const user = JSON.parse(sessionUser);
+        setCurrentUser(user);
+        setIsAuthenticated(true);
+        console.log('[StorageContext] User found in session storage:', user.email);
+      } catch (error) {
+        console.error('Error parsing user from session storage:', error);
+        sessionStorage.removeItem('currentUser');
       }
-    );
-    
-    // Initial auth check - we'll let the onAuthStateChange handle the initial state
-    // This is just a fallback in case the listener doesn't fire quickly
-    authCheckTimeout.current = setTimeout(() => {
-      if (isLoading && !initialDataLoaded.current) {
-        console.log('[StorageContext] Auth listener timeout - running manual check');
-        checkAuthentication();
-      }
-    }, 2000);
-    
-    return () => {
-      subscription.unsubscribe();
-      if (authCheckTimeout.current) {
-        clearTimeout(authCheckTimeout.current);
-      }
-    };
-  }, [isLoading]);
-
-  // Check if user is authenticated
-  const checkAuthentication = async () => {
-    try {
-      console.log('[StorageContext] Running manual auth check', { initialDataLoaded: initialDataLoaded.current });
-      const { data: { session } } = await supabase.auth.getSession();
-      const user = session?.user || null;
-      
-      console.log('[StorageContext] Initial auth check result:', { 
-        user: user?.email, 
-        authenticated: !!user,
-        sessionExists: !!session,
-        initialDataLoaded: initialDataLoaded.current
-      });
-      
-      setCurrentUser(user as User | null);
-      setIsAuthenticated(!!user);
-      
-      if (!initialDataLoaded.current) {
-        initialDataLoaded.current = true;
-        if (user) {
-          console.log('[StorageContext] Manual auth check: User authenticated:', user.email);
-          loadInitialData(user.id);
-        } else {
-          console.log('[StorageContext] Manual auth check: No user, using demo mode');
-          loadInitialData('demo-user-id');
-        }
-      }
-      
-      setIsLoading(false);
-    } catch (error) {
-      console.error('Error checking authentication:', error);
-      setCurrentUser(null);
-      setIsAuthenticated(false);
-      loadInitialData('demo-user-id');
-      setIsLoading(false);
     }
-  };
+    
+    // Load initial data
+    if (!initialDataLoaded.current) {
+      initialDataLoaded.current = true;
+      const userId = sessionStorage.getItem('currentUser') ? 
+        JSON.parse(sessionStorage.getItem('currentUser') || '{}').id : 
+        'demo-user-id';
+      loadInitialData(userId);
+    }
+    
+    setIsLoading(false);
+  }, []);
 
   // Load initial data from localStorage
   const loadInitialData = (userId: string) => {
     try {
       console.log('[StorageContext] Loading initial data for user:', userId, { isAuthenticated, isLoading });
       
-      if (userId === 'demo-user-id') {
-        // Load demo data from localStorage
-        loadCollection('agents', setAgents, userId);
-        loadCollection('calls', setCalls, userId);
-        loadCollection('complianceScripts', setComplianceScripts, userId);
-        loadCollection('conversationFlows', setConversationFlows, userId);
-        loadCollection('knowledgeBases', setKnowledgeBases, userId);
-        loadCollection('videoSummaries', setVideoSummaries, userId);
-      } else {
-        // Load real data from API
-        fetchCollection('/api/agents', setAgents);
-        // Other collections will be loaded as needed by their respective components
-      }
+      // Load data from sessionStorage
+      loadCollection('agents', setAgents, userId);
+      loadCollection('calls', setCalls, userId);
+      loadCollection('complianceScripts', setComplianceScripts, userId);
+      loadCollection('conversationFlows', setConversationFlows, userId);
+      loadCollection('knowledgeBases', setKnowledgeBases, userId);
+      loadCollection('videoSummaries', setVideoSummaries, userId);
     } catch (error) {
       console.error('[StorageContext] Error loading initial data:', error);
       // Load demo data as fallback
@@ -249,14 +156,14 @@ export function StorageProvider({ children }: { children: ReactNode }) {
   const loadCollection = (collection: string, setter: React.Dispatch<React.SetStateAction<StorageItem[]>>, userId: string) => {
     try {
       const key = `blvckwall_${userId}_${collection}`;
-      const storedData = localStorage.getItem(key);
+      const storedData = sessionStorage.getItem(key);
       
       if (storedData) {
         setter(JSON.parse(storedData));
       } else {
         // Load demo data
         const demoData = getDemoData(collection);
-        localStorage.setItem(key, JSON.stringify(demoData));
+        sessionStorage.setItem(key, JSON.stringify(demoData));
         setter(demoData);
       }
     } catch (error) {
@@ -408,9 +315,9 @@ export function StorageProvider({ children }: { children: ReactNode }) {
   const getItem = (key: string): string | null => {
     if (!isClient) return null;
     try {
-      return localStorage.getItem(key);
+      return sessionStorage.getItem(key);
     } catch (error) {
-      console.error('Error getting item from localStorage:', error);
+      console.error('Error getting item from sessionStorage:', error);
       return null;
     }
   };
@@ -418,27 +325,27 @@ export function StorageProvider({ children }: { children: ReactNode }) {
   const setItem = (key: string, value: string): void => {
     if (!isClient) return;
     try {
-      localStorage.setItem(key, value);
+      sessionStorage.setItem(key, value);
     } catch (error) {
-      console.error('Error setting item in localStorage:', error);
+      console.error('Error setting item in sessionStorage:', error);
     }
   };
 
   const removeItem = (key: string): void => {
     if (!isClient) return;
     try {
-      localStorage.removeItem(key);
+      sessionStorage.removeItem(key);
     } catch (error) {
-      console.error('Error removing item from localStorage:', error);
+      console.error('Error removing item from sessionStorage:', error);
     }
   };
 
   const clear = (): void => {
     if (!isClient) return;
     try {
-      localStorage.clear();
+      sessionStorage.clear();
     } catch (error) {
-      console.error('Error clearing localStorage:', error);
+      console.error('Error clearing sessionStorage:', error);
     }
   };
 
@@ -463,64 +370,105 @@ export function StorageProvider({ children }: { children: ReactNode }) {
 
   const login = useCallback(async (email: string, password: string): Promise<{ success: boolean; error?: string }> => {
     try {
-      setAuthError(null);
+      console.log('[StorageContext] Login attempt:', email);
+      setIsLoading(true);
       
       // Validate credentials
       const validation = validateCredentials(email, password);
       if (!validation.valid) {
         setAuthError(validation.errors[0]);
+        setIsLoading(false);
         return { success: false, error: validation.errors[0] };
       }
       
-      // Attempt login
-      const { user, error } = await loginUser(email, password);
+      // Demo login - accept any valid email/password
+      const user: User = {
+        id: uuidv4(),
+        email: email,
+        user_metadata: {
+          name: email.split('@')[0]
+        }
+      };
       
-      if (error) {
-        setAuthError(error.message);
-        return { success: false, error: error.message };
-      }
+      // Store user in session storage
+      sessionStorage.setItem('currentUser', JSON.stringify(user));
       
-      console.log('[StorageContext] Login successful:', user?.email);
+      // Set session expiry (24 hours)
+      const expiryTime = Date.now() + (24 * 60 * 60 * 1000);
+      sessionStorage.setItem('session_expiry', expiryTime.toString());
+      
+      // Update state
+      setCurrentUser(user);
+      setIsAuthenticated(true);
+      
+      // Load initial data for the user
+      loadInitialData(user.id);
+      
+      console.log('[StorageContext] Login successful:', user.email);
+      setIsLoading(false);
       return { success: true };
     } catch (error) {
       console.error('Login error:', error);
       const errorMessage = (error as Error).message || 'An unknown error occurred';
       setAuthError(errorMessage);
+      setIsLoading(false);
       return { success: false, error: errorMessage };
     }
   }, []);
 
   const signup = useCallback(async (email: string, password: string, firstName: string, lastName: string): Promise<{ success: boolean; error?: string }> => {
     try {
-      setAuthError(null);
+      console.log('[StorageContext] Signup attempt:', email);
+      setIsLoading(true);
       
       // Validate credentials
       const validation = validateCredentials(email, password);
       if (!validation.valid) {
         setAuthError(validation.errors[0]);
+        setIsLoading(false);
         return { success: false, error: validation.errors[0] };
       }
       
       if (!firstName || !lastName) {
         const error = 'First name and last name are required';
         setAuthError(error);
+        setIsLoading(false);
         return { success: false, error };
       }
       
-      // Attempt registration
-      const { user, error } = await registerUser(email, password, firstName, lastName);
+      // Create new user
+      const user: User = {
+        id: uuidv4(),
+        email: email,
+        user_metadata: {
+          firstName,
+          lastName,
+          name: `${firstName} ${lastName}`
+        }
+      };
       
-      if (error) {
-        setAuthError(error.message);
-        return { success: false, error: error.message };
-      }
+      // Store user in session storage
+      sessionStorage.setItem('currentUser', JSON.stringify(user));
       
-      console.log('[StorageContext] Signup successful:', user?.email);
+      // Set session expiry (24 hours)
+      const expiryTime = Date.now() + (24 * 60 * 60 * 1000);
+      sessionStorage.setItem('session_expiry', expiryTime.toString());
+      
+      // Update state
+      setCurrentUser(user);
+      setIsAuthenticated(true);
+      
+      // Load initial data for the user
+      loadInitialData(user.id);
+      
+      console.log('[StorageContext] Signup successful:', user.email);
+      setIsLoading(false);
       return { success: true };
     } catch (error) {
       console.error('Signup error:', error);
       const errorMessage = (error as Error).message || 'An unknown error occurred';
       setAuthError(errorMessage);
+      setIsLoading(false);
       return { success: false, error: errorMessage };
     }
   }, []);
@@ -528,13 +476,29 @@ export function StorageProvider({ children }: { children: ReactNode }) {
   const logout = useCallback(async (): Promise<void> => {
     try {
       console.log('[StorageContext] Logging out user');
-      setAuthError(null);
-      const { error } = await logoutUser();
       
-      if (error) throw error;
+      // Clear user from session storage
+      sessionStorage.removeItem('currentUser');
+      sessionStorage.removeItem('session_expiry');
+      
+      // Clear all data
+      Object.keys(sessionStorage).forEach(key => {
+        if (key.startsWith('blvckwall_')) {
+          sessionStorage.removeItem(key);
+        }
+      });
+      
+      // Update state
+      setCurrentUser(null);
+      setIsAuthenticated(false);
+      setAgents([]);
+      setCalls([]);
+      setComplianceScripts([]);
+      setConversationFlows([]);
+      setKnowledgeBases([]);
+      setVideoSummaries([]);
       
       console.log('[StorageContext] Logout successful');
-      // Auth state change listener will update currentUser and isAuthenticated
     } catch (error) {
       console.error('Logout error:', error);
       throw error;
@@ -544,186 +508,138 @@ export function StorageProvider({ children }: { children: ReactNode }) {
   // CRUD operations for collections
   const addItem = useCallback(async (collection: string, item: any): Promise<StorageItem> => {
     try {
-      await refreshSessionIfNeeded();
-      if (!isAuthenticated || !currentUser) {
-        // Demo mode - use localStorage
-        const userId = 'demo-user-id';
-        const key = `blvckwall_${userId}_${collection}`;
-        
-        // Get existing data
-        const storedData = localStorage.getItem(key);
-        const existingData = storedData ? JSON.parse(storedData) : [];
-        
-        // Add new item
-        const newItem = {
-          ...item,
-          id: item.id || `${collection.slice(0, -1)}_${Date.now()}`,
-          created_at: item.created_at || new Date().toISOString(),
-          user_id: userId
-        };
-        
-        // Save updated data
-        const updatedData = [newItem, ...existingData];
-        localStorage.setItem(key, JSON.stringify(updatedData));
-        
-        // Update state
-        updateCollectionState(collection, updatedData);
-        
-        return newItem;
-      } else {
-        // Real mode - use API
-        console.log(`[StorageContext] Adding item to ${collection} via API`);
+      console.log(`[StorageContext] Adding item to ${collection}`);
+      
+      // Get user ID
+      const userId = currentUser?.id || 'demo-user-id';
+      const key = `blvckwall_${userId}_${collection}`;
+      
+      // Get existing data
+      const storedData = sessionStorage.getItem(key);
+      const existingData = storedData ? JSON.parse(storedData) : [];
+      
+      // Add new item
+      const newItem = {
+        ...item,
+        id: item.id || `${collection.slice(0, -1)}_${Date.now()}`,
+        created_at: item.created_at || new Date().toISOString(),
+        user_id: userId
+      };
+      
+      // Save updated data
+      const updatedData = [newItem, ...existingData];
+      sessionStorage.setItem(key, JSON.stringify(updatedData));
+      
+      // Update state
+      updateCollectionState(collection, updatedData);
+      
+      // Simulate API call
+      try {
         const endpoint = `/api/${collection.toLowerCase()}`;
-        
-        const response = await fetch(endpoint, {
+        await fetch(endpoint, {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(item),
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(item)
         });
-        
-        if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(errorData.error || `Failed to add item to ${collection}`);
-        }
-        
-        const result = await response.json();
-        const newItem = result[collection.slice(0, -1).toLowerCase()] || result;
-        
-        // Update state
-        const collectionKey = collection.toLowerCase();
-        const stateKey = collectionKey === 'knowledgebases' ? 'knowledgeBases' : collectionKey;
-        
-        updateCollectionState(stateKey, (prev: StorageItem[]) => [newItem, ...prev]);
-        
-        return newItem;
+      } catch (apiError) {
+        console.warn(`[StorageContext] API simulation error (non-blocking):`, apiError);
       }
+      
+      return newItem;
     } catch (error) {
       console.error(`Error adding item to ${collection}:`, error);
       throw error;
     }
-  }, [isAuthenticated, currentUser]);
+  }, [currentUser]);
 
   const updateItem = useCallback(async (collection: string, id: string, updates: any): Promise<StorageItem> => {
     try {
-      await refreshSessionIfNeeded();
-      if (!isAuthenticated || !currentUser) {
-        // Demo mode - use localStorage
-        const userId = 'demo-user-id';
-        const key = `blvckwall_${userId}_${collection}`;
-        
-        // Get existing data
-        const storedData = localStorage.getItem(key);
-        if (!storedData) throw new Error(`Collection ${collection} not found`);
-        
-        const existingData = JSON.parse(storedData);
-        
-        // Find and update item
-        const updatedData = existingData.map((item: any) => {
-          if (item.id === id) {
-            return { ...item, ...updates, updated_at: new Date().toISOString() };
-          }
-          return item;
-        });
-        
-        // Save updated data
-        localStorage.setItem(key, JSON.stringify(updatedData));
-        
-        // Update state
-        updateCollectionState(collection, updatedData);
-        
-        // Return updated item
-        const updatedItem = updatedData.find((item: any) => item.id === id);
-        if (!updatedItem) throw new Error(`Item with id ${id} not found in ${collection}`);
-        
-        return updatedItem;
-      } else {
-        // Real mode - use API
-        console.log(`[StorageContext] Updating item in ${collection} via API:`, id);
-        const endpoint = `/api/${collection.toLowerCase()}/${id}`;
-        
-        const response = await fetch(endpoint, {
-          method: 'PATCH',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(updates),
-        });
-        
-        if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(errorData.error || `Failed to update item in ${collection}`);
+      console.log(`[StorageContext] Updating item in ${collection}:`, id);
+      
+      // Get user ID
+      const userId = currentUser?.id || 'demo-user-id';
+      const key = `blvckwall_${userId}_${collection}`;
+      
+      // Get existing data
+      const storedData = sessionStorage.getItem(key);
+      if (!storedData) throw new Error(`Collection ${collection} not found`);
+      
+      const existingData = JSON.parse(storedData);
+      
+      // Find and update item
+      const updatedData = existingData.map((item: any) => {
+        if (item.id === id) {
+          return { ...item, ...updates, updated_at: new Date().toISOString() };
         }
-        
-        const result = await response.json();
-        const updatedItem = result[collection.slice(0, -1).toLowerCase()] || result;
-        
-        // Update state
-        const collectionKey = collection.toLowerCase();
-        const stateKey = collectionKey === 'knowledgebases' ? 'knowledgeBases' : collectionKey;
-        
-        updateCollectionState(stateKey, (prev: StorageItem[]) => 
-          prev.map((item: any) => item.id === id ? updatedItem : item)
-        );
-        
-        return updatedItem;
+        return item;
+      });
+      
+      // Save updated data
+      sessionStorage.setItem(key, JSON.stringify(updatedData));
+      
+      // Update state
+      updateCollectionState(collection, updatedData);
+      
+      // Return updated item
+      const updatedItem = updatedData.find((item: any) => item.id === id);
+      if (!updatedItem) throw new Error(`Item with id ${id} not found in ${collection}`);
+      
+      // Simulate API call
+      try {
+        const endpoint = `/api/${collection.toLowerCase()}/${id}`;
+        await fetch(endpoint, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(updates)
+        });
+      } catch (apiError) {
+        console.warn(`[StorageContext] API simulation error (non-blocking):`, apiError);
       }
+      
+      return updatedItem;
     } catch (error) {
       console.error(`Error updating item in ${collection}:`, error);
       throw error;
     }
-  }, [isAuthenticated, currentUser]);
+  }, [currentUser]);
 
   const deleteItem = useCallback(async (collection: string, id: string): Promise<void> => {
     try {
-      await refreshSessionIfNeeded();
-      if (!isAuthenticated || !currentUser) {
-        // Demo mode - use localStorage
-        const userId = 'demo-user-id';
-        const key = `blvckwall_${userId}_${collection}`;
-        
-        // Get existing data
-        const storedData = localStorage.getItem(key);
-        if (!storedData) throw new Error(`Collection ${collection} not found`);
-        
-        const existingData = JSON.parse(storedData);
-        
-        // Filter out item
-        const updatedData = existingData.filter((item: any) => item.id !== id);
-        
-        // Save updated data
-        localStorage.setItem(key, JSON.stringify(updatedData));
-        
-        // Update state
-        updateCollectionState(collection, updatedData);
-      } else {
-        // Real mode - use API
-        console.log(`[StorageContext] Deleting item from ${collection} via API:`, id);
+      console.log(`[StorageContext] Deleting item from ${collection}:`, id);
+      
+      // Get user ID
+      const userId = currentUser?.id || 'demo-user-id';
+      const key = `blvckwall_${userId}_${collection}`;
+      
+      // Get existing data
+      const storedData = sessionStorage.getItem(key);
+      if (!storedData) throw new Error(`Collection ${collection} not found`);
+      
+      const existingData = JSON.parse(storedData);
+      
+      // Filter out item
+      const updatedData = existingData.filter((item: any) => item.id !== id);
+      
+      // Save updated data
+      sessionStorage.setItem(key, JSON.stringify(updatedData));
+      
+      // Update state
+      updateCollectionState(collection, updatedData);
+      
+      // Simulate API call
+      try {
         const endpoint = `/api/${collection.toLowerCase()}/${id}`;
-        
-        const response = await fetch(endpoint, {
-          method: 'DELETE',
+        await fetch(endpoint, {
+          method: 'DELETE'
         });
-        
-        if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(errorData.error || `Failed to delete item from ${collection}`);
-        }
-        
-        // Update state
-        const collectionKey = collection.toLowerCase();
-        const stateKey = collectionKey === 'knowledgebases' ? 'knowledgeBases' : collectionKey;
-        
-        updateCollectionState(stateKey, (prev: StorageItem[]) => 
-          prev.filter((item: any) => item.id !== id)
-        );
+      } catch (apiError) {
+        console.warn(`[StorageContext] API simulation error (non-blocking):`, apiError);
       }
     } catch (error) {
       console.error(`Error deleting item from ${collection}:`, error);
       throw error;
     }
-  }, [isAuthenticated, currentUser]);
+  }, [currentUser]);
 
   // Helper to update the correct state based on collection name
   const updateCollectionState = (collection: string, dataOrUpdater: StorageItem[] | ((prev: StorageItem[]) => StorageItem[])) => {
@@ -798,6 +714,19 @@ export function StorageProvider({ children }: { children: ReactNode }) {
     hasUser: !!currentUser,
     initialDataLoaded: initialDataLoaded.current
   });
+
+  // Add a demo banner note
+  useEffect(() => {
+    if (isClient && !isLoading) {
+      console.log('[StorageContext] Setting demo banner in sessionStorage');
+      sessionStorage.setItem('demo-banner', JSON.stringify({
+        show: true,
+        message: "🚀 Demo Mode - All data is stored in session storage and will be lost on refresh or sign out",
+        type: "warning",
+        dismissible: true
+      }));
+    }
+  }, [isClient, isLoading]);
 
   return (
     <StorageContext.Provider value={value}>

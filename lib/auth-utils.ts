@@ -1,8 +1,6 @@
 /**
  * Authentication utilities for secure user management
  */
-import { supabase } from '@/lib/supabase-browser';
-import { createClient } from '@supabase/supabase-js';
 
 // Constants
 const SESSION_TIMEOUT = 24 * 60 * 60 * 1000; // 24 hours
@@ -82,20 +80,25 @@ export async function loginUser(email: string, password: string): Promise<{ user
   }
   
   try {
-    // Attempt login with Supabase
-    const { data, error } = await supabase.auth.signInWithPassword({
-      email,
-      password
-    });
-    
-    if (error) throw error;
+    // This is now a mock function since we're using sessionStorage
+    // The actual login logic is in the storage-context.tsx
     
     // Set session expiry
     const expiryTime = Date.now() + SESSION_TIMEOUT;
-    localStorage.setItem('session_expiry', expiryTime.toString());
+    sessionStorage.setItem('session_expiry', expiryTime.toString());
     
     console.log('[AuthUtils] Login successful for:', email);
-    return { user: data.user, error: null };
+    
+    // Create a mock user
+    const user = {
+      id: 'mock-user-id',
+      email,
+      user_metadata: {
+        name: email.split('@')[0]
+      }
+    };
+    
+    return { user, error: null };
   } catch (error) {
     console.error('[AuthUtils] Login error:', error);
     return { user: null, error };
@@ -118,23 +121,22 @@ export async function registerUser(email: string, password: string, firstName: s
   }
   
   try {
-    // Register with Supabase
-    const { data, error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        data: {
-          first_name: firstName,
-          last_name: lastName,
-          full_name: `${firstName} ${lastName}`
-        }
-      }
-    });
+    // This is now a mock function since we're using sessionStorage
+    // The actual signup logic is in the storage-context.tsx
     
-    if (error) throw error;
+    // Create a mock user
+    const user = {
+      id: 'mock-user-id',
+      email,
+      user_metadata: {
+        firstName,
+        lastName,
+        name: `${firstName} ${lastName}`
+      }
+    };
     
     console.log('[AuthUtils] Registration successful for:', email);
-    return { user: data.user, error: null };
+    return { user, error: null };
   } catch (error) {
     console.error('[AuthUtils] Registration error:', error);
     return { user: null, error };
@@ -148,18 +150,14 @@ export async function logoutUser(): Promise<{ error: any }> {
   console.log('[AuthUtils] Logging out user');
   
   try {
-    // Sign out from Supabase
-    const { error } = await supabase.auth.signOut();
-    
-    if (error) throw error;
-    
     // Clean up session data
-    localStorage.removeItem('session_expiry');
+    sessionStorage.removeItem('session_expiry');
+    sessionStorage.removeItem('currentUser');
     
     // Clear any cached data
-    Object.keys(localStorage).forEach(key => {
+    Object.keys(sessionStorage).forEach(key => {
       if (key.startsWith('blvckwall_')) {
-        localStorage.removeItem(key);
+        sessionStorage.removeItem(key);
       }
     });
     
@@ -175,7 +173,7 @@ export async function logoutUser(): Promise<{ error: any }> {
  * Check if session is expired
  */
 export function isSessionExpired(): boolean {
-  const expiryTime = localStorage.getItem('session_expiry');
+  const expiryTime = sessionStorage.getItem('session_expiry');
   if (!expiryTime) return true;
   
   return Date.now() > parseInt(expiryTime);
@@ -185,24 +183,23 @@ export function isSessionExpired(): boolean {
  * Refresh session if needed
  */
 export async function refreshSessionIfNeeded(): Promise<void> {
-  if (isSessionExpired()) {
-    console.log('[AuthUtils] Session expired, refreshing');
-    
-    try {
-      const { data, error } = await supabase.auth.refreshSession();
-      if (error) throw error;
-      
-      if (data.session) {
-        // Update session expiry
-        const expiryTime = Date.now() + SESSION_TIMEOUT;
-        localStorage.setItem('session_expiry', expiryTime.toString());
-        console.log('[AuthUtils] Session refreshed successfully');
-      }
-    } catch (error) {
-      console.error('[AuthUtils] Session refresh error:', error);
-      // Force logout on refresh failure
-      await logoutUser();
-    }
+  // This is now a mock function since we're using sessionStorage
+  if (!isSessionExpired()) {
+    return;
+  }
+  
+  console.log('[AuthUtils] Session expired');
+  
+  // Check if we have a current user
+  const currentUser = sessionStorage.getItem('currentUser');
+  if (currentUser) {
+    // Update session expiry
+    const expiryTime = Date.now() + SESSION_TIMEOUT;
+    sessionStorage.setItem('session_expiry', expiryTime.toString());
+    console.log('[AuthUtils] Session refreshed successfully');
+  } else {
+    // Force logout
+    await logoutUser();
   }
 }
 
@@ -210,11 +207,14 @@ export async function refreshSessionIfNeeded(): Promise<void> {
  * Get current authenticated user
  */
 export async function getCurrentUser(): Promise<any> {
-  try {
-    const { data } = await supabase.auth.getUser();
-    return data.user;
-  } catch (error) {
-    console.error('[AuthUtils] Get current user error:', error);
-    return null;
+  const currentUser = sessionStorage.getItem('currentUser');
+  if (currentUser) {
+    try {
+      return JSON.parse(currentUser);
+    } catch (error) {
+      console.error('[AuthUtils] Error parsing current user:', error);
+      return null;
+    }
   }
+  return null;
 }

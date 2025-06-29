@@ -1,12 +1,59 @@
 'use client'
-import { createBrowserClient } from '@supabase/ssr'
-import type { Database } from '../database.types'
+// This file is kept for backward compatibility but its functionality is disabled
 
 /**
- * Singleton browser Supabase client (for use in components, hooks, etc)
- * Safe to use in 'use client' code.
+ * DEMO MODE: Supabase client is disabled.
+ * All data is stored in sessionStorage and will be lost on refresh or sign out.
  */
-export const supabase = createBrowserClient<Database>(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-)
+export const supabase = {
+  auth: {
+    getUser: async () => ({ data: { user: null }, error: null }),
+    getSession: async () => ({ data: { session: null }, error: null }),
+    onAuthStateChange: () => ({ data: { subscription: { unsubscribe: () => {} } } }),
+    signInWithPassword: async () => ({ data: { user: null }, error: null }),
+    signUp: async () => ({ data: { user: null }, error: null }),
+    signOut: async () => ({ error: null }),
+    refreshSession: async () => ({ data: { session: null }, error: null })
+  },
+  from: (table: string) => ({
+    select: () => ({
+      eq: () => ({
+        order: () => ({
+          limit: () => ({ data: [], error: null })
+        }),
+        single: () => ({ data: null, error: null }),
+        data: [], 
+        error: null
+      }),
+      order: () => ({
+        data: [],
+        error: null
+      }),
+      data: [],
+      error: null
+    }),
+    insert: () => ({
+      select: () => ({
+        single: () => ({ data: null, error: null })
+      }),
+      data: null,
+      error: null
+    }),
+    update: () => ({
+      eq: () => ({
+        select: () => ({
+          single: () => ({ data: null, error: null })
+        }),
+        data: null,
+        error: null
+      }),
+      data: null,
+      error: null
+    }),
+    delete: () => ({
+      eq: () => ({ data: null, error: null }),
+      data: null,
+      error: null
+    })
+  })
+};

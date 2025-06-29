@@ -452,6 +452,9 @@ const BlvckwallAuth = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
+    // Add a note about demo mode
+    console.log('DEMO MODE: All data will be stored in session storage and will be lost on refresh or sign out');
+    
     if (!validateForm()) {
       return;
     }
@@ -504,7 +507,12 @@ const BlvckwallAuth = () => {
 
   return (
     <MatrixBackground isDarkMode={isDarkMode}>
-      <div className={cn("min-h-screen w-full flex items-center justify-center relative overflow-hidden", isDarkMode ? "dark" : "light")}>
+      <div className={cn("min-h-screen w-full flex flex-col items-center justify-center relative overflow-hidden", isDarkMode ? "dark" : "light")}>
+        {/* Demo Mode Banner */}
+        <div className="absolute top-0 left-0 right-0 bg-yellow-900/50 text-yellow-200 py-2 px-4 text-center text-sm z-50">
+          ⚠️ DEMO MODE: All data is stored in session storage and will be lost on refresh or sign out
+        </div>
+        
         {/* Cyber grid background */}
         <div className="absolute inset-0 opacity-10">
           <div className="absolute inset-0" 

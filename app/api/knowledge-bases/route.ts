@@ -1,87 +1,59 @@
 import { NextResponse } from 'next/server';
-import { supabaseServer } from '@/lib/supabase'
-import { cookies } from 'next/headers';
 
 export async function GET() {
-  try {
-    let supabase;
-    try {
-      const cookieStore = cookies();
-      supabase = supabaseServer(cookieStore);
-    } catch (error) {
-      console.warn('[API:knowledge-bases] Cookie access failed, using demo mode');
-      const { createClient } = await import('@supabase/supabase-js');
-      supabase = createClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-      );
+  console.log('[API:knowledge-bases] GET request (demo mode)');
+  
+  // Demo mode - return mock data
+  const knowledgeBases = [
+    {
+      id: 'kb_1',
+      name: 'Medical Procedures FAQ',
+      description: 'Common questions about medical procedures and aftercare',
+      content: { 
+        faqs: [
+          { question: 'What is the recovery time?', answer: 'Recovery time varies by procedure, typically 2-4 weeks.', language: 'en' },
+          { question: 'Will I need follow-up appointments?', answer: 'Yes, most procedures require at least one follow-up.', language: 'en' }
+        ] 
+      },
+      languages: ['en', 'es'],
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    },
+    {
+      id: 'kb_2',
+      name: 'Insurance Coverage',
+      description: 'Information about insurance coverage and billing',
+      content: { 
+        faqs: [
+          { question: 'What insurance do you accept?', answer: 'We accept most major insurance providers including Blue Cross, Aetna, and UnitedHealthcare.', language: 'en' },
+          { question: 'How do I verify my coverage?', answer: 'Contact your insurance provider or our billing department for verification.', language: 'en' }
+        ] 
+      },
+      languages: ['en'],
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
     }
-
-    const { data: knowledgeBases, error } = await supabase
-      .from('knowledge_bases')
-      .select('*')
-      .order('created_at', { ascending: false });
-
-    if (error) throw error;
-
-    return NextResponse.json({ knowledgeBases });
-  } catch (error) {
-    console.error('Error fetching knowledge bases:', error);
-    return NextResponse.json(
-      { error: 'Failed to fetch knowledge bases' },
-      { status: 500 }
-    );
-  }
+  ];
+  
+  return NextResponse.json({ knowledgeBases });
 }
 
 export async function POST(req: Request) {
-  try {
-    const body = await req.json();
-    
-    let supabase;
-    let user;
-    
-    try {
-      const cookieStore = cookies();
-      supabase = supabaseServer(cookieStore);
-      const { data: { user: authUser } } = await supabase.auth.getUser();
-      user = authUser;
-    } catch (error) {
-      console.warn('[API:knowledge-bases] Cookie access failed, using demo mode');
-      const { createClient } = await import('@supabase/supabase-js');
-      supabase = createClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-      );
-      user = { id: 'demo-user-id', email: 'demo@blvckwall.ai' };
-    }
-
-    if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
-    const { data, error } = await supabase
-      .from('knowledge_bases')
-      .insert([
-        {
-          user_id: user.id,
-          name: body.name,
-          description: body.description,
-          content: body.content || {},
-          languages: body.languages || ['en'],
-        },
-      ])
-      .select()
-      .single();
-
-    if (error) throw error;
-
-    return NextResponse.json({ knowledgeBase: data });
-  } catch (error) {
-    console.error('Error creating knowledge base:', error);
-    return NextResponse.json(
-      { error: 'Failed to create knowledge base' },
-      { status: 500 }
-    );
-  }
+  console.log('[API:knowledge-bases] POST request (demo mode)');
+  
+  const body = await req.json();
+  
+  // Demo mode - return mock response
+  const knowledgeBase = {
+    id: `kb_${Date.now()}`,
+    user_id: 'demo-user-id',
+    name: body.name,
+    description: body.description,
+    content: body.content || {},
+    languages: body.languages || ['en'],
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString()
+  };
+  
+  return NextResponse.json({ knowledgeBase });
 }

@@ -19,37 +19,31 @@ export function DemoBanner({ className }: DemoBannerProps) {
 
   useEffect(() => {
     console.log('[DemoBanner] Component mounted');
-    fetchBannerConfig();
+    // Use the banner config from sessionStorage instead of fetching from API
+    const bannerConfig = sessionStorage.getItem('demo-banner');
+    if (bannerConfig) {
+      try {
+        const config = JSON.parse(bannerConfig);
+        setBannerData({
+          message: config.message || "🚀 Demo Mode - All data is stored in session storage and will be lost on refresh or sign out",
+          type: config.type || "warning",
+          dismissible: config.dismissible !== undefined ? config.dismissible : true
+        });
+      } catch (error) {
+        console.error('[DemoBanner] Error parsing banner config:', error);
+      }
+    }
     
     // Check if banner was previously dismissed
-    const dismissed = localStorage.getItem('demo-banner-dismissed');
+    const dismissed = sessionStorage.getItem('demo-banner-dismissed');
     if (dismissed === 'true') {
       setIsVisible(false);
     }
   }, []);
 
-  const fetchBannerConfig = async () => {
-    try {
-      const response = await fetch('/api/demo-banner');
-      const data = await response.json();
-      
-      if (data.show) {
-        setBannerData({
-          message: data.message,
-          type: data.type,
-          dismissible: data.dismissible
-        });
-      } else {
-        setIsVisible(false);
-      }
-    } catch (error) {
-      console.error('[DemoBanner] Error fetching banner config:', error);
-    }
-  };
-
   const dismissBanner = () => {
     setIsVisible(false);
-    localStorage.setItem('demo-banner-dismissed', 'true');
+    sessionStorage.setItem('demo-banner-dismissed', 'true');
   };
 
   const getBannerIcon = () => {
