@@ -54,7 +54,7 @@ export async function POST(req: Request) {
     } catch (error) {
       console.warn('[API:conversation-flows] Cookie access failed, using demo mode');
       // For demo mode, create a mock supabase client and user
-      const { createClient } = await import('@supabase/supabase-js');
+      //const { createClient } = await import('@supabase/supabase-js');
       supabase = createClient(
         process.env.NEXT_PUBLIC_SUPABASE_URL!,
         process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
