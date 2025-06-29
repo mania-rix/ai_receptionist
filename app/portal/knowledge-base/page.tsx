@@ -1,3 +1,8 @@
+'use client'
+
+import { supabase } from '@/lib/supabase-browser';
+
+
 import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { Plus, Loader2, Book, Upload, Trash2, Edit } from 'lucide-react';
