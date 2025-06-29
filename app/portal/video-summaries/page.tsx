@@ -1,231 +1,166 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
-import { Video, Play, Download, Share2, QrCode, Settings, Loader2, FileVideo, User, Calendar } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { Video, Play, Download, Calendar, User, Clock } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '@/components/ui/dialog';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/lib/supabase-browser';
-import { tavusAPI } from '@/lib/tavus';
-import { recordVideoAudit } from '@/lib/algorand';
 
 interface VideoSummary {
   id: string;
-  call_id: string;
-  patient_name: string;
-  doctor_name: string;
-  video_url?: string;
-  status: 'generating' | 'completed' | 'failed';
+  title: string;
+  description: string;
+  duration: string;
   created_at: string;
-  qr_code_url?: string;
-  share_url?: string;
+  status: 'generating' | 'completed' | 'failed';
+  thumbnail_url?: string;
+  video_url?: string;
+  call_id?: string;
 }
 
 export default function VideoSummariesPage() {
+  const router = useRouter();
+  const { toast } = useToast();
   const [videos, setVideos] = useState<VideoSummary[]>([]);
   const [isGenerating, setIsGenerating] = useState(false);
-  const [open, setOpen] = useState(false);
-  const [settingsOpen, setSettingsOpen] = useState(false);
-  const [selectedCall, setSelectedCall] = useState('');
-  const [patientName, setPatientName] = useState('');
-  const [doctorName, setDoctorName] = useState('Dr. Smith');
-  const [customScript, setCustomScript] = useState('');
-  const [template, setTemplate] = useState('medical');
-  const [brandColor, setBrandColor] = useState('#6366f1');
-  const { toast } = useToast();
+  const [user, setUser] = useState<any>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     console.log('[VideoSummaries] Component mounted');
+    checkAuthentication();
     fetchVideoSummaries();
-    loadDemoData();
   }, []);
 
-  const fetchVideoSummaries = async () => {
-    console.log('[VideoSummaries] Fetching video summaries...');
+  const checkAuthentication = async () => {
     try {
-      const { data, error } = await supabase
-        .from('calls')
-        .select('*')
-        .not('tavus_video_id', 'is', null)
-        .order('created_at', { ascending: false });
-
-      if (error) throw error;
-
-      const videoData = data?.map(call => ({
-        id: call.tavus_video_id || call.id,
-        call_id: call.id,
-        patient_name: call.callee || 'Patient',
-        doctor_name: 'Dr. Smith',
-        video_url: call.video_url,
-        status: call.video_status || 'completed',
-        created_at: call.created_at,
-        qr_code_url: `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(call.video_url || 'https://demo.tavus.io')}`,
-        share_url: call.video_url || 'https://demo.tavus.io'
-      })) || [];
-
-      setVideos(videoData);
-      console.log('[VideoSummaries] Video summaries fetched:', videoData.length);
+      const { data: { user }, error } = await supabase.auth.getUser();
+      if (error) {
+        console.error('[VideoSummaries] Auth error:', error);
+        router.push('/auth/blvckwall');
+        return;
+      }
+      
+      if (!user) {
+        console.log('[VideoSummaries] No user found, redirecting to auth');
+        router.push('/auth/blvckwall');
+        return;
+      }
+      
+      setUser(user);
+      console.log('[VideoSummaries] User authenticated:', user.id);
     } catch (error) {
-      console.error('[VideoSummaries] Error fetching video summaries:', error);
+      console.error('[VideoSummaries] Error checking authentication:', error);
+      router.push('/auth/blvckwall');
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  const loadDemoData = () => {
-    console.log('[VideoSummaries] Loading demo data...');
-    const demoVideos: VideoSummary[] = [
+  const fetchVideoSummaries = () => {
+    console.log('[VideoSummaries] Fetching video summaries...');
+    // Mock data for demo
+    const mockVideos: VideoSummary[] = [
       {
-        id: 'demo_video_1',
-        call_id: 'demo_call_1',
-        patient_name: 'Sarah Johnson',
-        doctor_name: 'Dr. Smith',
-        video_url: 'https://tavusapi.com/v2/videos/demo1',
-        status: 'completed',
+        id: '1',
+        title: 'Patient Consultation Summary',
+        description: 'Dr. Smith consultation with John Doe regarding treatment options',
+        duration: '2:34',
         created_at: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
-        qr_code_url: 'https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=https://tavusapi.com/v2/videos/demo1',
-        share_url: 'https://tavusapi.com/v2/videos/demo1'
+        status: 'completed',
+        thumbnail_url: 'https://images.pexels.com/photos/5327585/pexels-photo-5327585.jpeg?auto=compress&cs=tinysrgb&w=300',
+        video_url: 'https://sample-videos.com/zip/10/mp4/SampleVideo_1280x720_1mb.mp4',
+        call_id: 'call_123',
       },
       {
-        id: 'demo_video_2',
-        call_id: 'demo_call_2',
-        patient_name: 'Michael Chen',
-        doctor_name: 'Dr. Rodriguez',
-        video_url: 'https://tavusapi.com/v2/videos/demo2',
-        status: 'completed',
+        id: '2',
+        title: 'Follow-up Appointment Summary',
+        description: 'Follow-up discussion about treatment progress',
+        duration: '1:45',
         created_at: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(),
-        qr_code_url: 'https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=https://tavusapi.com/v2/videos/demo2',
-        share_url: 'https://tavusapi.com/v2/videos/demo2'
-      }
+        status: 'completed',
+        thumbnail_url: 'https://images.pexels.com/photos/4173251/pexels-photo-4173251.jpeg?auto=compress&cs=tinysrgb&w=300',
+        video_url: 'https://sample-videos.com/zip/10/mp4/SampleVideo_1280x720_1mb.mp4',
+        call_id: 'call_124',
+      },
+      {
+        id: '3',
+        title: 'Emergency Consultation',
+        description: 'Urgent care consultation summary',
+        duration: '3:12',
+        created_at: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),
+        status: 'generating',
+        call_id: 'call_125',
+      },
     ];
-
-    setVideos(prev => [...demoVideos, ...prev]);
+    
+    setVideos(mockVideos);
+    console.log('[VideoSummaries] Mock videos loaded:', mockVideos.length);
   };
 
   const generateVideo = async () => {
-    if (!patientName.trim()) {
+    if (!user) {
+      console.log('[VideoSummaries] User not authenticated, redirecting');
       toast({
-        title: 'Error',
-        description: 'Please enter a patient name',
+        title: 'Authentication Required',
+        description: 'Please sign in to generate video summaries',
         variant: 'destructive',
       });
+      router.push('/auth/blvckwall');
       return;
     }
 
-    console.log('[VideoSummaries] Generating video for:', patientName);
+    console.log('[VideoSummaries] Generating video for user:', user.id);
     setIsGenerating(true);
-
+    
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error('Not authenticated');
-
-      // Create mock appointment summary
-      const appointmentSummary = customScript || 
-        `Hello ${patientName}, this is ${doctorName}. Thank you for your recent appointment with us. 
-        We discussed your treatment options and provided recommendations for your care. 
-        Please follow the instructions we provided and don't hesitate to contact us if you have any questions.
-        We look forward to seeing you at your next appointment.`;
-
-      // Generate video using Tavus API (demo mode)
-      const video = await tavusAPI.generateVideo({
-        replica_id: process.env.NEXT_PUBLIC_DEFAULT_TAVUS_REPLICA_ID || 'demo_replica',
-        script: appointmentSummary,
-        callback_url: `${window.location.origin}/api/tavus/webhook`,
-      });
-
-      // Create new video entry
+      // Simulate video generation
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      
       const newVideo: VideoSummary = {
-        id: video.video_id,
-        call_id: selectedCall || `demo_call_${Date.now()}`,
-        patient_name: patientName,
-        doctor_name: doctorName,
-        video_url: video.video_url,
-        status: 'generating',
+        id: Date.now().toString(),
+        title: 'New Patient Consultation',
+        description: 'AI-generated summary of recent patient call',
+        duration: '2:15',
         created_at: new Date().toISOString(),
-        qr_code_url: `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(video.video_url || 'https://demo.tavus.io')}`,
-        share_url: video.video_url || 'https://demo.tavus.io'
+        status: 'generating',
+        call_id: `call_${Date.now()}`,
       };
-
+      
       setVideos(prev => [newVideo, ...prev]);
-
-      // Record audit log on blockchain
-      await recordVideoAudit(video.video_id, user.id, {
-        patient_name: patientName,
-        doctor_name: doctorName,
-        template,
-        brand_color: brandColor
-      });
-
-      // Simulate video completion after 5 seconds
+      
+      // Simulate completion after 5 seconds
       setTimeout(() => {
-        setVideos(prev => prev.map(v => 
-          v.id === video.video_id 
-            ? { ...v, status: 'completed', video_url: 'https://demo.tavus.io/sample-video' }
-            : v
+        setVideos(prev => prev.map(video => 
+          video.id === newVideo.id 
+            ? { 
+                ...video, 
+                status: 'completed' as const,
+                thumbnail_url: 'https://images.pexels.com/photos/5327585/pexels-photo-5327585.jpeg?auto=compress&cs=tinysrgb&w=300',
+                video_url: 'https://sample-videos.com/zip/10/mp4/SampleVideo_1280x720_1mb.mp4'
+              }
+            : video
         ));
       }, 5000);
-
-      setOpen(false);
-      setPatientName('');
-      setCustomScript('');
       
-      console.log('[VideoSummaries] Video generation started:', video.video_id);
+      console.log('[VideoSummaries] Video generation started successfully');
       toast({
         title: 'Video Generation Started',
-        description: `Creating personalized video for ${patientName}`,
+        description: 'Your video summary is being generated',
       });
     } catch (error) {
       console.error('[VideoSummaries] Error generating video:', error);
       toast({
-        title: 'Error',
-        description: 'Failed to generate video',
+        title: 'Generation Failed',
+        description: 'Failed to generate video summary',
         variant: 'destructive',
       });
     } finally {
       setIsGenerating(false);
     }
-  };
-
-  const shareVideo = async (video: VideoSummary) => {
-    console.log('[VideoSummaries] Sharing video:', video.id);
-    try {
-      await navigator.share({
-        title: `Doctor's Note for ${video.patient_name}`,
-        text: `Personalized video summary from ${video.doctor_name}`,
-        url: video.share_url,
-      });
-    } catch (error) {
-      // Fallback to clipboard
-      await navigator.clipboard.writeText(video.share_url || '');
-      toast({
-        title: 'Link Copied',
-        description: 'Video link copied to clipboard',
-      });
-    }
-  };
-
-  const downloadQR = (video: VideoSummary) => {
-    console.log('[VideoSummaries] Downloading QR code for:', video.id);
-    const link = document.createElement('a');
-    link.href = video.qr_code_url || '';
-    link.download = `qr-code-${video.patient_name.replace(/\s+/g, '-')}.png`;
-    link.click();
   };
 
   const getStatusColor = (status: string) => {
@@ -237,231 +172,125 @@ export default function VideoSummariesPage() {
     }
   };
 
+  const getStatusText = (status: string) => {
+    switch (status) {
+      case 'completed': return 'Ready';
+      case 'generating': return 'Processing';
+      case 'failed': return 'Failed';
+      default: return 'Unknown';
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <div className="flex-1 space-y-6 p-8">
+        <div className="flex items-center justify-center py-12">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-500" />
+        </div>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return (
+      <div className="flex-1 space-y-6 p-8">
+        <Card className="border-gray-800 bg-[#121212]">
+          <CardContent className="flex flex-col items-center justify-center py-12">
+            <Video className="h-12 w-12 text-gray-400 mb-4" />
+            <h3 className="text-lg font-medium mb-2">Authentication Required</h3>
+            <p className="text-gray-400 text-center mb-4">
+              Please sign in to access video summaries
+            </p>
+            <Button onClick={() => router.push('/auth/blvckwall')}>
+              Sign In
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
   return (
     <div className="flex-1 space-y-6 p-8">
       <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Video Summaries</h1>
-          <p className="text-gray-400 mt-1">AI-generated doctor's notes powered by Tavus</p>
-        </div>
-        <div className="flex gap-2">
-          <Dialog open={settingsOpen} onOpenChange={setSettingsOpen}>
-            <DialogTrigger asChild>
-              <Button variant="outline">
-                <Settings className="mr-2 h-4 w-4" />
-                Settings
-              </Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Video Settings</DialogTitle>
-              </DialogHeader>
-              <div className="space-y-4">
-                <div>
-                  <label className="mb-2 block text-sm font-medium">Template</label>
-                  <Select value={template} onValueChange={setTemplate}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="medical">Medical Professional</SelectItem>
-                      <SelectItem value="dental">Dental Practice</SelectItem>
-                      <SelectItem value="therapy">Therapy Session</SelectItem>
-                      <SelectItem value="consultation">General Consultation</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div>
-                  <label className="mb-2 block text-sm font-medium">Brand Color</label>
-                  <div className="flex gap-2">
-                    <Input
-                      type="color"
-                      value={brandColor}
-                      onChange={(e) => setBrandColor(e.target.value)}
-                      className="w-16 h-10"
-                    />
-                    <Input
-                      value={brandColor}
-                      onChange={(e) => setBrandColor(e.target.value)}
-                      placeholder="#6366f1"
-                    />
-                  </div>
-                </div>
-              </div>
-            </DialogContent>
-          </Dialog>
-          
-          <Dialog open={open} onOpenChange={setOpen}>
-            <DialogTrigger asChild>
-              <Button>
-                <Video className="mr-2 h-4 w-4" />
-                Generate Video
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="max-w-2xl">
-              <DialogHeader>
-                <DialogTitle>Generate Doctor's Note Video</DialogTitle>
-              </DialogHeader>
-              <div className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="mb-2 block text-sm font-medium">Patient Name</label>
-                    <Input
-                      placeholder="Enter patient name"
-                      value={patientName}
-                      onChange={(e) => setPatientName(e.target.value)}
-                    />
-                  </div>
-                  <div>
-                    <label className="mb-2 block text-sm font-medium">Doctor Name</label>
-                    <Input
-                      placeholder="Dr. Smith"
-                      value={doctorName}
-                      onChange={(e) => setDoctorName(e.target.value)}
-                    />
-                  </div>
-                </div>
-                
-                <div>
-                  <label className="mb-2 block text-sm font-medium">Custom Script (Optional)</label>
-                  <Textarea
-                    placeholder="Enter custom message or leave blank for auto-generated content..."
-                    value={customScript}
-                    onChange={(e) => setCustomScript(e.target.value)}
-                    rows={4}
-                  />
-                </div>
-
-                <div className="bg-blue-950/20 border border-blue-500/20 rounded-lg p-4">
-                  <div className="flex items-center gap-2 mb-2">
-                    <FileVideo className="h-4 w-4 text-blue-400" />
-                    <span className="text-sm font-medium text-blue-400">Demo Mode</span>
-                  </div>
-                  <p className="text-xs text-gray-400">
-                    This will generate a demo video using Tavus API. In production, this would create a personalized video with your replica.
-                  </p>
-                </div>
-
-                <Button 
-                  onClick={generateVideo} 
-                  disabled={isGenerating || !patientName.trim()}
-                  className="w-full"
-                >
-                  {isGenerating ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Generating Video...
-                    </>
-                  ) : (
-                    <>
-                      <Video className="mr-2 h-4 w-4" />
-                      Generate Video
-                    </>
-                  )}
-                </Button>
-              </div>
-            </DialogContent>
-          </Dialog>
+        <h1 className="text-3xl font-bold tracking-tight">Video Summaries</h1>
+        <div className="flex items-center gap-4">
+          <Badge variant="outline">Demo Mode</Badge>
+          <Button onClick={generateVideo} disabled={isGenerating}>
+            {isGenerating ? 'Generating...' : 'Generate New Video'}
+          </Button>
         </div>
       </div>
 
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
         {videos.map((video) => (
-          <motion.div
-            key={video.id}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="group"
-          >
-            <Card className="border-gray-800 bg-[#121212] hover:bg-gray-900/50 transition-colors">
-              <CardHeader className="pb-3">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <div className={`w-3 h-3 rounded-full ${getStatusColor(video.status)}`} />
-                    <CardTitle className="text-lg">{video.patient_name}</CardTitle>
-                  </div>
-                  <Badge variant="outline" className="text-xs">
-                    {video.status}
-                  </Badge>
+          <Card key={video.id} className="border-gray-800 bg-[#121212] overflow-hidden">
+            <div className="relative">
+              {video.thumbnail_url ? (
+                <img 
+                  src={video.thumbnail_url} 
+                  alt={video.title}
+                  className="w-full h-48 object-cover"
+                />
+              ) : (
+                <div className="w-full h-48 bg-gray-900 flex items-center justify-center">
+                  <Video className="h-12 w-12 text-gray-400" />
                 </div>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-2 text-sm">
-                  <div className="flex items-center gap-2">
-                    <User className="h-4 w-4 text-gray-400" />
-                    <span>{video.doctor_name}</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Calendar className="h-4 w-4 text-gray-400" />
-                    <span>{new Date(video.created_at).toLocaleDateString()}</span>
-                  </div>
+              )}
+              <div className="absolute top-2 right-2">
+                <Badge className={`${getStatusColor(video.status)} text-white`}>
+                  {getStatusText(video.status)}
+                </Badge>
+              </div>
+              {video.duration && (
+                <div className="absolute bottom-2 right-2 bg-black/70 text-white text-xs px-2 py-1 rounded">
+                  {video.duration}
                 </div>
-
-                {video.status === 'generating' && (
-                  <div className="space-y-2">
-                    <div className="flex items-center gap-2 text-sm text-blue-400">
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                      Generating video...
-                    </div>
-                    <div className="w-full bg-gray-800 rounded-full h-2">
-                      <motion.div 
-                        className="bg-blue-600 h-2 rounded-full" 
-                        initial={{ width: '0%' }}
-                        animate={{ width: '100%' }}
-                        transition={{ duration: 5, ease: 'easeInOut' }}
-                      />
-                    </div>
-                  </div>
-                )}
-
-                {video.status === 'completed' && (
-                  <div className="space-y-3">
-                    <div className="aspect-video bg-gray-900 rounded-lg flex items-center justify-center border border-gray-700">
-                      <div className="text-center">
-                        <Play className="h-8 w-8 mx-auto mb-2 text-gray-400" />
-                        <p className="text-xs text-gray-400">Video Preview</p>
-                      </div>
-                    </div>
-                    
-                    <div className="flex gap-2">
-                      <Button 
-                        variant="outline" 
-                        size="sm" 
-                        onClick={() => window.open(video.video_url, '_blank')}
-                        className="flex-1"
-                      >
+              )}
+            </div>
+            
+            <CardHeader className="pb-3">
+              <CardTitle className="text-lg line-clamp-2">{video.title}</CardTitle>
+            </CardHeader>
+            
+            <CardContent className="space-y-3">
+              <p className="text-sm text-gray-400 line-clamp-2">{video.description}</p>
+              
+              <div className="flex items-center gap-4 text-xs text-gray-500">
+                <div className="flex items-center gap-1">
+                  <Calendar className="h-3 w-3" />
+                  {new Date(video.created_at).toLocaleDateString()}
+                </div>
+                <div className="flex items-center gap-1">
+                  <User className="h-3 w-3" />
+                  Dr. Smith
+                </div>
+              </div>
+              
+              <div className="flex gap-2">
+                {video.status === 'completed' && video.video_url && (
+                  <>
+                    <Button variant="outline" size="sm" className="flex-1" asChild>
+                      <a href={video.video_url} target="_blank" rel="noopener noreferrer">
                         <Play className="mr-2 h-3 w-3" />
                         Play
-                      </Button>
-                      <Button 
-                        variant="outline" 
-                        size="sm" 
-                        onClick={() => shareVideo(video)}
-                      >
-                        <Share2 className="h-3 w-3" />
-                      </Button>
-                      <Button 
-                        variant="outline" 
-                        size="sm" 
-                        onClick={() => downloadQR(video)}
-                      >
-                        <QrCode className="h-3 w-3" />
-                      </Button>
-                    </div>
-                  </div>
-                )}
-
-                {video.status === 'failed' && (
-                  <div className="text-center py-4">
-                    <p className="text-sm text-red-400">Video generation failed</p>
-                    <Button variant="outline" size="sm" className="mt-2">
-                      Retry
+                      </a>
                     </Button>
-                  </div>
+                    <Button variant="outline" size="sm" className="flex-1">
+                      <Download className="mr-2 h-3 w-3" />
+                      Download
+                    </Button>
+                  </>
                 )}
-              </CardContent>
-            </Card>
-          </motion.div>
+                {video.status === 'generating' && (
+                  <Button variant="outline" size="sm" className="w-full" disabled>
+                    <Clock className="mr-2 h-3 w-3" />
+                    Processing...
+                  </Button>
+                )}
+              </div>
+            </CardContent>
+          </Card>
         ))}
       </div>
 
@@ -471,11 +300,10 @@ export default function VideoSummariesPage() {
             <Video className="h-12 w-12 text-gray-400 mb-4" />
             <h3 className="text-lg font-medium mb-2">No video summaries yet</h3>
             <p className="text-gray-400 text-center mb-4">
-              Generate personalized doctor's note videos for your patients
+              Generate your first video summary from a patient call
             </p>
-            <Button onClick={() => setOpen(true)}>
-              <Video className="mr-2 h-4 w-4" />
-              Generate First Video
+            <Button onClick={generateVideo} disabled={isGenerating}>
+              Generate Video Summary
             </Button>
           </CardContent>
         </Card>
