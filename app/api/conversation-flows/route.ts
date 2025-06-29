@@ -13,11 +13,11 @@ export async function GET() {
       console.warn('[API:conversation-flows] Cookie access failed, using demo mode');
       // For demo mode, create a mock supabase client
       //const { createClient } = await import('@supabase/supabase-js');
-      supabase = createClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-      );
-    }
+     // supabase = createClient(
+      //  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      //  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+     // );
+   // }
 
     const { data: flows, error } = await supabase
       .from('conversation_flows')
@@ -55,12 +55,12 @@ export async function POST(req: Request) {
       console.warn('[API:conversation-flows] Cookie access failed, using demo mode');
       // For demo mode, create a mock supabase client and user
       //const { createClient } = await import('@supabase/supabase-js');
-      supabase = createClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-      );
-      user = { id: 'demo-user-id', email: 'demo@blvckwall.ai' };
-    }
+     // supabase = createClient(
+      //  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+       // process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+    //  );
+     // user = { id: 'demo-user-id', email: 'demo@blvckwall.ai' };
+    //}
 
     if (!user) {
       console.error('[API:conversation-flows] POST Unauthorized access attempt');
