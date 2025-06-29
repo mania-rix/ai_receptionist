@@ -61,7 +61,7 @@ export function NotificationDrawer() {
     channel.subscribe();
 
     return () => {
-      channel.unsubscribe();
+      //channel.unsubscribe();
       console.log('[NotificationDrawer] Component unmounted');
     };
   }, []);
