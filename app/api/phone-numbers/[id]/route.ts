@@ -8,8 +8,8 @@ export async function PATCH(
 ) {
   try {
     const body = await req.json();
-    const cookieStore = cookies();
-    const supabase = supabaseServer(cookieStore)
+   // const cookieStore = cookies();
+    const supabase = supabaseServer();
 
     const { data, error } = await supabase
       .from('phone_numbers')
