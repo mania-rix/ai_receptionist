@@ -14,8 +14,8 @@ export async function POST(req: Request) {
       source_language 
     });
     
-    const cookieStore = cookies();
-    const supabase = supabaseServer(cookieStore);
+   // const cookieStore = cookies();
+    const supabase = supabaseServer();
 
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
