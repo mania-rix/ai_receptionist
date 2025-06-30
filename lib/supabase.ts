@@ -28,14 +28,14 @@ const mockClient = {
   from: (table: string) => ({
     select: (_fields?: string) => ({
       eq: (_column: string, _value: any) => ({
-        order: () => ({
+        order: (_column: string, _options?: { ascending?: boolean; nullsFirst?: boolean }) => ({
           limit: () => ({ data: [], error: null })
         }),
         single: () => ({ data: null, error: null }),
         data: [],
         error: null
       }),
-      order: () => ({
+      order: (_column: string, _options?: { ascending?: boolean; nullsFirst?: boolean }) => ({
         data: [],
         error: null
       }),
