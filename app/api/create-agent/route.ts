@@ -16,8 +16,8 @@ export async function POST(req: Request) {
       interruption_sensitivity: body.interruption_sensitivity,
     });
 
-    const cookieStore = cookies();
-    const supabase = supabaseServer(cookieStore)
+    //const cookieStore = cookies();
+    const supabase = supabaseServer()
 
     const { data, error } = await supabase.from("agents").insert([
       {
