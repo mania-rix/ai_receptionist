@@ -8,8 +8,8 @@ export async function GET(
 ) {
   console.log('[API:conversation-flows] GET by ID request:', params.id);
   try {
-    const cookieStore = cookies();
-    const supabase = supabaseServer(cookieStore)
+    //const cookieStore = cookies();
+    const supabase = supabaseServer()
 
     const { data, error } = await supabase
       .from('conversation_flows')
@@ -37,8 +37,8 @@ export async function PATCH(
   try {
     const body = await req.json();
     console.log('[API:conversation-flows] PATCH payload:', body);
-    const cookieStore = cookies();
-    const supabase = supabaseServer(cookieStore);
+    //const cookieStore = cookies();
+    const supabase = supabaseServer();
 
     const { data, error } = await supabase
       .from('conversation_flows')
@@ -71,8 +71,8 @@ export async function DELETE(
 ) {
   console.log('[API:conversation-flows] DELETE request:', params.id);
   try {
-    const cookieStore = cookies();
-    const supabase = supabaseServer(cookieStore);
+    //const cookieStore = cookies();
+    const supabase = supabaseServer();
 
     const { error } = await supabase
       .from('conversation_flows')
