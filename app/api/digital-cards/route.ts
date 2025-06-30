@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { cookies } from 'next/headers';
+//import { cookies } from 'next/headers';
 import { supabaseServer } from '@/lib/supabase';
 import { createDigitalBusinessCard, verifyDigitalCard } from '@/lib/picaos';
 import { recordCardAudit } from '@/lib/algorand';
