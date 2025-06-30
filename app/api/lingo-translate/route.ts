@@ -86,8 +86,8 @@ export async function GET(req: Request) {
     let user;
     
     try {
-      const cookieStore = cookies();
-      supabase = supabaseServer(cookieStore);
+    //  const cookieStore = cookies();
+      supabase = supabaseServer();
       const { data: { user: authUser } } = await supabase.auth.getUser();
       user = authUser;
     } catch (error) {
