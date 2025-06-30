@@ -17,7 +17,7 @@ export async function GET() {
       //  process.env.NEXT_PUBLIC_SUPABASE_URL!,
       //  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
      // );
-   // }
+   }
 
     const { data: flows, error } = await supabase
       .from('conversation_flows')
