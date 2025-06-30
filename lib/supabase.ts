@@ -3,7 +3,20 @@
 // Mock Supabase client for demo mode
 const mockClient = {
   auth: {
-    getUser: async () => ({ data: { user: null }, error: null }),
+    getUser: async () => {
+      if (typeof window !== "undefined") {
+        const userStr = sessionStorage.getItem("currentUser");
+        if (userStr) {
+          try {
+            const user = JSON.parse(userStr);
+            return { data: { user }, error: null };
+          } catch {
+            // If parsing fails, treat as not logged in
+          }
+        }
+      }
+      return { data: { user: null }, error: null };
+    },
     getSession: async () => ({ data: { session: null }, error: null }),
     onAuthStateChange: () => ({ data: { subscription: { unsubscribe: () => {} } } }),
     signInWithPassword: async () => ({ data: { user: null }, error: null }),
@@ -19,7 +32,7 @@ const mockClient = {
           limit: () => ({ data: [], error: null })
         }),
         single: () => ({ data: null, error: null }),
-        data: [], 
+        data: [],
         error: null
       }),
       order: () => ({
@@ -54,6 +67,7 @@ const mockClient = {
     })
   })
 };
+
 
 /**
  * DEMO MODE: Supabase server client is disabled.
