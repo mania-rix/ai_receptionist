@@ -9,7 +9,7 @@ export async function GET(
   console.log('[API:conversation-flows] GET by ID request:', params.id);
   try {
     //const cookieStore = cookies();
-    const supabase = supabaseServer()
+    const supabase = supabaseServer();
 
     const { data, error } = await supabase
       .from('conversation_flows')
