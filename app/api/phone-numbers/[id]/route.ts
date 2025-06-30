@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { supabaseServer } from '@/lib/supabase'
-import { cookies } from 'next/headers';
+//import { cookies } from 'next/headers';
 
 export async function PATCH(
   req: Request,
