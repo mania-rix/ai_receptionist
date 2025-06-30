@@ -26,7 +26,7 @@ const mockClient = {
     exchangeCodeForSession: async () => ({ data: { session: null }, error: null })
   },
   from: (table: string) => ({
-    select: () => ({
+    select: (_fields?: string) => ({
       eq: () => ({
         order: () => ({
           limit: () => ({ data: [], error: null })
@@ -43,7 +43,7 @@ const mockClient = {
       error: null
     }),
     insert: () => ({
-      select: () => ({
+      select: (_fields?: string) => ({
         single: () => ({ data: null, error: null })
       }),
       data: null,
@@ -51,7 +51,7 @@ const mockClient = {
     }),
     update: () => ({
       eq: () => ({
-        select: () => ({
+        select: (_fields?: string) => ({
           single: () => ({ data: null, error: null })
         }),
         data: null,
