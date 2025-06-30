@@ -21,7 +21,7 @@ export const supabase = {
         order: () => ({
           limit: () => ({ data: [], error: null })
         }),
-        single: () => ({ data: null, error: null }),
+        single: () => ({ data: null, error: {} as any }),
         data: [], 
         error: null
       }),
@@ -34,7 +34,7 @@ export const supabase = {
     }),
     insert: () => ({
       select: () => ({
-        single: () => ({ data: null, error: null })
+        single: () => ({ data: null, error: {} as any })
       }),
       data: null,
       error: null
@@ -42,7 +42,7 @@ export const supabase = {
     update: () => ({
       eq: () => ({
         select: () => ({
-          single: () => ({ data: null, error: null })
+          single: () => ({ data: null, error: {} as any })
         }),
         data: null,
         error: null
