@@ -9,8 +9,8 @@ export async function POST(req: Request) {
     const { text, voice_id } = await req.json();
     console.log('[API:elevenlabs-tts] POST payload:', { text: text.substring(0, 50), voice_id });
     
-    const cookieStore = cookies();
-    const supabase = supabaseServer(cookieStore);
+   // const cookieStore = cookies();
+    const supabase = supabaseServer();
 
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
