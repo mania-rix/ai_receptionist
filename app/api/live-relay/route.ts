@@ -137,8 +137,8 @@ export async function GET(req: Request) {
     const call_id = searchParams.get('call_id');
     console.log('[API:live-relay] GET payload:', { call_id });
     
-    const cookieStore = cookies();
-    const supabase = supabaseServer(cookieStore)
+   // const cookieStore = cookies();
+    const supabase = supabaseServer();
 
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
