@@ -40,8 +40,8 @@ export async function DELETE(
   { params }: { params: { id: string } }
 ) {
   try {
-    const cookieStore = cookies();
-    const supabase = supabaseServer(cookieStore)
+   // const cookieStore = cookies();
+    const supabase = supabaseServer();
 
     const { error } = await supabase
       .from('phone_numbers')
