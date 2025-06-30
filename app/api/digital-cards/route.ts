@@ -51,8 +51,8 @@ export async function POST(req: Request) {
 export async function GET(req: Request) {
   console.log('[API:digital-cards] GET request');
   try {
-    const cookieStore = cookies();
-    const supabase = supabaseServer(cookieStore);
+  //  const cookieStore = cookies();
+    const supabase = supabaseServer();
 
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
