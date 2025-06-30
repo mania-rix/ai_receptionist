@@ -18,7 +18,7 @@ export async function GET() {
       //  process.env.NEXT_PUBLIC_SUPABASE_URL!,
        // process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
      // );
-   // }
+   }
 
     // Get ElevenLabs voices
     let elevenLabsVoices: any[] = [];
