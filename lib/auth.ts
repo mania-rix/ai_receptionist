@@ -3,8 +3,8 @@ import { supabaseServer } from '@/lib/supabase'
 
 export async function getUser() {
   console.log('[AuthLib] Getting user...');
-  const cookieStore = cookies();
-  const supabase = supabaseServer(cookieStore)
+ // const cookieStore = cookies();
+  const supabase = supabaseServer();
 
   try {
     const { data: { user } } = await supabase.auth.getUser();
