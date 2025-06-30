@@ -10,8 +10,8 @@ export async function POST(req: Request) {
     const { name, title, company, email, phone, image_url } = await req.json();
     console.log('[API:digital-cards] POST payload:', { name, title, company, email });
     
-    const cookieStore = cookies();
-    const supabase = supabaseServer(cookieStore);
+    //const cookieStore = cookies();
+    const supabase = supabaseServer();
 
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
