@@ -14,8 +14,8 @@ export async function GET(req: Request) {
     const { searchParams } = new URL(req.url);
     const category = searchParams.get('category');
     
-    const cookieStore = cookies();
-    const supabase = supabaseServer(cookieStore);
+  //  const cookieStore = cookies();
+    const supabase = supabaseServer();
     
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
