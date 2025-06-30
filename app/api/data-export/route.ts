@@ -30,6 +30,9 @@ export async function POST(req: Request) {
 
     if (exportError) throw exportError;
 
+    if (!exportRecord) {
+  throw new Error('Failed to create export record');
+}
     // Process export based on type
     let data;
     let filename;
