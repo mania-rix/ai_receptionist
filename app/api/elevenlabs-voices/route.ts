@@ -8,8 +8,8 @@ export async function GET() {
   try {
     let supabase;
     try {
-      const cookieStore = cookies();
-      supabase = supabaseServer(cookieStore);
+      //const cookieStore = cookies();
+      supabase = supabaseServer();
     } catch (error) {
       console.warn('[API:elevenlabs-voices] Cookie access failed, using demo mode');
       // For demo mode, create a mock supabase client
