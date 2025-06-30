@@ -65,8 +65,8 @@ export async function GET(req: Request) {
     const { searchParams } = new URL(req.url);
     const txnId = searchParams.get('txn_id');
     
-    const cookieStore = cookies();
-    const supabase = supabaseServer(cookieStore);
+    //const cookieStore = cookies();
+    const supabase = supabaseServer();
 
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
