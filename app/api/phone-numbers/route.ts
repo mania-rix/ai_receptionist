@@ -7,8 +7,8 @@ export async function GET() {
   try {
     let supabase;
     try {
-      const cookieStore = cookies();
-      supabase = supabaseServer(cookieStore);
+      //const cookieStore = cookies();
+      supabase = supabaseServer();
     } catch (error) {
       console.warn('[API:phone-numbers] Cookie access failed, using demo mode');
       //const { createClient } = await import('@supabase/supabase-js');
