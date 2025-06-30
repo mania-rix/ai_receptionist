@@ -27,7 +27,7 @@ const mockClient = {
   },
   from: (table: string) => ({
     select: (_fields?: string) => ({
-      eq: () => ({
+      eq: (_column: string, _value: any) => ({
         order: () => ({
           limit: () => ({ data: [], error: null })
         }),
@@ -50,7 +50,7 @@ const mockClient = {
       error: null
     }),
     update: () => ({
-      eq: () => ({
+      eq: (_column: string, _value: any) => ({
         select: (_fields?: string) => ({
           single: () => ({ data: null, error: null })
         }),
@@ -61,7 +61,7 @@ const mockClient = {
       error: null
     }),
     delete: () => ({
-      eq: () => ({ data: null, error: null }),
+      eq: (_column: string, _value: any) => ({ data: null, error: null }),
       data: null,
       error: null
     })
