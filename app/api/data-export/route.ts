@@ -7,8 +7,8 @@ export async function POST(req: Request) {
   try {
     const { export_type, filters } = await req.json();
     console.log('[API:data-export] POST payload:', { export_type, filters });
-    const cookieStore = cookies();
-    const supabase = supabaseServer(cookieStore)
+    //const cookieStore = cookies();
+    const supabase = supabaseServer();
 
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
