@@ -19,7 +19,7 @@ export async function GET() {
      // );
    }
 
-    const { data: flows, error } = await supabase
+    const { data: flows, error } = await supabase!
       .from('conversation_flows')
       .select('*')
       .order('created_at', { ascending: false });
