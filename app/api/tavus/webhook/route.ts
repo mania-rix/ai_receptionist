@@ -5,8 +5,8 @@ import { supabaseServer } from '@/lib/supabase'
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    const cookieStore = cookies();
-    const supabase = supabaseServer(cookieStore)
+    //const cookieStore = cookies();
+    const supabase = supabaseServer();
 
     // Handle Tavus webhook events
     if (body.event_type === 'video.completed') {
