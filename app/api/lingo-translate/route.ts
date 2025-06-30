@@ -98,7 +98,7 @@ export async function GET(req: Request) {
       //  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
      // );
      // user = { id: 'demo-user-id', email: 'demo@blvckwall.ai' };
-   // }
+   }
 
     if (!user) {
       console.error('[API:lingo-translate] Unauthorized access attempt');
