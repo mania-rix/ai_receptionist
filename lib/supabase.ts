@@ -31,7 +31,7 @@ const mockClient = {
         order: (_column: string, _options?: { ascending?: boolean; nullsFirst?: boolean }) => ({
           limit: () => ({ data: [], error: null })
         }),
-        single: () => ({ data: null, error: null }),
+        single: () => ({ data: null, error: {} as any }),
         data: [],
         error: null
       }),
@@ -44,7 +44,7 @@ const mockClient = {
     }),
     insert: (_rows: any) => ({
       select: (_fields?: string) => ({
-        single: () => ({ data: null, error: null })
+        single: () => ({ data: null, error: {} as any })
       }),
       data: null,
       error: null
@@ -52,7 +52,7 @@ const mockClient = {
     update: (_data: any) => ({
       eq: (_column: string, _value: any) => ({
         select: (_fields?: string) => ({
-          single: () => ({ data: null, error: null })
+          single: () => ({ data: null, error: {} as any })
         }),
         data: null,
         error: null
