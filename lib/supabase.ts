@@ -49,7 +49,7 @@ const mockClient = {
       data: null,
       error: null
     }),
-    update: () => ({
+    update: (_data: any) => ({
       eq: (_column: string, _value: any) => ({
         select: (_fields?: string) => ({
           single: () => ({ data: null, error: null })
