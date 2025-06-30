@@ -42,7 +42,7 @@ const mockClient = {
       data: [],
       error: null
     }),
-    insert: () => ({
+    insert: (_rows: any) => ({
       select: (_fields?: string) => ({
         single: () => ({ data: null, error: null })
       }),
