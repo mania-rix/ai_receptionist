@@ -28,7 +28,9 @@ const mockClient = {
   from: (table: string) => ({
     select: (_fields?: string) => ({
       eq: (_column: string, _value: any) => ({
-        order: (_column: string, _options?: { ascending?: boolean; nullsFirst?: boolean }) => ({
+        order: (_column: string, _options?: any) => ({
+          data: [],
+          error: null,
           limit: () => ({ data: [], error: null })
         }),
         single: () => ({ data: { id: 'mock_export_id' }, error: {} as any }),
