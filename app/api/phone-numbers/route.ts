@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { supabaseServer } from '@/lib/supabase'
-import { cookies } from 'next/headers';
+//import { cookies } from 'next/headers';
 import { elevenLabsAPI } from '@/lib/elevenlabs';
 
 export async function GET() {
