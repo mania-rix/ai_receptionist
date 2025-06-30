@@ -80,8 +80,8 @@ export async function POST(req: Request) {
   try {
     const { category } = await req.json();
     
-    const cookieStore = cookies();
-    const supabase = supabaseServer(cookieStore);
+    //const cookieStore = cookies();
+    const supabase = supabaseServer();
     
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
