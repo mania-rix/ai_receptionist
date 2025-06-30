@@ -83,7 +83,7 @@ export async function GET() {
       //  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
     //  );
     //  user = { id: 'demo-user-id', email: 'demo@blvckwall.ai' };
-   // }
+   }
 
     if (!user) {
       console.error('[API:feedback] GET Unauthorized access attempt');
