@@ -2,7 +2,7 @@ export const runtime = "nodejs";
 
 import { NextResponse } from 'next/server';
 import { supabaseServer } from '@/lib/supabase';
-import { cookies } from 'next/headers';
+//import { cookies } from 'next/headers';
 import { voiceAnalyticsProcessor } from '@/lib/voice-analytics';
 import { elevenLabsAPI } from '@/lib/elevenlabs';
 
