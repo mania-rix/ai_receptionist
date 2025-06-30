@@ -16,8 +16,8 @@ export async function POST(req: Request) {
     const { type, resource_id, details } = await req.json();
     console.log('[API:blockchain-audit] POST payload:', { type, resource_id });
     
-    const cookieStore = cookies();
-    const supabase = supabaseServer(cookieStore);
+    //const cookieStore = cookies();
+    const supabase = supabaseServer();
 
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
