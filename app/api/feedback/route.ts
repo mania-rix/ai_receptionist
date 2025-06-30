@@ -18,13 +18,13 @@ export async function POST(req: Request) {
       user = authUser;
     } catch (error) {
       console.warn('[API:feedback] Cookie access failed, using demo mode');
-      //const { createClient } = await import('@supabase/supabase-js');
-     // supabase = createClient(
-      //  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      //  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-      //);
-      //user = { id: 'demo-user-id', email: 'demo@blvckwall.ai' };
- //   }
+      const { createClient } = await import('@supabase/supabase-js');
+      supabase = createClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+      );
+      user = { id: 'demo-user-id', email: 'demo@blvckwall.ai' };
+    }
 
 
     const { data, error } = await supabase
@@ -77,13 +77,13 @@ export async function GET() {
       user = authUser;
     } catch (error) {
       console.warn('[API:feedback] Cookie access failed, using demo mode');
-      //const { createClient } = await import('@supabase/supabase-js');
-      //supabase = createClient(
-      //  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      //  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-    //  );
-    //  user = { id: 'demo-user-id', email: 'demo@blvckwall.ai' };
-   // }
+      const { createClient } = await import('@supabase/supabase-js');
+      supabase = createClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+      );
+      user = { id: 'demo-user-id', email: 'demo@blvckwall.ai' };
+    }
 
     if (!user) {
       console.error('[API:feedback] GET Unauthorized access attempt');
